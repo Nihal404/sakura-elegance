@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useStore } from "@/lib/store";
 
 export function CartDrawer() {
