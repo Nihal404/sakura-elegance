@@ -97,13 +97,9 @@ function CartPage() {
           <div className="grid lg:grid-cols-[1fr_360px] gap-8">
             <ul className="space-y-4">
               {cart.map((item) => (
-                <motion.li
+                <li
                   key={item.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="flex gap-5 p-4 rounded-2xl bg-background/80 backdrop-blur border border-border shadow-soft"
+                  className="flex gap-5 p-4 rounded-2xl bg-background/95 border border-border shadow-soft animate-fade-in"
                 >
                   <Link
                     to="/product/$id"
