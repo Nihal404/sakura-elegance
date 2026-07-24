@@ -175,6 +175,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           price: p.price,
           category: p.category,
           image_url: p.image,
+          description: p.description,
         });
         if (error) throw error;
         await refreshProducts();
@@ -185,11 +186,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           price?: number;
           category?: string;
           image_url?: string;
+          description?: string;
         } = {};
         if (patch.name !== undefined) dbPatch.name = patch.name;
         if (patch.price !== undefined) dbPatch.price = patch.price;
         if (patch.category !== undefined) dbPatch.category = patch.category;
         if (patch.image !== undefined) dbPatch.image_url = patch.image;
+        if (patch.description !== undefined) dbPatch.description = patch.description;
         const { error } = await supabase.from("products").update(dbPatch).eq("id", id);
         if (error) throw error;
         await refreshProducts();
