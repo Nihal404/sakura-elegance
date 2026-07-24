@@ -19,6 +19,7 @@ export interface Product {
   image: string;
   description: string;
   features: string[];
+  mockups: string[];
 }
 
 export interface CartItem extends Product {
