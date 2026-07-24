@@ -135,11 +135,21 @@ function Login() {
         toast.error(result.error);
         return;
       }
-      toast.success(
-        channel === "whatsapp"
-          ? "Code sent — check WhatsApp (or your email as fallback)."
-          : "Code sent to your email.",
-      );
+      if (channel === "email") {
+        // Trigger Supabase's built-in email OTP (6-digit token).
+        const { error: otpErr } = await supabase.auth.signInWithOtp({
+          email: cleanEmail,
+          options: { shouldCreateUser: false },
+        });
+        if (otpErr) {
+          setFormError(otpErr.message);
+          toast.error(otpErr.message);
+          return;
+        }
+        toast.success("Code sent to your email.");
+      } else {
+        toast.success("Code sent — check WhatsApp.");
+      }
       setSignupStep("otp");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not create account";
@@ -160,19 +170,36 @@ function Login() {
     setFormError("");
     try {
       const cleanEmail = email.trim().toLowerCase();
+      if (channel === "email") {
+        // Verify with Supabase's built-in email OTP — signs the user in and
+        // marks the email as confirmed in one call.
+        const { error } = await supabase.auth.verifyOtp({
+          email: cleanEmail,
+          token: otp,
+          type: "email",
+        });
+        if (error) {
+          setFormError(error.message);
+          toast.error(error.message);
+          return;
+        }
+        toast.success("Welcome to Zari!");
+        router.navigate({ to: "/" });
+        return;
+      }
+      // WhatsApp channel: verify custom code server-side, then sign in with password.
       const result = await doVerifySignup({ data: { email: cleanEmail, code: otp } });
       if (!result.ok) {
         setFormError(result.error);
         toast.error(result.error);
         return;
       }
-      // Auto sign the user in with the password they just set
       const { error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
       });
       if (error) {
-        toast.success("Email verified! Please sign in.");
+        toast.success("Verified! Please sign in.");
         setMode("signin");
         setSigninEmail(cleanEmail);
         setSignupStep("form");
