@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 
 export function Navbar() {
-  const { cartCount, setCartOpen, user, logout } = useStore();
+  const { cartCount, user, logout } = useStore();
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
