@@ -21,12 +21,16 @@ export const Route = createFileRoute("/cart")({
 });
 
 function CartPage() {
-  const { cart, updateQty, removeFromCart, cartTotal, cartCount } = useStore();
+  const { cart, updateQty, removeFromCart, cartTotal, cartCount, user } = useStore();
   const router = useRouter();
   const [popup, setPopup] = useState(false);
 
   const handleBuyNow = () => {
     if (cart.length === 0) return;
+    if (!user) {
+      router.navigate({ to: "/login", search: { redirect: "/cart" } as any });
+      return;
+    }
     setPopup(true);
 
     const lines = cart.map(
