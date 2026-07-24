@@ -165,11 +165,13 @@ export const signUpUser = createServerFn({ method: "POST" })
     if (name) metadata.name = name;
     if (phone) metadata.phone = phone;
 
-    // email_confirm: false — user must verify via our OTP before signing in
+    // email_confirm: true — suppresses Supabase's "Confirm signup" link email.
+    // The user is verified separately via a 6-digit OTP delivered by
+    // supabase.auth.signInWithOtp (email) or our WhatsApp code (phone).
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false,
+      email_confirm: true,
       user_metadata: Object.keys(metadata).length ? metadata : undefined,
     });
     if (createErr || !created.user) {
