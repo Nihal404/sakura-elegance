@@ -23,11 +23,13 @@ function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState<Category>("Clothing");
+  const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
