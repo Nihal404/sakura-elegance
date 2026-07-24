@@ -1,30 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import { Star, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type Review = {
   id: string;
-  productId: string;
+  product_id: string;
   name: string;
   rating: number;
   comment: string;
-  createdAt: number;
+  created_at: string;
 };
-
-const STORAGE_KEY = "zari-reviews";
-
-function loadAll(): Review[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function saveAll(reviews: Review[]) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(reviews));
-}
 
 function StarRow({
   value,
@@ -56,11 +42,7 @@ function StarRow({
             <Star
               width={size}
               height={size}
-              className={
-                filled
-                  ? "fill-primary text-primary"
-                  : "text-primary/40"
-              }
+              className={filled ? "fill-primary text-primary" : "text-primary/40"}
             />
           </button>
         );
@@ -71,12 +53,52 @@ function StarRow({
 
 export function ProductReviews({ productId }: { productId: string }) {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setReviews(loadAll().filter((r) => r.productId === productId));
+    let active = true;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("product_id", productId)
+        .order("created_at", { ascending: false });
+      if (!active) return;
+      if (!error && data) setReviews(data as Review[]);
+      setLoading(false);
+    })();
+
+    const channel = supabase
+      .channel(`reviews:${productId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reviews", filter: `product_id=eq.${productId}` },
+        (payload) => {
+          setReviews((prev) => {
+            if (payload.eventType === "INSERT") {
+              const row = payload.new as Review;
+              if (prev.some((r) => r.id === row.id)) return prev;
+              return [row, ...prev];
+            }
+            if (payload.eventType === "DELETE") {
+              return prev.filter((r) => r.id !== (payload.old as Review).id);
+            }
+            return prev;
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
   }, [productId]);
 
   const avg = useMemo(() => {
@@ -84,21 +106,33 @@ export function ProductReviews({ productId }: { productId: string }) {
     return reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
   }, [reviews]);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !comment.trim()) return;
-    const review: Review = {
-      id: crypto.randomUUID(),
-      productId,
-      name: name.trim().slice(0, 60),
-      rating,
-      comment: comment.trim().slice(0, 500),
-      createdAt: Date.now(),
-    };
-    const all = loadAll();
-    const next = [review, ...all];
-    saveAll(next);
-    setReviews(next.filter((r) => r.productId === productId));
+    if (!name.trim() || !comment.trim() || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    const { data: userData } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from("reviews")
+      .insert({
+        product_id: productId,
+        name: name.trim().slice(0, 60),
+        rating,
+        comment: comment.trim().slice(0, 1000),
+        user_id: userData.user?.id ?? null,
+      })
+      .select()
+      .single();
+    setSubmitting(false);
+    if (error) {
+      setError("Couldn't post your review. Please try again.");
+      return;
+    }
+    if (data) {
+      setReviews((prev) =>
+        prev.some((r) => r.id === (data as Review).id) ? prev : [data as Review, ...prev],
+      );
+    }
     setName("");
     setComment("");
     setRating(5);
@@ -120,7 +154,9 @@ export function ProductReviews({ productId }: { productId: string }) {
           <span className="text-sm text-muted-foreground">
             {reviews.length
               ? `${avg.toFixed(1)} · ${reviews.length} review${reviews.length > 1 ? "s" : ""}`
-              : "Be the first to review"}
+              : loading
+                ? "Loading reviews…"
+                : "Be the first to review"}
           </span>
         </div>
       </div>
@@ -161,24 +197,34 @@ export function ProductReviews({ productId }: { productId: string }) {
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            maxLength={500}
+            maxLength={1000}
             required
             rows={4}
             placeholder="This piece felt like spring in silk…"
             className="mt-2 w-full rounded-2xl bg-background border border-border/70 px-5 py-3 focus:outline-none focus:border-primary transition-colors resize-none"
           />
 
+          {error && (
+            <p className="mt-3 text-sm text-destructive">{error}</p>
+          )}
+
           <button
             type="submit"
-            className="mt-6 px-7 py-3 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all"
+            disabled={submitting}
+            className="mt-6 px-7 py-3 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all inline-flex items-center gap-2 disabled:opacity-60"
           >
-            Post review
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            {submitting ? "Posting…" : "Post review"}
           </button>
         </form>
 
         {/* List */}
         <div className="space-y-4">
-          {reviews.length === 0 ? (
+          {loading ? (
+            <div className="rounded-3xl border border-dashed border-border/70 p-10 text-center text-muted-foreground inline-flex items-center justify-center gap-2 w-full">
+              <Loader2 className="w-4 h-4 animate-spin" /> Gathering petals…
+            </div>
+          ) : reviews.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-border/70 p-10 text-center text-muted-foreground">
               No reviews yet. Your words could be the first petal to fall.
             </div>
@@ -195,7 +241,7 @@ export function ProductReviews({ productId }: { productId: string }) {
                   <div>
                     <div className="font-medium">{r.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {new Date(r.createdAt).toLocaleDateString(undefined, {
+                      {new Date(r.created_at).toLocaleDateString(undefined, {
                         year: "numeric",
                         month: "short",
                         day: "numeric",
