@@ -87,13 +87,13 @@ function Login() {
 
   const adminSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminPassword) return;
+    if (!adminEmail || !adminPassword) return;
     setLoading(true);
     try {
       // Idempotently provision admin (safe to call every time)
       await provisionAdmin();
       const { error } = await supabase.auth.signInWithPassword({
-        email: ADMIN_EMAIL,
+        email: adminEmail.trim().toLowerCase(),
         password: adminPassword,
       });
       if (error) throw error;
