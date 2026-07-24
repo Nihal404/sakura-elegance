@@ -60,8 +60,8 @@ export function Navbar() {
           <button className="p-2.5 rounded-full hover:bg-sakura/30 transition-colors" aria-label="Search">
             <Search className="w-5 h-5 text-foreground/80" />
           </button>
-          <button
-            onClick={() => setCartOpen(true)}
+          <Link
+            to="/cart"
             className="relative p-2.5 rounded-full hover:bg-sakura/30 transition-colors"
             aria-label="Cart"
           >
@@ -75,7 +75,7 @@ export function Navbar() {
                 {cartCount}
               </motion.span>
             )}
-          </button>
+          </Link>
           <div className="relative">
             <button
               onClick={() => (user ? setUserMenu((v) => !v) : router.navigate({ to: "/login" }))}
