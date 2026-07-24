@@ -1,12 +1,12 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Mail, Lock, Sparkles, Loader2, KeyRound, ShieldCheck } from "lucide-react";
+import { Mail, Lock, Sparkles, Loader2, KeyRound, User, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { ensureAdminAccount } from "@/lib/admin-provision.functions";
-import { sendOtpEmail, verifyOtpEmail } from "@/lib/otp.functions";
+import { signUpUser, startLogin, verifyLoginOtp } from "@/lib/otp.functions";
 
 const ADMIN_EMAIL = "admin@zariboutique.com";
 
@@ -14,54 +14,58 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in — Zari Boutique" },
-      { name: "description", content: "Sign in to your Zari Boutique account with a one-time code." },
+      { name: "description", content: "Sign in to Zari Boutique with 2-step verification." },
       { property: "og:title", content: "Sign in — Zari Boutique" },
-      { property: "og:description", content: "Sign in to your Zari Boutique account with a one-time code." },
+      { property: "og:description", content: "Sign in to Zari Boutique with 2-step verification." },
     ],
   }),
   component: Login,
 });
 
-type Tab = "customer" | "admin";
-type Step = "email" | "otp";
+type Mode = "signin" | "signup";
+type Step = "credentials" | "otp";
 
 function Login() {
   const router = useRouter();
   const provisionAdmin = useServerFn(ensureAdminAccount);
-  const sendOtpFn = useServerFn(sendOtpEmail);
-  const verifyOtpFn = useServerFn(verifyOtpEmail);
+  const signUpFn = useServerFn(signUpUser);
+  const startLoginFn = useServerFn(startLogin);
+  const verifyOtpFn = useServerFn(verifyLoginOtp);
 
-  const [tab, setTab] = useState<Tab>("customer");
-  // customer OTP flow
-  const [step, setStep] = useState<Step>("email");
+  const [mode, setMode] = useState<Mode>("signin");
+  const [step, setStep] = useState<Step>("credentials");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [otp, setOtp] = useState("");
-  // admin
-  const [adminEmail, setAdminEmail] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const sendOtp = async (e: React.FormEvent) => {
+  const submitCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
-    const clean = email.trim().toLowerCase();
-    if (!clean) return;
-    if (clean === ADMIN_EMAIL) {
-      toast.error("Admin uses password sign-in. Switch to the Admin tab.");
-      return;
-    }
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password) return;
     setLoading(true);
     try {
-      await sendOtpFn({ data: { email: clean } });
-      toast.success("Check your inbox for a 6-digit code.");
+      if (cleanEmail === ADMIN_EMAIL) {
+        // Ensure the admin account exists with the seeded password before signing in.
+        await provisionAdmin();
+      }
+      if (mode === "signup") {
+        await signUpFn({ data: { email: cleanEmail, password, name: name.trim() || undefined } });
+        toast.success("Account created. Check your email for the 6-digit code.");
+      } else {
+        await startLoginFn({ data: { email: cleanEmail, password } });
+        toast.success("Password verified. Check your email for the 6-digit code.");
+      }
       setStep("otp");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not send code");
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  const verifyOtp = async (e: React.FormEvent) => {
+  const submitOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otp.length !== 6) {
       toast.error("Enter the 6-digit code.");
@@ -69,15 +73,12 @@ function Login() {
     }
     setLoading(true);
     try {
-      const clean = email.trim().toLowerCase();
-      const { token_hash } = await verifyOtpFn({ data: { email: clean, code: otp } });
-      const { error } = await supabase.auth.verifyOtp({
-        type: "email",
-        token_hash,
-      });
+      const cleanEmail = email.trim().toLowerCase();
+      const { token_hash } = await verifyOtpFn({ data: { email: cleanEmail, code: otp } });
+      const { error } = await supabase.auth.verifyOtp({ type: "email", token_hash });
       if (error) throw error;
       toast.success("Welcome to Zari!");
-      router.navigate({ to: "/" });
+      router.navigate({ to: cleanEmail === ADMIN_EMAIL ? "/admin" : "/" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid code");
     } finally {
@@ -85,26 +86,9 @@ function Login() {
     }
   };
 
-
-  const adminSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adminEmail || !adminPassword) return;
-    setLoading(true);
-    try {
-      // Idempotently provision admin (safe to call every time)
-      await provisionAdmin();
-      const { error } = await supabase.auth.signInWithPassword({
-        email: adminEmail.trim().toLowerCase(),
-        password: adminPassword,
-      });
-      if (error) throw error;
-      toast.success("Welcome, Admin.");
-      router.navigate({ to: "/admin" });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Admin sign-in failed");
-    } finally {
-      setLoading(false);
-    }
+  const resetToStart = () => {
+    setStep("credentials");
+    setOtp("");
   };
 
   return (
@@ -127,31 +111,46 @@ function Login() {
             <Sparkles className="w-5 h-5 text-primary" />
           </div>
           <h1 className="font-serif text-3xl">Welcome to Zari</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Sign in with a one-time code — no password to remember.
+          <p className="text-sm text-muted-foreground mt-2 inline-flex items-center gap-1.5 justify-center">
+            <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+            2-step verification — password + email code
           </p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex p-1 rounded-full bg-blush/60 mb-6 text-sm">
-          <button
-            type="button"
-            onClick={() => { setTab("customer"); setStep("email"); }}
-            className={`flex-1 py-2 rounded-full transition-all ${tab === "customer" ? "bg-background shadow-soft text-foreground" : "text-muted-foreground"}`}
-          >
-            Customer
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("admin")}
-            className={`flex-1 py-2 rounded-full transition-all inline-flex items-center justify-center gap-1.5 ${tab === "admin" ? "bg-background shadow-soft text-foreground" : "text-muted-foreground"}`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" /> Admin
-          </button>
-        </div>
+        {/* Sign-in / Sign-up toggle */}
+        {step === "credentials" && (
+          <div className="flex p-1 rounded-full bg-blush/60 mb-6 text-sm">
+            <button
+              type="button"
+              onClick={() => setMode("signin")}
+              className={`flex-1 py-2 rounded-full transition-all ${mode === "signin" ? "bg-background shadow-soft text-foreground" : "text-muted-foreground"}`}
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("signup")}
+              className={`flex-1 py-2 rounded-full transition-all ${mode === "signup" ? "bg-background shadow-soft text-foreground" : "text-muted-foreground"}`}
+            >
+              Create account
+            </button>
+          </div>
+        )}
 
-        {tab === "customer" && step === "email" && (
-          <form onSubmit={sendOtp} className="space-y-4">
+        {step === "credentials" && (
+          <form onSubmit={submitCredentials} className="space-y-4">
+            {mode === "signup" && (
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name (optional)"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
+                />
+              </div>
+            )}
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -163,19 +162,31 @@ function Login() {
                 required
               />
             </div>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === "signup" ? "Create a password (min 8 characters)" : "Your password"}
+                className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
+                minLength={mode === "signup" ? 8 : undefined}
+                required
+              />
+            </div>
             <button
               type="submit"
               disabled={loading}
               className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Send one-time code
+              {mode === "signup" ? "Create account & send code" : "Continue — send code"}
             </button>
           </form>
         )}
 
-        {tab === "customer" && step === "otp" && (
-          <form onSubmit={verifyOtp} className="space-y-4">
+        {step === "otp" && (
+          <form onSubmit={submitOtp} className="space-y-4">
             <p className="text-xs text-center text-muted-foreground">
               Enter the 6-digit code sent to <span className="font-medium text-foreground">{email}</span>
             </p>
@@ -203,51 +214,16 @@ function Login() {
             </button>
             <button
               type="button"
-              onClick={() => { setStep("email"); setOtp(""); }}
+              onClick={resetToStart}
               className="w-full text-xs text-muted-foreground hover:text-primary"
             >
-              Use a different email
-            </button>
-          </form>
-        )}
-
-        {tab === "admin" && (
-          <form onSubmit={adminSignIn} className="space-y-4">
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="email"
-                value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
-                placeholder="Admin email"
-                className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
-                required
-              />
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="password"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                placeholder="Admin password"
-                className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
-            >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Sign in as Admin
+              Back — use a different email or password
             </button>
           </form>
         )}
 
         <p className="mt-6 text-[11px] text-center text-muted-foreground/80 bg-blush/60 rounded-xl py-2 px-3">
-          Customers sign in with a one-time code. Admin uses a preset strong password.
+          Every sign-in requires your password and a fresh code emailed to you.
         </p>
       </motion.div>
     </div>
