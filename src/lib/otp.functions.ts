@@ -6,6 +6,10 @@ const FROM = "Zari Boutique <onboarding@resend.dev>";
 const OTP_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
 
+type OtpSendResult = { ok: true } | { ok: false; error: string };
+type BasicResult = { ok: true } | { ok: false; error: string };
+type VerifyResult = { ok: true; token_hash: string; email: string } | { ok: false; error: string };
+
 const hashCode = (email: string, code: string) =>
   createHash("sha256").update(`${email.toLowerCase()}:${code}`).digest("hex");
 
@@ -25,7 +29,7 @@ const emailHtml = (code: string) => `
   </div>
 `;
 
-async function sendOtpTo(email: string) {
+async function sendOtpTo(email: string): Promise<OtpSendResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   // Rate-limit: max 3 codes per email per 5 min
@@ -36,24 +40,37 @@ async function sendOtpTo(email: string) {
     .eq("email", email)
     .gte("created_at", fiveMinAgo);
   if ((count ?? 0) >= 3) {
-    throw new Error("Too many codes requested. Please wait a few minutes.");
+    return { ok: false, error: "Too many codes requested. Please wait a few minutes." };
+  }
+
+  const lovableApiKey = process.env.LOVABLE_API_KEY;
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!lovableApiKey || !resendApiKey) {
+    return {
+      ok: false,
+      error: "Email sending is not connected yet. Please reconnect Resend or set up a verified sender domain.",
+    };
   }
 
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   const expires_at = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
   const code_hash = hashCode(email, code);
 
-  const { error: insertErr } = await supabaseAdmin
+  const { data: otpRow, error: insertErr } = await supabaseAdmin
     .from("email_otps")
-    .insert({ email, code_hash, expires_at });
-  if (insertErr) throw new Error("Could not create sign-in code.");
+    .insert({ email, code_hash, expires_at })
+    .select("id")
+    .single();
+  if (insertErr || !otpRow) {
+    return { ok: false, error: "Could not create sign-in code." };
+  }
 
   const res = await fetch(`${RESEND_GATEWAY}/emails`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": process.env.RESEND_API_KEY!,
+      Authorization: `Bearer ${lovableApiKey}`,
+      "X-Connection-Api-Key": resendApiKey,
     },
     body: JSON.stringify({
       from: FROM,
@@ -65,20 +82,23 @@ async function sendOtpTo(email: string) {
   if (!res.ok) {
     const body = await res.text();
     console.error("Resend send failed", res.status, body);
+    await supabaseAdmin.from("email_otps").delete().eq("id", otpRow.id);
     let msg = "Could not send the verification email. Please try again.";
     try {
       const parsed = JSON.parse(body) as { message?: string; name?: string };
       if (parsed?.name === "validation_error" && parsed.message?.includes("testing emails")) {
         msg =
-          "Email sending is restricted to the Resend account owner's address until a domain is verified. Verify a domain at resend.com/domains and update the sender.";
+          "Resend is in test mode, so codes only deliver to the Resend account owner's email. Verify a domain in Resend and update the sender to send codes to other addresses.";
       } else if (parsed?.message) {
         msg = parsed.message;
       }
     } catch {
       // keep default
     }
-    throw new Error(msg);
+    return { ok: false, error: msg };
   }
+
+  return { ok: true };
 }
 
 /**
@@ -98,25 +118,31 @@ export const signUpUser = createServerFn({ method: "POST" })
     }
     return { email, password, name };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<BasicResult> => {
     const { email, password, name } = data;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
     const existing = list?.users?.find((u) => u.email?.toLowerCase() === email);
     if (existing) {
-      throw new Error("An account with this email already exists. Please sign in instead.");
+      return { ok: false, error: "An account with this email already exists. Please sign in instead." };
     }
 
-    const { error: createErr } = await supabaseAdmin.auth.admin.createUser({
+    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: name ? { name } : undefined,
     });
-    if (createErr) throw new Error(createErr.message || "Could not create your account.");
+    if (createErr || !created.user) {
+      return { ok: false, error: createErr?.message || "Could not create your account." };
+    }
 
-    await sendOtpTo(email);
+    const otpResult = await sendOtpTo(email);
+    if (!otpResult.ok) {
+      await supabaseAdmin.auth.admin.deleteUser(created.user.id).catch(() => {});
+      return otpResult;
+    }
     return { ok: true };
   });
 
@@ -134,22 +160,28 @@ export const startLogin = createServerFn({ method: "POST" })
     if (!password) throw new Error("Enter your password.");
     return { email, password };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<BasicResult> => {
     const { email, password } = data;
     const { createClient } = await import("@supabase/supabase-js");
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      return { ok: false, error: "Login is not connected yet. Please try again shortly." };
+    }
     const supa = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
+      supabaseUrl,
+      supabaseKey,
       { auth: { persistSession: false, autoRefreshToken: false, storage: undefined } },
     );
     const { data: signIn, error } = await supa.auth.signInWithPassword({ email, password });
     if (error || !signIn?.user) {
-      throw new Error("Invalid email or password.");
+      return { ok: false, error: "Invalid email or password." };
     }
     // Immediately discard the session — we only use password check for step 1.
     await supa.auth.signOut().catch(() => {});
 
-    await sendOtpTo(email);
+    const otpResult = await sendOtpTo(email);
+    if (!otpResult.ok) return otpResult;
     return { ok: true };
   });
 
@@ -166,7 +198,7 @@ export const verifyLoginOtp = createServerFn({ method: "POST" })
     }
     return { email, code };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<VerifyResult> => {
     const { email, code } = data;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -177,14 +209,14 @@ export const verifyLoginOtp = createServerFn({ method: "POST" })
       .eq("used", false)
       .order("created_at", { ascending: false })
       .limit(1);
-    if (qErr) throw new Error("Verification failed.");
+    if (qErr) return { ok: false, error: "Verification failed." };
     const row = rows?.[0];
-    if (!row) throw new Error("No active code. Request a new one.");
+    if (!row) return { ok: false, error: "No active code. Request a new one." };
     if (new Date(row.expires_at).getTime() < Date.now()) {
-      throw new Error("Code expired. Request a new one.");
+      return { ok: false, error: "Code expired. Request a new one." };
     }
     if (row.attempts >= MAX_ATTEMPTS) {
-      throw new Error("Too many attempts. Request a new code.");
+      return { ok: false, error: "Too many attempts. Request a new code." };
     }
 
     const expected = hashCode(email, code);
@@ -193,7 +225,7 @@ export const verifyLoginOtp = createServerFn({ method: "POST" })
         .from("email_otps")
         .update({ attempts: row.attempts + 1 })
         .eq("id", row.id);
-      throw new Error("Invalid code.");
+      return { ok: false, error: "Invalid code." };
     }
 
     await supabaseAdmin.from("email_otps").update({ used: true }).eq("id", row.id);
@@ -203,10 +235,10 @@ export const verifyLoginOtp = createServerFn({ method: "POST" })
       email,
     });
     if (linkErr || !link?.properties?.hashed_token) {
-      throw new Error("Could not create a session. Please try again.");
+      return { ok: false, error: "Could not create a session. Please try again." };
     }
 
-    return { token_hash: link.properties.hashed_token, email };
+    return { ok: true, token_hash: link.properties.hashed_token, email };
   });
 
 /**
@@ -221,9 +253,6 @@ export const sendOtpEmail = createServerFn({ method: "POST" })
     }
     return { email };
   })
-  .handler(async ({ data }) => {
-    await sendOtpTo(data.email);
-    return { ok: true };
-  });
+  .handler(async ({ data }): Promise<BasicResult> => sendOtpTo(data.email));
 
 export const verifyOtpEmail = verifyLoginOtp;
