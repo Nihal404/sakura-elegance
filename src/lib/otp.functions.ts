@@ -77,11 +77,8 @@ async function sendWhatsAppOtp(phone: string, code: string): Promise<OtpSendResu
   return { ok: true };
 }
 
-async function sendOtpTo(
-  email: string,
-  channel: Channel,
-  phone?: string | null,
-): Promise<OtpSendResult> {
+/** Send a WhatsApp OTP and store its hashed code in email_otps for later server-side verification. */
+async function sendWhatsAppOtpWithStore(email: string, phone: string): Promise<OtpSendResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   // Rate-limit: max 3 codes per email per 5 min
@@ -108,27 +105,14 @@ async function sendOtpTo(
     return { ok: false, error: "Could not create sign-in code." };
   }
 
-  let sendResult: OtpSendResult;
-  if (channel === "whatsapp") {
-    sendResult = await sendWhatsAppOtp(phone ?? "", code);
-    if (!sendResult.ok) {
-      // If WhatsApp fails, try email as a fallback so the user isn't stuck.
-      const fallback = await sendEmailOtp(email, code);
-      if (fallback.ok) {
-        return { ok: true };
-      }
-    }
-  } else {
-    sendResult = await sendEmailOtp(email, code);
-  }
-
+  const sendResult = await sendWhatsAppOtp(phone, code);
   if (!sendResult.ok) {
     await supabaseAdmin.from("email_otps").delete().eq("id", otpRow.id);
     return sendResult;
   }
-
   return { ok: true };
 }
+
 
 /**
  * Sign-up: creates the account (email pre-confirmed) then sends the 2FA code.
