@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { ensureAdminAccount } from "@/lib/admin-provision.functions";
+import { sendPhoneLoginOtp, verifyPhoneLoginOtp } from "@/lib/otp.functions";
 
 const ADMIN_EMAIL = "admin@zariboutique.com";
 
@@ -38,6 +39,8 @@ export const Route = createFileRoute("/login")({
 function Login() {
   const router = useRouter();
   const provisionAdmin = useServerFn(ensureAdminAccount);
+  const sendPhoneOtp = useServerFn(sendPhoneLoginOtp);
+  const verifyPhoneOtp = useServerFn(verifyPhoneLoginOtp);
 
   const [step, setStep] = useState<Step>("identify");
   const [channel, setChannel] = useState<Channel>("email");
@@ -89,17 +92,18 @@ function Login() {
         if (error) throw error;
         toast.success("Check your email for the 6-digit code.");
       } else {
-        const cleanPhone = phone.replace(/[^\d+]/g, "");
-        if (!cleanPhone) {
-          setFormError("Enter your phone number with country code.");
+        const digits = phone.replace(/\D/g, "").replace(/^91/, "");
+        if (digits.length !== 10 || !/^[6-9]/.test(digits)) {
+          setFormError("Enter a valid 10-digit Indian mobile number.");
           return;
         }
-        const { error } = await supabase.auth.signInWithOtp({
-          phone: cleanPhone,
-          options: { shouldCreateUser: true },
-        });
-        if (error) throw error;
-        toast.success("Check your phone for the 6-digit code.");
+        const result = await sendPhoneOtp({ data: { phone: digits } });
+        if (!result.ok) {
+          setFormError(result.error);
+          toast.error(result.error);
+          return;
+        }
+        toast.success("Code sent to the email linked to this phone.");
       }
       setStep("otp");
     } catch (err) {
@@ -129,11 +133,12 @@ function Login() {
         });
         if (error) throw error;
       } else {
-        const cleanPhone = phone.replace(/[^\d+]/g, "");
+        const digits = phone.replace(/\D/g, "").replace(/^91/, "");
+        const result = await verifyPhoneOtp({ data: { phone: digits, code: otp } });
+        if (!result.ok) throw new Error(result.error);
         const { error } = await supabase.auth.verifyOtp({
-          phone: cleanPhone,
-          token: otp,
-          type: "sms",
+          token_hash: result.token_hash,
+          type: "magiclink",
         });
         if (error) throw error;
       }
@@ -222,12 +227,17 @@ function Login() {
               ) : (
                 <div className="relative">
                   <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <div className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
+                    +91
+                  </div>
                   <input
                     type="tel"
+                    inputMode="numeric"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+919876543210"
-                    className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    placeholder="9876543210"
+                    maxLength={10}
+                    className="w-full pl-20 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all tracking-wide"
                     required
                   />
                 </div>
