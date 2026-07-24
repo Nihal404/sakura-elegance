@@ -34,6 +34,7 @@ interface StoreContextValue {
   productsLoading: boolean;
   refreshProducts: () => Promise<void>;
   addProduct: (p: Omit<Product, "id">) => Promise<void>;
+  updateProduct: (id: string, patch: Partial<Omit<Product, "id">>) => Promise<void>;
   removeProduct: (id: string) => Promise<void>;
 
   cart: CartItem[];
@@ -172,6 +173,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           category: p.category,
           image_url: p.image,
         });
+        if (error) throw error;
+        await refreshProducts();
+      },
+      updateProduct: async (id, patch) => {
+        const dbPatch: {
+          name?: string;
+          price?: number;
+          category?: string;
+          image_url?: string;
+        } = {};
+        if (patch.name !== undefined) dbPatch.name = patch.name;
+        if (patch.price !== undefined) dbPatch.price = patch.price;
+        if (patch.category !== undefined) dbPatch.category = patch.category;
+        if (patch.image !== undefined) dbPatch.image_url = patch.image;
+        const { error } = await supabase.from("products").update(dbPatch).eq("id", id);
         if (error) throw error;
         await refreshProducts();
       },
