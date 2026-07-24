@@ -201,7 +201,7 @@ function Admin() {
                 required
               />
             </Field>
-            <Field label="Price (USD)">
+            <Field label="PRICE (INR)">
               <input
                 type="number"
                 step="0.01"
