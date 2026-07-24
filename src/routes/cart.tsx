@@ -97,13 +97,9 @@ function CartPage() {
           <div className="grid lg:grid-cols-[1fr_360px] gap-8">
             <ul className="space-y-4">
               {cart.map((item) => (
-                <motion.li
+                <li
                   key={item.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="flex gap-5 p-4 rounded-2xl bg-background/80 backdrop-blur border border-border shadow-soft"
+                  className="flex gap-5 p-4 rounded-2xl bg-background/95 border border-border shadow-soft animate-fade-in"
                 >
                   <Link
                     to="/product/$id"
@@ -162,11 +158,11 @@ function CartPage() {
                       </span>
                     </div>
                   </div>
-                </motion.li>
+                </li>
               ))}
             </ul>
 
-            <aside className="h-fit rounded-3xl bg-background/85 backdrop-blur border border-border shadow-petal p-6 lg:sticky lg:top-28">
+            <aside className="h-fit rounded-3xl bg-background/95 border border-border shadow-petal p-6 lg:sticky lg:top-28">
               <h3 className="font-serif text-2xl">Order Summary</h3>
               <div className="mt-5 space-y-3 text-sm">
                 <div className="flex justify-between text-muted-foreground">
@@ -202,7 +198,7 @@ function CartPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/40 backdrop-blur-md"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/70"
           >
             <motion.div
               initial={{ scale: 0.6, opacity: 0, rotate: -6 }}

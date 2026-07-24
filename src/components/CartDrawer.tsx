@@ -14,15 +14,16 @@ export function CartDrawer() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-foreground/30 backdrop-blur-sm z-[60]"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-foreground/40 z-[60]"
             onClick={() => setCartOpen(false)}
           />
           <motion.aside
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 260 }}
-            className="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-background z-[70] shadow-petal flex flex-col"
+            transition={{ type: "tween", duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed right-0 top-0 h-full w-full sm:w-[420px] bg-background z-[70] shadow-petal flex flex-col will-change-transform"
           >
             <div className="flex items-center justify-between px-6 py-5 border-b border-border">
               <h3 className="font-serif text-2xl">Your Bag</h3>
@@ -42,12 +43,8 @@ export function CartDrawer() {
               ) : (
                 <ul className="space-y-4">
                   {cart.map((item) => (
-                    <motion.li
+                    <li
                       key={item.id}
-                      layout
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
                       className="flex gap-4 p-3 rounded-2xl bg-blush/60"
                     >
                       <img src={item.image} alt={item.name} className="w-20 h-24 rounded-xl object-cover" />
@@ -83,7 +80,7 @@ export function CartDrawer() {
                           <span className="font-semibold">₹{(item.qty * item.price).toFixed(2)}</span>
                         </div>
                       </div>
-                    </motion.li>
+                    </li>
                   ))}
                 </ul>
               )}
