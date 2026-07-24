@@ -8,30 +8,26 @@ import {
   Sparkles,
   Loader2,
   KeyRound,
-  User,
   ShieldCheck,
   Smartphone,
-  MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { ensureAdminAccount } from "@/lib/admin-provision.functions";
-import { signUpUser, startLogin, verifyLoginOtp } from "@/lib/otp.functions";
 
 const ADMIN_EMAIL = "admin@zariboutique.com";
 
-type Mode = "signin" | "signup";
-type Step = "credentials" | "otp";
-type Channel = "email" | "whatsapp";
+type Step = "identify" | "otp";
+type Channel = "email" | "phone";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in — Zari Boutique" },
-      { name: "description", content: "Sign in to Zari Boutique with 2-step verification." },
+      { name: "description", content: "Sign in to Zari Boutique with a secure one-time code." },
       { property: "og:title", content: "Sign in — Zari Boutique" },
-      { property: "og:description", content: "Sign in to Zari Boutique with 2-step verification." },
+      { property: "og:description", content: "Sign in to Zari Boutique with a secure one-time code." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -42,34 +38,34 @@ export const Route = createFileRoute("/login")({
 function Login() {
   const router = useRouter();
   const provisionAdmin = useServerFn(ensureAdminAccount);
-  const signUpFn = useServerFn(signUpUser);
-  const startLoginFn = useServerFn(startLogin);
-  const verifyOtpFn = useServerFn(verifyLoginOtp);
 
-  const [mode, setMode] = useState<Mode>("signin");
-  const [step, setStep] = useState<Step>("credentials");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [step, setStep] = useState<Step>("identify");
   const [channel, setChannel] = useState<Channel>("email");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
   const isAdmin = email.trim().toLowerCase() === ADMIN_EMAIL;
 
-  const submitCredentials = async (e: React.FormEvent) => {
+  const sendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !password) return;
     setLoading(true);
     setFormError("");
     try {
-      if (isAdmin) {
-        // Provision the admin account and sign in directly (no OTP step for the owner).
+      // Admin bypass: password sign-in, no OTP.
+      if (channel === "email" && isAdmin) {
+        if (!adminPassword) {
+          setFormError("Enter the admin password.");
+          return;
+        }
         await provisionAdmin();
-        const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email: ADMIN_EMAIL,
+          password: adminPassword,
+        });
         if (error) {
           setFormError(error.message);
           toast.error(error.message);
@@ -79,36 +75,35 @@ function Login() {
         router.navigate({ to: "/admin" });
         return;
       }
-      if (mode === "signup") {
-        const result = await signUpFn({
-          data: { email: cleanEmail, password, name: name.trim() || undefined, phone: phone.trim() || undefined, channel },
+
+      if (channel === "email") {
+        const cleanEmail = email.trim().toLowerCase();
+        if (!cleanEmail) {
+          setFormError("Enter your email.");
+          return;
+        }
+        const { error } = await supabase.auth.signInWithOtp({
+          email: cleanEmail,
+          options: { shouldCreateUser: true },
         });
-        if (!result.ok) {
-          setFormError(result.error);
-          toast.error(result.error);
-          return;
-        }
-        toast.success(
-          channel === "whatsapp"
-            ? "Account created. Check WhatsApp for the 6-digit code (or your email if WhatsApp is not configured)."
-            : "Account created. Check your email for the 6-digit code.",
-        );
+        if (error) throw error;
+        toast.success("Check your email for the 6-digit code.");
       } else {
-        const result = await startLoginFn({ data: { email: cleanEmail, password, channel } });
-        if (!result.ok) {
-          setFormError(result.error);
-          toast.error(result.error);
+        const cleanPhone = phone.replace(/[^\d+]/g, "");
+        if (!cleanPhone) {
+          setFormError("Enter your phone number with country code.");
           return;
         }
-        toast.success(
-          channel === "whatsapp"
-            ? "Password verified. Check WhatsApp for the code (or your email if WhatsApp is not configured)."
-            : "Password verified. Check your email for the 6-digit code.",
-        );
+        const { error } = await supabase.auth.signInWithOtp({
+          phone: cleanPhone,
+          options: { shouldCreateUser: true },
+        });
+        if (error) throw error;
+        toast.success("Check your phone for the 6-digit code.");
       }
       setStep("otp");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Something went wrong";
+      const message = err instanceof Error ? err.message : "Could not send code";
       setFormError(message);
       toast.error(message);
     } finally {
@@ -116,7 +111,7 @@ function Login() {
     }
   };
 
-  const submitOtp = async (e: React.FormEvent) => {
+  const verifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otp.length !== 6) {
       toast.error("Enter the 6-digit code.");
@@ -125,17 +120,25 @@ function Login() {
     setLoading(true);
     setFormError("");
     try {
-      const cleanEmail = email.trim().toLowerCase();
-      const result = await verifyOtpFn({ data: { email: cleanEmail, code: otp } });
-      if (!result.ok) {
-        setFormError(result.error);
-        toast.error(result.error);
-        return;
+      if (channel === "email") {
+        const cleanEmail = email.trim().toLowerCase();
+        const { error } = await supabase.auth.verifyOtp({
+          email: cleanEmail,
+          token: otp,
+          type: "email",
+        });
+        if (error) throw error;
+      } else {
+        const cleanPhone = phone.replace(/[^\d+]/g, "");
+        const { error } = await supabase.auth.verifyOtp({
+          phone: cleanPhone,
+          token: otp,
+          type: "sms",
+        });
+        if (error) throw error;
       }
-      const { error } = await supabase.auth.verifyOtp({ type: "email", token_hash: result.token_hash });
-      if (error) throw error;
       toast.success("Welcome to Zari!");
-      router.navigate({ to: cleanEmail === ADMIN_EMAIL ? "/admin" : "/" });
+      router.navigate({ to: "/" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Invalid code";
       setFormError(message);
@@ -146,7 +149,7 @@ function Login() {
   };
 
   const resetToStart = () => {
-    setStep("credentials");
+    setStep("identify");
     setOtp("");
     setFormError("");
   };
@@ -173,135 +176,91 @@ function Login() {
           <h1 className="font-serif text-3xl">Welcome to Zari</h1>
           <p className="text-sm text-muted-foreground mt-2 inline-flex items-center gap-1.5 justify-center">
             <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-            2-step verification — password + secure code
+            Sign in with a secure one-time code
           </p>
         </div>
 
-        {/* Sign-in / Sign-up toggle */}
-        {step === "credentials" && (
-          <div className="flex p-1 rounded-full bg-blush/60 mb-6 text-sm">
-            <button
-              type="button"
-              onClick={() => setMode("signin")}
-              className={`flex-1 py-2 rounded-full transition-all ${mode === "signin" ? "bg-background shadow-soft text-foreground" : "text-muted-foreground"}`}
-            >
-              Sign in
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("signup")}
-              className={`flex-1 py-2 rounded-full transition-all ${mode === "signup" ? "bg-background shadow-soft text-foreground" : "text-muted-foreground"}`}
-            >
-              Create account
-            </button>
-          </div>
-        )}
-
-        {step === "credentials" && (
-          <form onSubmit={submitCredentials} className="space-y-4">
-            {formError && (
-              <div className="flex gap-2 rounded-2xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                <p>{formError}</p>
-              </div>
-            )}
-            {mode === "signup" && (
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name (optional)"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
-                />
-              </div>
-            )}
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
-                required
-              />
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === "signup" ? "Create a password (min 8 characters)" : "Your password"}
-                className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
-                minLength={mode === "signup" ? 8 : undefined}
-                required
-              />
+        {step === "identify" && (
+          <>
+            <div className="flex p-1 rounded-full bg-blush/60 mb-6 text-sm">
+              <button
+                type="button"
+                onClick={() => setChannel("email")}
+                className={`flex-1 py-2 rounded-full inline-flex items-center justify-center gap-2 transition-all ${channel === "email" ? "bg-background shadow-soft text-foreground" : "text-muted-foreground"}`}
+              >
+                <Mail className="w-3.5 h-3.5" /> Email
+              </button>
+              <button
+                type="button"
+                onClick={() => setChannel("phone")}
+                className={`flex-1 py-2 rounded-full inline-flex items-center justify-center gap-2 transition-all ${channel === "phone" ? "bg-background shadow-soft text-foreground" : "text-muted-foreground"}`}
+              >
+                <Smartphone className="w-3.5 h-3.5" /> Phone
+              </button>
             </div>
 
-            {/* Verification channel */}
-            {!isAdmin && (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground px-1">Send verification code via</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setChannel("email")}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-2xl border transition-all ${
-                      channel === "email"
-                        ? "bg-background border-primary text-foreground shadow-soft"
-                        : "bg-blush/60 border-transparent text-muted-foreground hover:bg-background/80"
-                    }`}
-                  >
-                    <Mail className="w-4 h-4" />
-                    <span className="text-sm font-medium">Email</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChannel("whatsapp")}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-2xl border transition-all ${
-                      channel === "whatsapp"
-                        ? "bg-background border-primary text-foreground shadow-soft"
-                        : "bg-blush/60 border-transparent text-muted-foreground hover:bg-background/80"
-                    }`}
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span className="text-sm font-medium">WhatsApp</span>
-                  </button>
+            <form onSubmit={sendCode} className="space-y-4">
+              {formError && (
+                <div className="flex gap-2 rounded-2xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>{formError}</p>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Phone number for WhatsApp */}
-            {mode === "signup" && channel === "whatsapp" && (
-              <div className="relative">
-                <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
-                  required={channel === "whatsapp"}
-                />
-              </div>
-            )}
+              {channel === "email" ? (
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
+                    required
+                  />
+                </div>
+              ) : (
+                <div className="relative">
+                  <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+919876543210"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
+                    required
+                  />
+                </div>
+              )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
-            >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {mode === "signup" ? "Create account & send code" : "Continue — send code"}
-            </button>
-          </form>
+              {channel === "email" && isAdmin && (
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="password"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="Admin password"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
+                    required
+                  />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
+              >
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {channel === "email" && isAdmin ? "Sign in as admin" : "Send verification code"}
+              </button>
+            </form>
+          </>
         )}
 
         {step === "otp" && (
-          <form onSubmit={submitOtp} className="space-y-4">
+          <form onSubmit={verifyCode} className="space-y-4">
             {formError && (
               <div className="flex gap-2 rounded-2xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -311,7 +270,7 @@ function Login() {
             <p className="text-xs text-center text-muted-foreground">
               Enter the 6-digit code sent to{" "}
               <span className="font-medium text-foreground">
-                {channel === "whatsapp" ? "your WhatsApp number" : email}
+                {channel === "email" ? email : phone}
               </span>
             </p>
             <div className="relative">
@@ -341,13 +300,13 @@ function Login() {
               onClick={resetToStart}
               className="w-full text-xs text-muted-foreground hover:text-primary"
             >
-              Back — use a different email or password
+              Back — use a different {channel === "email" ? "email" : "phone number"}
             </button>
           </form>
         )}
 
         <p className="mt-6 text-[11px] text-center text-muted-foreground/80 bg-blush/60 rounded-xl py-2 px-3">
-          Every sign-in requires your password and a fresh verification code.
+          We'll send you a one-time code — no password needed.
         </p>
       </motion.div>
     </div>
