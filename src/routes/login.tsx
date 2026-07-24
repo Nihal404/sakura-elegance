@@ -170,19 +170,36 @@ function Login() {
     setFormError("");
     try {
       const cleanEmail = email.trim().toLowerCase();
+      if (channel === "email") {
+        // Verify with Supabase's built-in email OTP — signs the user in and
+        // marks the email as confirmed in one call.
+        const { error } = await supabase.auth.verifyOtp({
+          email: cleanEmail,
+          token: otp,
+          type: "email",
+        });
+        if (error) {
+          setFormError(error.message);
+          toast.error(error.message);
+          return;
+        }
+        toast.success("Welcome to Zari!");
+        router.navigate({ to: "/" });
+        return;
+      }
+      // WhatsApp channel: verify custom code server-side, then sign in with password.
       const result = await doVerifySignup({ data: { email: cleanEmail, code: otp } });
       if (!result.ok) {
         setFormError(result.error);
         toast.error(result.error);
         return;
       }
-      // Auto sign the user in with the password they just set
       const { error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
       });
       if (error) {
-        toast.success("Email verified! Please sign in.");
+        toast.success("Verified! Please sign in.");
         setMode("signin");
         setSigninEmail(cleanEmail);
         setSignupStep("form");
