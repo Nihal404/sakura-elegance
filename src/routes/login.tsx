@@ -39,6 +39,8 @@ export const Route = createFileRoute("/login")({
 function Login() {
   const router = useRouter();
   const provisionAdmin = useServerFn(ensureAdminAccount);
+  const sendPhoneOtp = useServerFn(sendPhoneLoginOtp);
+  const verifyPhoneOtp = useServerFn(verifyPhoneLoginOtp);
 
   const [step, setStep] = useState<Step>("identify");
   const [channel, setChannel] = useState<Channel>("email");
