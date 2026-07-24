@@ -92,17 +92,18 @@ function Login() {
         if (error) throw error;
         toast.success("Check your email for the 6-digit code.");
       } else {
-        const cleanPhone = phone.replace(/[^\d+]/g, "");
-        if (!cleanPhone) {
-          setFormError("Enter your phone number with country code.");
+        const digits = phone.replace(/\D/g, "").replace(/^91/, "");
+        if (digits.length !== 10 || !/^[6-9]/.test(digits)) {
+          setFormError("Enter a valid 10-digit Indian mobile number.");
           return;
         }
-        const { error } = await supabase.auth.signInWithOtp({
-          phone: cleanPhone,
-          options: { shouldCreateUser: true },
-        });
-        if (error) throw error;
-        toast.success("Check your phone for the 6-digit code.");
+        const result = await sendPhoneOtp({ data: { phone: digits } });
+        if (!result.ok) {
+          setFormError(result.error);
+          toast.error(result.error);
+          return;
+        }
+        toast.success("Code sent to the email linked to this phone.");
       }
       setStep("otp");
     } catch (err) {
