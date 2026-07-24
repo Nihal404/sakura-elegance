@@ -24,15 +24,24 @@ function Admin() {
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editFeatures, setEditFeatures] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState<Category>("Clothing");
   const [description, setDescription] = useState("");
+  const [features, setFeatures] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+
+  const parseFeatures = (raw: string) =>
+    raw
+      .split("\n")
+      .map((f) => f.trim())
+      .filter(Boolean)
+      .slice(0, 8);
 
   if (authLoading) {
     return (
@@ -102,11 +111,13 @@ function Admin() {
         category,
         image: signed.signedUrl,
         description: description.trim(),
+        features: parseFeatures(features),
       });
       toast.success("Product added to the boutique.");
       setName("");
       setPrice("");
       setDescription("");
+      setFeatures("");
       setFile(null);
       setPreview("");
     } catch (err: unknown) {
@@ -127,11 +138,18 @@ function Admin() {
     }
   };
 
-  const startEdit = (id: string, name: string, price: number, description: string) => {
+  const startEdit = (
+    id: string,
+    name: string,
+    price: number,
+    description: string,
+    features: string[],
+  ) => {
     setEditingId(id);
     setEditName(name);
     setEditPrice(String(price));
     setEditDescription(description);
+    setEditFeatures(features.join("\n"));
   };
 
   const cancelEdit = () => {
@@ -139,6 +157,7 @@ function Admin() {
     setEditName("");
     setEditPrice("");
     setEditDescription("");
+    setEditFeatures("");
   };
 
   const saveEdit = async (id: string) => {
@@ -153,6 +172,7 @@ function Admin() {
         name: editName.trim(),
         price: priceNum,
         description: editDescription.trim(),
+        features: parseFeatures(editFeatures),
       });
       toast.success("Product updated.");
       cancelEdit();
@@ -227,6 +247,15 @@ function Admin() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Tell the story of this piece — fabric, craftsmanship, styling notes…"
+                rows={4}
+                className="input resize-y min-h-[110px]"
+              />
+            </Field>
+            <Field label="Highlights (one per line, up to 8)">
+              <textarea
+                value={features}
+                onChange={(e) => setFeatures(e.target.value)}
+                placeholder={"Hand-finished detail\nRose-gold accents\nSakura-soft palette\nShips in 2–7 days"}
                 rows={4}
                 className="input resize-y min-h-[110px]"
               />
@@ -329,6 +358,13 @@ function Admin() {
                                 rows={2}
                                 className="input !py-1.5 !px-3 text-xs resize-y min-h-[52px]"
                               />
+                              <textarea
+                                value={editFeatures}
+                                onChange={(e) => setEditFeatures(e.target.value)}
+                                placeholder="Highlights (one per line)"
+                                rows={3}
+                                className="input !py-1.5 !px-3 text-xs resize-y min-h-[64px]"
+                              />
                             </div>
                           ) : (
                             <div className="flex flex-col">
@@ -382,7 +418,7 @@ function Admin() {
                           ) : (
                             <>
                               <button
-                                onClick={() => startEdit(p.id, p.name, p.price, p.description)}
+                                onClick={() => startEdit(p.id, p.name, p.price, p.description, p.features)}
                                 className="p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
                                 aria-label="Edit"
                               >

@@ -154,10 +154,14 @@ function ProductDetail() {
           </div>
 
           <ul className="mt-6 grid grid-cols-2 gap-3 text-sm text-foreground/75">
-            <li className="rounded-2xl bg-blush/60 px-4 py-3">Hand-finished detail</li>
-            <li className="rounded-2xl bg-blush/60 px-4 py-3">Rose-gold accents</li>
-            <li className="rounded-2xl bg-blush/60 px-4 py-3">Sakura-soft palette</li>
-            <li className="rounded-2xl bg-blush/60 px-4 py-3">Ships in 2–7 days</li>
+            {(product.features && product.features.length > 0
+              ? product.features
+              : ["Hand-finished detail", "Rose-gold accents", "Sakura-soft palette", "Ships in 2–7 days"]
+            ).map((f, i) => (
+              <li key={i} className="rounded-2xl bg-blush/60 px-4 py-3">
+                {f}
+              </li>
+            ))}
           </ul>
 
           <div className="mt-10 flex items-center gap-4">

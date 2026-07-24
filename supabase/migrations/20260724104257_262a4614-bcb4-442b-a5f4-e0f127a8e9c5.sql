@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS features text[] NOT NULL DEFAULT ARRAY[]::text[];
