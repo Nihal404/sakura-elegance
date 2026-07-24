@@ -101,10 +101,12 @@ function Admin() {
         price: priceNum,
         category,
         image: signed.signedUrl,
+        description: description.trim(),
       });
       toast.success("Product added to the boutique.");
       setName("");
       setPrice("");
+      setDescription("");
       setFile(null);
       setPreview("");
     } catch (err: unknown) {
