@@ -51,11 +51,7 @@ function Login() {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: clean,
-        options: { shouldCreateUser: true },
-      });
-      if (error) throw error;
+      await sendOtpFn({ data: { email: clean } });
       toast.success("Check your inbox for a 6-digit code.");
       setStep("otp");
     } catch (err) {
@@ -73,10 +69,11 @@ function Login() {
     }
     setLoading(true);
     try {
+      const clean = email.trim().toLowerCase();
+      const { token_hash } = await verifyOtpFn({ data: { email: clean, code: otp } });
       const { error } = await supabase.auth.verifyOtp({
-        email: email.trim().toLowerCase(),
-        token: otp,
         type: "email",
+        token_hash,
       });
       if (error) throw error;
       toast.success("Welcome to Zari!");
@@ -87,6 +84,7 @@ function Login() {
       setLoading(false);
     }
   };
+
 
   const adminSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
