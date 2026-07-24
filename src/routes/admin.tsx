@@ -138,11 +138,18 @@ function Admin() {
     }
   };
 
-  const startEdit = (id: string, name: string, price: number, description: string) => {
+  const startEdit = (
+    id: string,
+    name: string,
+    price: number,
+    description: string,
+    features: string[],
+  ) => {
     setEditingId(id);
     setEditName(name);
     setEditPrice(String(price));
     setEditDescription(description);
+    setEditFeatures(features.join("\n"));
   };
 
   const cancelEdit = () => {
@@ -150,6 +157,7 @@ function Admin() {
     setEditName("");
     setEditPrice("");
     setEditDescription("");
+    setEditFeatures("");
   };
 
   const saveEdit = async (id: string) => {
@@ -164,6 +172,7 @@ function Admin() {
         name: editName.trim(),
         price: priceNum,
         description: editDescription.trim(),
+        features: parseFeatures(editFeatures),
       });
       toast.success("Product updated.");
       cancelEdit();
