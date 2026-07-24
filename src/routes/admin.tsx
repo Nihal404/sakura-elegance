@@ -315,14 +315,30 @@ function Admin() {
                             className="w-11 h-11 rounded-lg object-cover"
                           />
                           {editingId === p.id ? (
-                            <input
-                              value={editName}
-                              onChange={(e) => setEditName(e.target.value)}
-                              className="input !py-1.5 !px-3 max-w-[180px]"
-                              autoFocus
-                            />
+                            <div className="flex-1 flex flex-col gap-2">
+                              <input
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                className="input !py-1.5 !px-3 max-w-[240px]"
+                                autoFocus
+                              />
+                              <textarea
+                                value={editDescription}
+                                onChange={(e) => setEditDescription(e.target.value)}
+                                placeholder="Description"
+                                rows={2}
+                                className="input !py-1.5 !px-3 text-xs resize-y min-h-[52px]"
+                              />
+                            </div>
                           ) : (
-                            <span className="font-medium">{p.name}</span>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{p.name}</span>
+                              {p.description && (
+                                <span className="text-xs text-muted-foreground line-clamp-1 max-w-[260px]">
+                                  {p.description}
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                       </td>
