@@ -1,7 +1,18 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { AlertCircle, Mail, Lock, Sparkles, Loader2, KeyRound, User, ShieldCheck } from "lucide-react";
+import {
+  AlertCircle,
+  Mail,
+  Lock,
+  Sparkles,
+  Loader2,
+  KeyRound,
+  User,
+  ShieldCheck,
+  Smartphone,
+  MessageCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,6 +20,10 @@ import { ensureAdminAccount } from "@/lib/admin-provision.functions";
 import { signUpUser, startLogin, verifyLoginOtp } from "@/lib/otp.functions";
 
 const ADMIN_EMAIL = "admin@zariboutique.com";
+
+type Mode = "signin" | "signup";
+type Step = "credentials" | "otp";
+type Channel = "email" | "whatsapp";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -24,9 +39,6 @@ export const Route = createFileRoute("/login")({
   component: Login,
 });
 
-type Mode = "signin" | "signup";
-type Step = "credentials" | "otp";
-
 function Login() {
   const router = useRouter();
   const provisionAdmin = useServerFn(ensureAdminAccount);
@@ -39,9 +51,13 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [channel, setChannel] = useState<Channel>("email");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
+
+  const isAdmin = email.trim().toLowerCase() === ADMIN_EMAIL;
 
   const submitCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +66,7 @@ function Login() {
     setLoading(true);
     setFormError("");
     try {
-      if (cleanEmail === ADMIN_EMAIL) {
+      if (isAdmin) {
         // Provision the admin account and sign in directly (no OTP step for the owner).
         await provisionAdmin();
         const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
@@ -64,21 +80,31 @@ function Login() {
         return;
       }
       if (mode === "signup") {
-        const result = await signUpFn({ data: { email: cleanEmail, password, name: name.trim() || undefined } });
+        const result = await signUpFn({
+          data: { email: cleanEmail, password, name: name.trim() || undefined, phone: phone.trim() || undefined, channel },
+        });
         if (!result.ok) {
           setFormError(result.error);
           toast.error(result.error);
           return;
         }
-        toast.success("Account created. Check your email for the 6-digit code.");
+        toast.success(
+          channel === "whatsapp"
+            ? "Account created. Check WhatsApp for the 6-digit code (or your email if WhatsApp is not configured)."
+            : "Account created. Check your email for the 6-digit code.",
+        );
       } else {
-        const result = await startLoginFn({ data: { email: cleanEmail, password } });
+        const result = await startLoginFn({ data: { email: cleanEmail, password, channel } });
         if (!result.ok) {
           setFormError(result.error);
           toast.error(result.error);
           return;
         }
-        toast.success("Password verified. Check your email for the 6-digit code.");
+        toast.success(
+          channel === "whatsapp"
+            ? "Password verified. Check WhatsApp for the code (or your email if WhatsApp is not configured)."
+            : "Password verified. Check your email for the 6-digit code.",
+        );
       }
       setStep("otp");
     } catch (err) {
@@ -147,7 +173,7 @@ function Login() {
           <h1 className="font-serif text-3xl">Welcome to Zari</h1>
           <p className="text-sm text-muted-foreground mt-2 inline-flex items-center gap-1.5 justify-center">
             <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-            2-step verification — password + email code
+            2-step verification — password + secure code
           </p>
         </div>
 
@@ -214,6 +240,55 @@ function Login() {
                 required
               />
             </div>
+
+            {/* Verification channel */}
+            {!isAdmin && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground px-1">Send verification code via</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setChannel("email")}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-2xl border transition-all ${
+                      channel === "email"
+                        ? "bg-background border-primary text-foreground shadow-soft"
+                        : "bg-blush/60 border-transparent text-muted-foreground hover:bg-background/80"
+                    }`}
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span className="text-sm font-medium">Email</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChannel("whatsapp")}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-2xl border transition-all ${
+                      channel === "whatsapp"
+                        ? "bg-background border-primary text-foreground shadow-soft"
+                        : "bg-blush/60 border-transparent text-muted-foreground hover:bg-background/80"
+                    }`}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span className="text-sm font-medium">WhatsApp</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Phone number for WhatsApp */}
+            {mode === "signup" && channel === "whatsapp" && (
+              <div className="relative">
+                <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+91 98765 43210"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
+                  required={channel === "whatsapp"}
+                />
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -234,7 +309,10 @@ function Login() {
               </div>
             )}
             <p className="text-xs text-center text-muted-foreground">
-              Enter the 6-digit code sent to <span className="font-medium text-foreground">{email}</span>
+              Enter the 6-digit code sent to{" "}
+              <span className="font-medium text-foreground">
+                {channel === "whatsapp" ? "your WhatsApp number" : email}
+              </span>
             </p>
             <div className="relative">
               <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -269,7 +347,7 @@ function Login() {
         )}
 
         <p className="mt-6 text-[11px] text-center text-muted-foreground/80 bg-blush/60 rounded-xl py-2 px-3">
-          Every sign-in requires your password and a fresh code emailed to you.
+          Every sign-in requires your password and a fresh verification code.
         </p>
       </motion.div>
     </div>
