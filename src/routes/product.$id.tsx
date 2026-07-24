@@ -154,7 +154,7 @@ function ProductDetail() {
             <li className="rounded-2xl bg-blush/60 px-4 py-3">Hand-finished detail</li>
             <li className="rounded-2xl bg-blush/60 px-4 py-3">Rose-gold accents</li>
             <li className="rounded-2xl bg-blush/60 px-4 py-3">Sakura-soft palette</li>
-            <li className="rounded-2xl bg-blush/60 px-4 py-3">Ships in 2–3 days</li>
+            <li className="rounded-2xl bg-blush/60 px-4 py-3">Ships in 2–7 days</li>
           </ul>
 
           <div className="mt-10 flex items-center gap-4">
