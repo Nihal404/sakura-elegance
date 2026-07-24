@@ -216,20 +216,34 @@ export const signUpUser = createServerFn({ method: "POST" })
     const { email, password, name, phone, channel } = data;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const existing = list?.users?.find((u) => u.email?.toLowerCase() === email);
     if (existing) {
       return { ok: false, error: "An account with this email already exists. Please sign in instead." };
+    }
+
+    // Phone uniqueness check against profiles
+    if (phone) {
+      const { data: phoneMatch } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("phone", phone)
+        .limit(1)
+        .maybeSingle();
+      if (phoneMatch) {
+        return { ok: false, error: "An account with this phone number already exists. Please sign in instead." };
+      }
     }
 
     const metadata: Record<string, unknown> = {};
     if (name) metadata.name = name;
     if (phone) metadata.phone = phone;
 
+    // email_confirm: false — user must verify via our OTP before signing in
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      email_confirm: false,
       user_metadata: Object.keys(metadata).length ? metadata : undefined,
     });
     if (createErr || !created.user) {
@@ -241,6 +255,54 @@ export const signUpUser = createServerFn({ method: "POST" })
       await supabaseAdmin.auth.admin.deleteUser(created.user.id).catch(() => {});
       return otpResult;
     }
+    return { ok: true };
+  });
+
+/**
+ * Verify the signup OTP and mark the user's email as confirmed so they can
+ * sign in with their password.
+ */
+export const verifySignupOtp = createServerFn({ method: "POST" })
+  .inputValidator((data: { email: string; code: string }) => {
+    const email = data.email?.trim().toLowerCase();
+    const code = data.code?.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error("Enter a valid email address.");
+    }
+    if (!code || !/^\d{6}$/.test(code)) throw new Error("Enter the 6-digit code.");
+    return { email, code };
+  })
+  .handler(async ({ data }): Promise<BasicResult> => {
+    const { email, code } = data;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: rows } = await supabaseAdmin
+      .from("email_otps")
+      .select("id, code_hash, expires_at, attempts, used")
+      .eq("email", email)
+      .eq("used", false)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const row = rows?.[0];
+    if (!row) return { ok: false, error: "No active code. Request a new one." };
+    if (new Date(row.expires_at).getTime() < Date.now()) {
+      return { ok: false, error: "Code expired. Request a new one." };
+    }
+    if (row.attempts >= MAX_ATTEMPTS) {
+      return { ok: false, error: "Too many attempts. Request a new code." };
+    }
+    if (hashCode(email, code) !== row.code_hash) {
+      await supabaseAdmin.from("email_otps").update({ attempts: row.attempts + 1 }).eq("id", row.id);
+      return { ok: false, error: "Invalid code." };
+    }
+    await supabaseAdmin.from("email_otps").update({ used: true }).eq("id", row.id);
+
+    // Find the user and confirm their email
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const user = list?.users?.find((u) => u.email?.toLowerCase() === email);
+    if (!user) return { ok: false, error: "Account not found. Please sign up again." };
+
+    await supabaseAdmin.auth.admin.updateUserById(user.id, { email_confirm: true });
     return { ok: true };
   });
 
