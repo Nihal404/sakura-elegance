@@ -1,8 +1,9 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Mail, Lock, Sparkles } from "lucide-react";
-import { useStore } from "@/lib/store";
+import { Mail, Lock, Sparkles, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -17,17 +18,41 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
-  const { login } = useStore();
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
-    const u = login(email);
-    router.navigate({ to: u.role === "Admin" ? "/admin" : "/" });
+    setLoading(true);
+    try {
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        toast.success("Account created! Signing you in…");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        toast.success("Welcome back!");
+      }
+      // Give auth state a moment to hydrate role
+      setTimeout(() => {
+        const isAdmin = email.trim().toLowerCase() === "admin@zariboutique.com";
+        router.navigate({ to: isAdmin ? "/admin" : "/" });
+      }, 300);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,7 +102,8 @@ function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder="Password (min 6 characters)"
+              minLength={6}
               className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
               required
             />
@@ -85,8 +111,10 @@ function Login() {
 
           <button
             type="submit"
-            className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all"
+            disabled={loading}
+            className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
           >
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {mode === "signin" ? "Sign in" : "Create account"}
           </button>
         </form>
@@ -102,7 +130,7 @@ function Login() {
         </p>
 
         <p className="mt-6 text-[11px] text-center text-muted-foreground/80 bg-blush/60 rounded-xl py-2 px-3">
-          Admin demo: <span className="font-medium">admin@zariboutique.com</span>
+          Admin: sign up with <span className="font-medium">admin@zariboutique.com</span> to unlock the dashboard.
         </p>
       </motion.div>
     </div>
