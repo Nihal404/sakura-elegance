@@ -24,15 +24,24 @@ function Admin() {
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editFeatures, setEditFeatures] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState<Category>("Clothing");
   const [description, setDescription] = useState("");
+  const [features, setFeatures] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+
+  const parseFeatures = (raw: string) =>
+    raw
+      .split("\n")
+      .map((f) => f.trim())
+      .filter(Boolean)
+      .slice(0, 8);
 
   if (authLoading) {
     return (
