@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Mail, Lock, Sparkles, Loader2, KeyRound, User, ShieldCheck } from "lucide-react";
+import { AlertCircle, Mail, Lock, Sparkles, Loader2, KeyRound, User, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -17,6 +17,8 @@ export const Route = createFileRoute("/login")({
       { name: "description", content: "Sign in to Zari Boutique with 2-step verification." },
       { property: "og:title", content: "Sign in — Zari Boutique" },
       { property: "og:description", content: "Sign in to Zari Boutique with 2-step verification." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Login,
@@ -39,27 +41,41 @@ function Login() {
   const [name, setName] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const submitCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !password) return;
     setLoading(true);
+    setFormError("");
     try {
       if (cleanEmail === ADMIN_EMAIL) {
         // Ensure the admin account exists with the seeded password before signing in.
         await provisionAdmin();
       }
       if (mode === "signup") {
-        await signUpFn({ data: { email: cleanEmail, password, name: name.trim() || undefined } });
+        const result = await signUpFn({ data: { email: cleanEmail, password, name: name.trim() || undefined } });
+        if (!result.ok) {
+          setFormError(result.error);
+          toast.error(result.error);
+          return;
+        }
         toast.success("Account created. Check your email for the 6-digit code.");
       } else {
-        await startLoginFn({ data: { email: cleanEmail, password } });
+        const result = await startLoginFn({ data: { email: cleanEmail, password } });
+        if (!result.ok) {
+          setFormError(result.error);
+          toast.error(result.error);
+          return;
+        }
         toast.success("Password verified. Check your email for the 6-digit code.");
       }
       setStep("otp");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setFormError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -72,15 +88,23 @@ function Login() {
       return;
     }
     setLoading(true);
+    setFormError("");
     try {
       const cleanEmail = email.trim().toLowerCase();
-      const { token_hash } = await verifyOtpFn({ data: { email: cleanEmail, code: otp } });
-      const { error } = await supabase.auth.verifyOtp({ type: "email", token_hash });
+      const result = await verifyOtpFn({ data: { email: cleanEmail, code: otp } });
+      if (!result.ok) {
+        setFormError(result.error);
+        toast.error(result.error);
+        return;
+      }
+      const { error } = await supabase.auth.verifyOtp({ type: "email", token_hash: result.token_hash });
       if (error) throw error;
       toast.success("Welcome to Zari!");
       router.navigate({ to: cleanEmail === ADMIN_EMAIL ? "/admin" : "/" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Invalid code");
+      const message = err instanceof Error ? err.message : "Invalid code";
+      setFormError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -89,6 +113,7 @@ function Login() {
   const resetToStart = () => {
     setStep("credentials");
     setOtp("");
+    setFormError("");
   };
 
   return (
@@ -139,6 +164,12 @@ function Login() {
 
         {step === "credentials" && (
           <form onSubmit={submitCredentials} className="space-y-4">
+            {formError && (
+              <div className="flex gap-2 rounded-2xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>{formError}</p>
+              </div>
+            )}
             {mode === "signup" && (
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -187,6 +218,12 @@ function Login() {
 
         {step === "otp" && (
           <form onSubmit={submitOtp} className="space-y-4">
+            {formError && (
+              <div className="flex gap-2 rounded-2xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>{formError}</p>
+              </div>
+            )}
             <p className="text-xs text-center text-muted-foreground">
               Enter the 6-digit code sent to <span className="font-medium text-foreground">{email}</span>
             </p>
