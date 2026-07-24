@@ -11,7 +11,7 @@ const WHATSAPP_TEMPLATE_LANG = process.env.WHATSAPP_TEMPLATE_LANG || "en";
 type Channel = "email" | "whatsapp";
 type OtpSendResult = { ok: true } | { ok: false; error: string };
 type BasicResult = { ok: true; channel?: Channel } | { ok: false; error: string };
-type VerifyResult = { ok: true; token_hash: string; email: string } | { ok: false; error: string };
+
 
 const hashCode = (email: string, code: string) =>
   createHash("sha256").update(`${email.toLowerCase()}:${code}`).digest("hex");
