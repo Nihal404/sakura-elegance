@@ -111,10 +111,13 @@ export function ProductReviews({ productId }: { productId: string }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setError("Please sign in to leave a review.");
+      return;
+    }
     if (!name.trim() || !comment.trim() || submitting) return;
     setSubmitting(true);
     setError(null);
-    const { data: userData } = await supabase.auth.getUser();
     const { data, error } = await supabase
       .from("reviews")
       .insert({
@@ -122,7 +125,7 @@ export function ProductReviews({ productId }: { productId: string }) {
         name: name.trim().slice(0, 60),
         rating,
         comment: comment.trim().slice(0, 1000),
-        user_id: userData.user?.id ?? null,
+        user_id: user.id,
       })
       .select()
       .single();
