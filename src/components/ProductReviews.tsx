@@ -54,6 +54,7 @@ function StarRow({
 }
 
 export function ProductReviews({ productId }: { productId: string }) {
+  const { user } = useStore();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
