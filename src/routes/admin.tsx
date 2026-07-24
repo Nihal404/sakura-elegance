@@ -358,6 +358,13 @@ function Admin() {
                                 rows={2}
                                 className="input !py-1.5 !px-3 text-xs resize-y min-h-[52px]"
                               />
+                              <textarea
+                                value={editFeatures}
+                                onChange={(e) => setEditFeatures(e.target.value)}
+                                placeholder="Highlights (one per line)"
+                                rows={3}
+                                className="input !py-1.5 !px-3 text-xs resize-y min-h-[64px]"
+                              />
                             </div>
                           ) : (
                             <div className="flex flex-col">
