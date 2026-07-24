@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createHash, randomInt } from "crypto";
 
-const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
-const FROM = "Zari Boutique <onboarding@resend.dev>";
 const OTP_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
 
@@ -12,7 +10,7 @@ const WHATSAPP_TEMPLATE_LANG = process.env.WHATSAPP_TEMPLATE_LANG || "en";
 
 type Channel = "email" | "whatsapp";
 type OtpSendResult = { ok: true } | { ok: false; error: string };
-type BasicResult = { ok: true } | { ok: false; error: string };
+type BasicResult = { ok: true; channel?: Channel } | { ok: false; error: string };
 type VerifyResult = { ok: true; token_hash: string; email: string } | { ok: false; error: string };
 
 const hashCode = (email: string, code: string) =>
