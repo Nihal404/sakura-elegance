@@ -125,6 +125,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
+        <SplashScreen />
         <Navbar />
         <main className="pt-20 min-h-screen">
           <Outlet />
