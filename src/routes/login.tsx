@@ -135,11 +135,21 @@ function Login() {
         toast.error(result.error);
         return;
       }
-      toast.success(
-        channel === "whatsapp"
-          ? "Code sent — check WhatsApp (or your email as fallback)."
-          : "Code sent to your email.",
-      );
+      if (channel === "email") {
+        // Trigger Supabase's built-in email OTP (6-digit token).
+        const { error: otpErr } = await supabase.auth.signInWithOtp({
+          email: cleanEmail,
+          options: { shouldCreateUser: false },
+        });
+        if (otpErr) {
+          setFormError(otpErr.message);
+          toast.error(otpErr.message);
+          return;
+        }
+        toast.success("Code sent to your email.");
+      } else {
+        toast.success("Code sent — check WhatsApp.");
+      }
       setSignupStep("otp");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not create account";
