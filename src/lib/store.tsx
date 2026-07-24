@@ -124,7 +124,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setProductsLoading(true);
     const { data, error } = await supabase
       .from("products")
-      .select("id,name,price,category,image_url,description,features")
+      .select("id,name,price,category,image_url,description,features,mockups")
       .order("created_at", { ascending: false });
     if (!error && data) setProducts((data as unknown as ProductRow[]).map(rowToProduct));
     setProductsLoading(false);
