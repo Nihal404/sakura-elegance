@@ -169,8 +169,6 @@ export function ProductReviews({ productId }: { productId: string }) {
 
       <div className="grid lg:grid-cols-2 gap-10">
         {/* Form */}
-      <div className="grid lg:grid-cols-2 gap-10">
-        {/* Form */}
         {!user ? (
           <div className="rounded-3xl bg-blush/50 border border-border/60 p-6 lg:p-8 shadow-soft flex flex-col items-start">
             <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary">
