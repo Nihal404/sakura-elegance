@@ -183,6 +183,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           image_url: p.image,
           description: p.description,
           features: p.features,
+          mockups: p.mockups,
         });
         if (error) throw error;
         await refreshProducts();
@@ -195,6 +196,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           image_url?: string;
           description?: string;
           features?: string[];
+          mockups?: string[];
         } = {};
         if (patch.name !== undefined) dbPatch.name = patch.name;
         if (patch.price !== undefined) dbPatch.price = patch.price;
@@ -202,6 +204,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (patch.image !== undefined) dbPatch.image_url = patch.image;
         if (patch.description !== undefined) dbPatch.description = patch.description;
         if (patch.features !== undefined) dbPatch.features = patch.features;
+        if (patch.mockups !== undefined) dbPatch.mockups = patch.mockups;
         const { error } = await supabase.from("products").update(dbPatch).eq("id", id);
         if (error) throw error;
         await refreshProducts();
