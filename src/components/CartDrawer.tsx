@@ -43,12 +43,8 @@ export function CartDrawer() {
               ) : (
                 <ul className="space-y-4">
                   {cart.map((item) => (
-                    <motion.li
+                    <li
                       key={item.id}
-                      layout
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
                       className="flex gap-4 p-3 rounded-2xl bg-blush/60"
                     >
                       <img src={item.image} alt={item.name} className="w-20 h-24 rounded-xl object-cover" />
