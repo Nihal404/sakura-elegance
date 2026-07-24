@@ -87,7 +87,7 @@ function Login() {
         toast.error(result.error);
         return;
       }
-      const { error } = await supabase.auth.verifyOtp({ type: "email", token_hash });
+      const { error } = await supabase.auth.verifyOtp({ type: "email", token_hash: result.token_hash });
       if (error) throw error;
       toast.success("Welcome to Zari!");
       router.navigate({ to: cleanEmail === ADMIN_EMAIL ? "/admin" : "/" });
