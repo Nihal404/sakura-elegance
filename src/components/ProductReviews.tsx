@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Star, Loader2 } from "lucide-react";
+import { Star, Loader2, Lock } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { useStore } from "@/lib/store";
 
 type Review = {
   id: string;
@@ -52,6 +54,7 @@ function StarRow({
 }
 
 export function ProductReviews({ productId }: { productId: string }) {
+  const { user } = useStore();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
@@ -108,10 +111,13 @@ export function ProductReviews({ productId }: { productId: string }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setError("Please sign in to leave a review.");
+      return;
+    }
     if (!name.trim() || !comment.trim() || submitting) return;
     setSubmitting(true);
     setError(null);
-    const { data: userData } = await supabase.auth.getUser();
     const { data, error } = await supabase
       .from("reviews")
       .insert({
@@ -119,7 +125,7 @@ export function ProductReviews({ productId }: { productId: string }) {
         name: name.trim().slice(0, 60),
         rating,
         comment: comment.trim().slice(0, 1000),
-        user_id: userData.user?.id ?? null,
+        user_id: user.id,
       })
       .select()
       .single();
@@ -163,60 +169,79 @@ export function ProductReviews({ productId }: { productId: string }) {
 
       <div className="grid lg:grid-cols-2 gap-10">
         {/* Form */}
-        <form
-          onSubmit={submit}
-          className="rounded-3xl bg-blush/50 border border-border/60 p-6 lg:p-8 shadow-soft"
-        >
-          <h3 className="font-serif text-2xl">Leave a review</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Share how this piece made you feel.
-          </p>
-
-          <label className="block mt-6 text-xs uppercase tracking-widest text-foreground/70">
-            Your rating
-          </label>
-          <div className="mt-2">
-            <StarRow value={rating} onChange={setRating} interactive size={26} />
+        {!user ? (
+          <div className="rounded-3xl bg-blush/50 border border-border/60 p-6 lg:p-8 shadow-soft flex flex-col items-start">
+            <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-primary">
+              <Lock className="w-3.5 h-3.5" />
+              Sign in required
+            </div>
+            <h3 className="font-serif text-2xl mt-3">Leave a review</h3>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              Sign in to share your thoughts on this piece. Only Zari members can post reviews — it keeps the garden honest.
+            </p>
+            <Link
+              to="/login"
+              className="mt-6 px-7 py-3 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all"
+            >
+              Sign in to review
+            </Link>
           </div>
-
-          <label className="block mt-5 text-xs uppercase tracking-widest text-foreground/70">
-            Name
-          </label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={60}
-            required
-            placeholder="Sakura L."
-            className="mt-2 w-full rounded-full bg-background border border-border/70 px-5 py-3 focus:outline-none focus:border-primary transition-colors"
-          />
-
-          <label className="block mt-5 text-xs uppercase tracking-widest text-foreground/70">
-            Review
-          </label>
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            maxLength={1000}
-            required
-            rows={4}
-            placeholder="This piece felt like spring in silk…"
-            className="mt-2 w-full rounded-2xl bg-background border border-border/70 px-5 py-3 focus:outline-none focus:border-primary transition-colors resize-none"
-          />
-
-          {error && (
-            <p className="mt-3 text-sm text-destructive">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="mt-6 px-7 py-3 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all inline-flex items-center gap-2 disabled:opacity-60"
+        ) : (
+          <form
+            onSubmit={submit}
+            className="rounded-3xl bg-blush/50 border border-border/60 p-6 lg:p-8 shadow-soft"
           >
-            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {submitting ? "Posting…" : "Post review"}
-          </button>
-        </form>
+            <h3 className="font-serif text-2xl">Leave a review</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Posting as <span className="text-foreground/80">{user.email}</span>
+            </p>
+
+            <label className="block mt-6 text-xs uppercase tracking-widest text-foreground/70">
+              Your rating
+            </label>
+            <div className="mt-2">
+              <StarRow value={rating} onChange={setRating} interactive size={26} />
+            </div>
+
+            <label className="block mt-5 text-xs uppercase tracking-widest text-foreground/70">
+              Display name
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={60}
+              required
+              placeholder="Sakura L."
+              className="mt-2 w-full rounded-full bg-background border border-border/70 px-5 py-3 focus:outline-none focus:border-primary transition-colors"
+            />
+
+            <label className="block mt-5 text-xs uppercase tracking-widest text-foreground/70">
+              Review
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              maxLength={1000}
+              required
+              rows={4}
+              placeholder="This piece felt like spring in silk…"
+              className="mt-2 w-full rounded-2xl bg-background border border-border/70 px-5 py-3 focus:outline-none focus:border-primary transition-colors resize-none"
+            />
+
+            {error && (
+              <p className="mt-3 text-sm text-destructive">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="mt-6 px-7 py-3 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all inline-flex items-center gap-2 disabled:opacity-60"
+            >
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {submitting ? "Posting…" : "Post review"}
+            </button>
+          </form>
+        )}
 
         {/* List */}
         <div className="space-y-4">
