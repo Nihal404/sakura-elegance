@@ -159,18 +159,13 @@ function Admin() {
     }
   };
 
-  const startEdit = (
-    id: string,
-    name: string,
-    price: number,
-    description: string,
-    features: string[],
-  ) => {
-    setEditingId(id);
-    setEditName(name);
-    setEditPrice(String(price));
-    setEditDescription(description);
-    setEditFeatures(features.join("\n"));
+  const startEdit = (p: Product) => {
+    setEditingId(p.id);
+    setEditName(p.name);
+    setEditPrice(String(p.price));
+    setEditDescription(p.description);
+    setEditFeatures(p.features.join("\n"));
+    setEditMockups(p.mockups.length > 0 ? p.mockups : [p.image]);
   };
 
   const cancelEdit = () => {
@@ -179,12 +174,53 @@ function Admin() {
     setEditPrice("");
     setEditDescription("");
     setEditFeatures("");
+    setEditMockups([]);
+  };
+
+  const onEditFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const chosen = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!chosen.length) return;
+    const room = MAX_MOCKUPS - editMockups.length;
+    if (room <= 0) {
+      toast.error(`Up to ${MAX_MOCKUPS} images.`);
+      return;
+    }
+    const toUpload = chosen.slice(0, room);
+    if (chosen.length > room) toast.error(`Only ${room} more allowed.`);
+    setEditUploading(true);
+    try {
+      const urls = await Promise.all(toUpload.map(uploadFile));
+      setEditMockups((prev) => [...prev, ...urls]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      toast.error(msg);
+    } finally {
+      setEditUploading(false);
+    }
+  };
+
+  const removeEditMockup = (i: number) => {
+    setEditMockups((prev) => prev.filter((_, idx) => idx !== i));
+  };
+
+  const makeEditMain = (i: number) => {
+    setEditMockups((prev) => {
+      if (i === 0) return prev;
+      const copy = [...prev];
+      const [picked] = copy.splice(i, 1);
+      return [picked, ...copy];
+    });
   };
 
   const saveEdit = async (id: string) => {
     const priceNum = parseFloat(editPrice);
     if (!editName.trim() || !priceNum || priceNum <= 0) {
       toast.error("Enter a valid name and price.");
+      return;
+    }
+    if (editMockups.length === 0) {
+      toast.error("At least one image is required.");
       return;
     }
     setSavingEdit(true);
@@ -194,6 +230,8 @@ function Admin() {
         price: priceNum,
         description: editDescription.trim(),
         features: parseFeatures(editFeatures),
+        image: editMockups[0],
+        mockups: editMockups,
       });
       toast.success("Product updated.");
       cancelEdit();
