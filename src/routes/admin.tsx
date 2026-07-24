@@ -18,7 +18,12 @@ export const Route = createFileRoute("/admin")({
 });
 
 function Admin() {
-  const { user, authLoading, products, addProduct, removeProduct } = useStore();
+  const { user, authLoading, products, addProduct, removeProduct, updateProduct } = useStore();
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPrice, setEditPrice] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
