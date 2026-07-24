@@ -22,65 +22,9 @@ const normalizePhone = (phone?: string | null) => {
   return digits.startsWith("+") ? digits : `+${digits}`;
 };
 
-const emailHtml = (code: string) => `
-  <div style="font-family: 'Playfair Display', Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; background: linear-gradient(135deg, #fff5f7 0%, #ffe4ec 100%); border-radius: 20px; color: #4a2c3a;">
-    <h1 style="font-size: 28px; margin: 0 0 8px; color: #b8577a;">Zari Boutique</h1>
-    <p style="font-size: 14px; color: #7a5566; margin: 0 0 24px;">Your 2-step verification code</p>
-    <div style="background: white; border-radius: 14px; padding: 24px; text-align: center; box-shadow: 0 4px 20px rgba(232, 156, 178, 0.2);">
-      <div style="font-family: 'Courier New', monospace; font-size: 36px; letter-spacing: 12px; color: #b8577a; font-weight: 700;">${code}</div>
-    </div>
-    <p style="font-size: 13px; color: #7a5566; margin-top: 20px; line-height: 1.6;">
-      Enter this code to finish signing in. It expires in ${OTP_TTL_MINUTES} minutes. If you didn't try to sign in, you can safely ignore this email.
-    </p>
-    <p style="font-size: 11px; color: #a68899; margin-top: 24px; text-align: center;">
-      🌸 With love, Zari Boutique
-    </p>
-  </div>
-`;
+// Email OTP delivery is handled by Supabase Auth's built-in mailer
+// (client calls supabase.auth.signInWithOtp / verifyOtp). No Resend usage.
 
-async function sendEmailOtp(email: string, code: string): Promise<OtpSendResult> {
-  const lovableApiKey = process.env.LOVABLE_API_KEY;
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (!lovableApiKey || !resendApiKey) {
-    return {
-      ok: false,
-      error: "Email sending is not connected yet. Please reconnect Resend or set up a verified sender domain.",
-    };
-  }
-
-  const res = await fetch(`${RESEND_GATEWAY}/emails`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${lovableApiKey}`,
-      "X-Connection-Api-Key": resendApiKey,
-    },
-    body: JSON.stringify({
-      from: FROM,
-      to: [email],
-      subject: `Your Zari verification code: ${code}`,
-      html: emailHtml(code),
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    console.error("Resend send failed", res.status, body);
-    let msg = "Could not send the verification email. Please try again.";
-    try {
-      const parsed = JSON.parse(body) as { message?: string; name?: string };
-      if (parsed?.name === "validation_error" && parsed.message?.includes("testing emails")) {
-        msg =
-          "Resend is in test mode, so codes only deliver to the Resend account owner's email. Verify a domain in Resend and update the sender to send codes to other addresses.";
-      } else if (parsed?.message) {
-        msg = parsed.message;
-      }
-    } catch {
-      // keep default
-    }
-    return { ok: false, error: msg };
-  }
-  return { ok: true };
-}
 
 async function sendWhatsAppOtp(phone: string, code: string): Promise<OtpSendResult> {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
