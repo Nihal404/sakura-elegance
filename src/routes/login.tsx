@@ -28,6 +28,8 @@ type Step = "email" | "otp";
 function Login() {
   const router = useRouter();
   const provisionAdmin = useServerFn(ensureAdminAccount);
+  const sendOtpFn = useServerFn(sendOtpEmail);
+  const verifyOtpFn = useServerFn(verifyOtpEmail);
 
   const [tab, setTab] = useState<Tab>("customer");
   // customer OTP flow
