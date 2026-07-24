@@ -140,7 +140,7 @@ function ProductDetail() {
             <span className="text-3xl font-medium text-primary">
               ₹{product.price}
             </span>
-            <span className="text-sm text-muted-foreground">USD · Free petal-wrapped shipping</span>
+            <span className="text-sm text-muted-foreground">INR · Free petal-wrapped shipping</span>
           </div>
 
           <div className="mt-8 h-px bg-border/70" />
