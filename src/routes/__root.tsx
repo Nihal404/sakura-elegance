@@ -16,6 +16,7 @@ import { Navbar } from "@/components/Navbar";
 import { CartDrawer } from "@/components/CartDrawer";
 import { Footer } from "@/components/Footer";
 import { SplashScreen } from "@/components/SplashScreen";
+import { PageTransition } from "@/components/PageTransition";
 
 function NotFoundComponent() {
   return (
@@ -145,7 +146,9 @@ function RootComponent() {
         >
           <Navbar />
           <main className="pt-20 min-h-screen">
-            <Outlet />
+            <PageTransition>
+              <Outlet />
+            </PageTransition>
           </main>
           <Footer />
         </motion.div>
