@@ -34,6 +34,7 @@ interface StoreContextValue {
   productsLoading: boolean;
   refreshProducts: () => Promise<void>;
   addProduct: (p: Omit<Product, "id">) => Promise<void>;
+  updateProduct: (id: string, patch: Partial<Omit<Product, "id">>) => Promise<void>;
   removeProduct: (id: string) => Promise<void>;
 
   cart: CartItem[];
