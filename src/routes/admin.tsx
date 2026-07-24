@@ -281,21 +281,45 @@ function Admin() {
                 className="input resize-y min-h-[110px]"
               />
             </Field>
-            <Field label="Product image">
+            <Field label={`Product images (1–${MAX_MOCKUPS} · first is the main mockup)`}>
               <input
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={onFileChange}
-                className="input file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-primary-foreground file:text-xs file:cursor-pointer cursor-pointer"
-                required={!file}
+                disabled={files.length >= MAX_MOCKUPS}
+                className="input file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-primary-foreground file:text-xs file:cursor-pointer cursor-pointer disabled:opacity-60"
+                required={files.length === 0}
               />
-              {preview && (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="mt-3 w-24 h-24 rounded-xl object-cover border border-border/60"
-                />
+              {previews.length > 0 && (
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {previews.map((src, i) => (
+                    <div key={i} className="relative group">
+                      <img
+                        src={src}
+                        alt={`Mockup ${i + 1}`}
+                        className={`w-full aspect-square rounded-xl object-cover border ${i === 0 ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
+                      />
+                      {i === 0 && (
+                        <span className="absolute top-1 left-1 text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground">
+                          Main
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removePreview(i)}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-background border border-border/70 text-muted-foreground hover:text-destructive hover:border-destructive inline-flex items-center justify-center shadow-soft"
+                        aria-label="Remove image"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {files.length}/{MAX_MOCKUPS} selected
+              </p>
             </Field>
 
             <button
