@@ -158,7 +158,7 @@ function CartPage() {
                       </span>
                     </div>
                   </div>
-                </motion.li>
+                </li>
               ))}
             </ul>
 
