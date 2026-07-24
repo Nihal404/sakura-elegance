@@ -177,7 +177,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         await refreshProducts();
       },
       updateProduct: async (id, patch) => {
-        const dbPatch: Record<string, unknown> = {};
+        const dbPatch: {
+          name?: string;
+          price?: number;
+          category?: string;
+          image_url?: string;
+        } = {};
         if (patch.name !== undefined) dbPatch.name = patch.name;
         if (patch.price !== undefined) dbPatch.price = patch.price;
         if (patch.category !== undefined) dbPatch.category = patch.category;
