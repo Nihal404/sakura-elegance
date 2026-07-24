@@ -15,11 +15,12 @@ export function SplashScreen({ onFading }: SplashScreenProps) {
       return;
     }
     const t = setTimeout(() => {
+      onFading?.();
       sessionStorage.setItem("zari_splash_seen", "1");
       setShow(false);
     }, 2600);
     return () => clearTimeout(t);
-  }, []);
+  }, [onFading]);
 
   const petals = Array.from({ length: 14 });
 
