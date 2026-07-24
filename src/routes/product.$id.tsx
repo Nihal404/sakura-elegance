@@ -30,8 +30,33 @@ function ProductDetail() {
 
   if (productsLoading && !product) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="mx-auto max-w-7xl px-6 lg:px-10 py-10 lg:py-14">
+        <div className="h-4 w-16 rounded-full bg-primary/10 animate-pulse mb-8" />
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
+          <div>
+            <div className="aspect-[4/5] rounded-3xl bg-sakura-gradient animate-pulse" />
+            <div className="mt-4 grid grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="aspect-square rounded-2xl bg-primary/10 animate-pulse" />
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-4">
+            <div className="h-3 w-24 rounded-full bg-primary/20 animate-pulse" />
+            <div className="h-10 w-3/4 rounded-full bg-primary/10 animate-pulse" />
+            <div className="h-8 w-32 rounded-full bg-primary/15 animate-pulse mt-2" />
+            <div className="h-px bg-border/70 my-4" />
+            <div className="h-4 w-full rounded-full bg-primary/10 animate-pulse" />
+            <div className="h-4 w-5/6 rounded-full bg-primary/10 animate-pulse" />
+            <div className="h-4 w-4/6 rounded-full bg-primary/10 animate-pulse" />
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-12 rounded-2xl bg-blush/60 animate-pulse" />
+              ))}
+            </div>
+            <div className="h-12 rounded-full bg-primary/20 animate-pulse mt-6" />
+          </div>
+        </div>
       </div>
     );
   }
