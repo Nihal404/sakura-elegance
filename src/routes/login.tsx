@@ -34,6 +34,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   // admin
+  const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
