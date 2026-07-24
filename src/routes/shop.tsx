@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useStore, type Category } from "@/lib/store";
 import { ProductCard } from "@/components/ProductCard";
 import { z } from "zod";
