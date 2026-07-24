@@ -198,21 +198,21 @@ function CartPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/70"
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-foreground/70 px-6 text-center"
           >
             <motion.div
               initial={{ scale: 0.6, opacity: 0, rotate: -6 }}
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
               exit={{ scale: 1.15, opacity: 0 }}
               transition={{ type: "spring", damping: 12, stiffness: 180 }}
-              className="relative"
+              className="relative flex flex-col items-center justify-center"
             >
               <motion.span
                 animate={{
                   backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                 }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="block font-serif text-7xl md:text-9xl font-bold tracking-widest"
+                className="block font-serif text-6xl sm:text-7xl md:text-9xl font-bold tracking-widest text-center mx-auto"
                 style={{
                   backgroundImage:
                     "linear-gradient(90deg, #b8860b, #ffd700, #fff4b8, #ffd700, #b8860b)",
