@@ -251,6 +251,15 @@ function Admin() {
                 className="input resize-y min-h-[110px]"
               />
             </Field>
+            <Field label="Highlights (one per line, up to 8)">
+              <textarea
+                value={features}
+                onChange={(e) => setFeatures(e.target.value)}
+                placeholder={"Hand-finished detail\nRose-gold accents\nSakura-soft palette\nShips in 2–7 days"}
+                rows={4}
+                className="input resize-y min-h-[110px]"
+              />
+            </Field>
             <Field label="Product image">
               <input
                 type="file"
