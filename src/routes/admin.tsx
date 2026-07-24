@@ -111,11 +111,13 @@ function Admin() {
         category,
         image: signed.signedUrl,
         description: description.trim(),
+        features: parseFeatures(features),
       });
       toast.success("Product added to the boutique.");
       setName("");
       setPrice("");
       setDescription("");
+      setFeatures("");
       setFile(null);
       setPreview("");
     } catch (err: unknown) {
