@@ -34,6 +34,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   // admin
+  const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -86,13 +87,13 @@ function Login() {
 
   const adminSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminPassword) return;
+    if (!adminEmail || !adminPassword) return;
     setLoading(true);
     try {
       // Idempotently provision admin (safe to call every time)
       await provisionAdmin();
       const { error } = await supabase.auth.signInWithPassword({
-        email: ADMIN_EMAIL,
+        email: adminEmail.trim().toLowerCase(),
         password: adminPassword,
       });
       if (error) throw error;
@@ -215,10 +216,11 @@ function Login() {
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="email"
-                value=""
-                readOnly
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
                 placeholder="Admin email"
-                className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/40 border border-border text-muted-foreground"
+                className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
+                required
               />
             </div>
             <div className="relative">
