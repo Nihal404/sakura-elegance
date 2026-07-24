@@ -51,7 +51,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           <div>
             <h3 className="font-serif text-lg leading-tight">{product.name}</h3>
           </div>
-          <span className="font-medium text-primary">${product.price}</span>
+          <span className="font-medium text-primary">₹{product.price}</span>
         </div>
       </Link>
     </motion.div>

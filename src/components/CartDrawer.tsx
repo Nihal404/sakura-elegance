@@ -79,7 +79,7 @@ export function CartDrawer() {
                               <Plus className="w-3 h-3" />
                             </button>
                           </div>
-                          <span className="font-semibold">${(item.qty * item.price).toFixed(2)}</span>
+                          <span className="font-semibold">₹{(item.qty * item.price).toFixed(2)}</span>
                         </div>
                       </div>
                     </motion.li>
@@ -91,11 +91,11 @@ export function CartDrawer() {
             <div className="border-t border-border p-6 space-y-4">
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span>
-                <span>${cartTotal.toFixed(2)}</span>
+                <span>₹{cartTotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span className="text-gradient-rose">${cartTotal.toFixed(2)}</span>
+                <span className="text-gradient-rose">₹{cartTotal.toFixed(2)}</span>
               </div>
               <button
                 disabled={cart.length === 0}
