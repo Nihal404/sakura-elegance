@@ -123,6 +123,37 @@ function Admin() {
     }
   };
 
+  const startEdit = (id: string, name: string, price: number) => {
+    setEditingId(id);
+    setEditName(name);
+    setEditPrice(String(price));
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName("");
+    setEditPrice("");
+  };
+
+  const saveEdit = async (id: string) => {
+    const priceNum = parseFloat(editPrice);
+    if (!editName.trim() || !priceNum || priceNum <= 0) {
+      toast.error("Enter a valid name and price.");
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      await updateProduct(id, { name: editName.trim(), price: priceNum });
+      toast.success("Product updated.");
+      cancelEdit();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update";
+      toast.error(msg);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-6 lg:px-10 py-14">
       <motion.div
