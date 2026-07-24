@@ -138,7 +138,7 @@ function ProductDetail() {
           </h1>
           <div className="mt-4 flex items-baseline gap-3">
             <span className="text-3xl font-medium text-primary">
-              ${product.price}
+              ₹{product.price}
             </span>
             <span className="text-sm text-muted-foreground">USD · Free petal-wrapped shipping</span>
           </div>
@@ -183,7 +183,7 @@ function ProductDetail() {
               className="flex-1 py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all inline-flex items-center justify-center gap-2"
             >
               <ShoppingBag className="w-4 h-4" />
-              Add to Cart · ${(product.price * qty).toFixed(2)}
+              Add to Cart · ₹{(product.price * qty).toFixed(2)}
             </button>
           </div>
         </motion.div>

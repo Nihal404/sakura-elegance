@@ -355,7 +355,7 @@ function Admin() {
                             className="input !py-1.5 !px-3 w-24 text-right ml-auto"
                           />
                         ) : (
-                          <>${p.price}</>
+                          <>₹{p.price}</>
                         )}
                       </td>
                       <td className="py-3 px-4 text-right">
