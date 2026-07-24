@@ -62,6 +62,7 @@ type ProductRow = {
   category: string;
   image_url: string;
   description: string | null;
+  features: string[] | null;
 };
 
 function rowToProduct(r: ProductRow): Product {
@@ -72,6 +73,7 @@ function rowToProduct(r: ProductRow): Product {
     category: r.category as Category,
     image: r.image_url,
     description: r.description ?? "",
+    features: r.features ?? [],
   };
 }
 
