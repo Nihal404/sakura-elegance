@@ -133,11 +133,12 @@ function Login() {
         });
         if (error) throw error;
       } else {
-        const cleanPhone = phone.replace(/[^\d+]/g, "");
+        const digits = phone.replace(/\D/g, "").replace(/^91/, "");
+        const result = await verifyPhoneOtp({ data: { phone: digits, code: otp } });
+        if (!result.ok) throw new Error(result.error);
         const { error } = await supabase.auth.verifyOtp({
-          phone: cleanPhone,
-          token: otp,
-          type: "sms",
+          token_hash: result.token_hash,
+          type: "magiclink",
         });
         if (error) throw error;
       }
