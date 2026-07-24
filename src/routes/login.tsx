@@ -51,10 +51,18 @@ function Login() {
         await provisionAdmin();
       }
       if (mode === "signup") {
-        await signUpFn({ data: { email: cleanEmail, password, name: name.trim() || undefined } });
+        const result = await signUpFn({ data: { email: cleanEmail, password, name: name.trim() || undefined } });
+        if (!result.ok) {
+          toast.error(result.error);
+          return;
+        }
         toast.success("Account created. Check your email for the 6-digit code.");
       } else {
-        await startLoginFn({ data: { email: cleanEmail, password } });
+        const result = await startLoginFn({ data: { email: cleanEmail, password } });
+        if (!result.ok) {
+          toast.error(result.error);
+          return;
+        }
         toast.success("Password verified. Check your email for the 6-digit code.");
       }
       setStep("otp");
@@ -74,7 +82,11 @@ function Login() {
     setLoading(true);
     try {
       const cleanEmail = email.trim().toLowerCase();
-      const { token_hash } = await verifyOtpFn({ data: { email: cleanEmail, code: otp } });
+      const result = await verifyOtpFn({ data: { email: cleanEmail, code: otp } });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
       const { error } = await supabase.auth.verifyOtp({ type: "email", token_hash });
       if (error) throw error;
       toast.success("Welcome to Zari!");
