@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Star, Loader2 } from "lucide-react";
+import { Star, Loader2, Lock } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { useStore } from "@/lib/store";
 
 type Review = {
   id: string;
