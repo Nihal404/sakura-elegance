@@ -6,12 +6,23 @@ const FROM = "Zari Boutique <onboarding@resend.dev>";
 const OTP_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
 
+const WHATSAPP_API_BASE = "https://graph.facebook.com/v18.0";
+const WHATSAPP_TEMPLATE_NAME = process.env.WHATSAPP_TEMPLATE_NAME || "zari_verification";
+const WHATSAPP_TEMPLATE_LANG = process.env.WHATSAPP_TEMPLATE_LANG || "en";
+
+type Channel = "email" | "whatsapp";
 type OtpSendResult = { ok: true } | { ok: false; error: string };
 type BasicResult = { ok: true } | { ok: false; error: string };
 type VerifyResult = { ok: true; token_hash: string; email: string } | { ok: false; error: string };
 
 const hashCode = (email: string, code: string) =>
   createHash("sha256").update(`${email.toLowerCase()}:${code}`).digest("hex");
+
+const normalizePhone = (phone?: string | null) => {
+  if (!phone) return "";
+  const digits = phone.replace(/\D/g, "");
+  return digits.startsWith("+") ? digits : `+${digits}`;
+};
 
 const emailHtml = (code: string) => `
   <div style="font-family: 'Playfair Display', Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; background: linear-gradient(135deg, #fff5f7 0%, #ffe4ec 100%); border-radius: 20px; color: #4a2c3a;">
@@ -29,20 +40,7 @@ const emailHtml = (code: string) => `
   </div>
 `;
 
-async function sendOtpTo(email: string): Promise<OtpSendResult> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-  // Rate-limit: max 3 codes per email per 5 min
-  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  const { count } = await supabaseAdmin
-    .from("email_otps")
-    .select("id", { count: "exact", head: true })
-    .eq("email", email)
-    .gte("created_at", fiveMinAgo);
-  if ((count ?? 0) >= 3) {
-    return { ok: false, error: "Too many codes requested. Please wait a few minutes." };
-  }
-
+async function sendEmailOtp(email: string, code: string): Promise<OtpSendResult> {
   const lovableApiKey = process.env.LOVABLE_API_KEY;
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!lovableApiKey || !resendApiKey) {
@@ -50,19 +48,6 @@ async function sendOtpTo(email: string): Promise<OtpSendResult> {
       ok: false,
       error: "Email sending is not connected yet. Please reconnect Resend or set up a verified sender domain.",
     };
-  }
-
-  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-  const expires_at = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
-  const code_hash = hashCode(email, code);
-
-  const { data: otpRow, error: insertErr } = await supabaseAdmin
-    .from("email_otps")
-    .insert({ email, code_hash, expires_at })
-    .select("id")
-    .single();
-  if (insertErr || !otpRow) {
-    return { ok: false, error: "Could not create sign-in code." };
   }
 
   const res = await fetch(`${RESEND_GATEWAY}/emails`, {
@@ -82,7 +67,6 @@ async function sendOtpTo(email: string): Promise<OtpSendResult> {
   if (!res.ok) {
     const body = await res.text();
     console.error("Resend send failed", res.status, body);
-    await supabaseAdmin.from("email_otps").delete().eq("id", otpRow.id);
     let msg = "Could not send the verification email. Please try again.";
     try {
       const parsed = JSON.parse(body) as { message?: string; name?: string };
@@ -97,6 +81,109 @@ async function sendOtpTo(email: string): Promise<OtpSendResult> {
     }
     return { ok: false, error: msg };
   }
+  return { ok: true };
+}
+
+async function sendWhatsAppOtp(phone: string, code: string): Promise<OtpSendResult> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+  if (!phoneNumberId || !accessToken) {
+    return { ok: false, error: "WhatsApp is not configured yet. Falling back to email." };
+  }
+
+  const to = normalizePhone(phone);
+  if (!to || to.length < 10) {
+    return { ok: false, error: "A valid phone number is required for WhatsApp codes." };
+  }
+
+  const res = await fetch(`${WHATSAPP_API_BASE}/${phoneNumberId}/messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to,
+      type: "template",
+      template: {
+        name: WHATSAPP_TEMPLATE_NAME,
+        language: { code: WHATSAPP_TEMPLATE_LANG },
+        components: [
+          {
+            type: "body",
+            parameters: [{ type: "text", text: code }],
+          },
+        ],
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    console.error("WhatsApp send failed", res.status, body);
+    let msg = "Could not send the WhatsApp code. Please try again.";
+    try {
+      const parsed = JSON.parse(body) as { error?: { message?: string } };
+      if (parsed?.error?.message) msg = parsed.error.message;
+    } catch {
+      // keep default
+    }
+    return { ok: false, error: msg };
+  }
+  return { ok: true };
+}
+
+async function sendOtpTo(
+  email: string,
+  channel: Channel,
+  phone?: string | null,
+): Promise<OtpSendResult> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  // Rate-limit: max 3 codes per email per 5 min
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const { count } = await supabaseAdmin
+    .from("email_otps")
+    .select("id", { count: "exact", head: true })
+    .eq("email", email)
+    .gte("created_at", fiveMinAgo);
+  if ((count ?? 0) >= 3) {
+    return { ok: false, error: "Too many codes requested. Please wait a few minutes." };
+  }
+
+  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  const expires_at = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000).toISOString();
+  const code_hash = hashCode(email, code);
+
+  const { data: otpRow, error: insertErr } = await supabaseAdmin
+    .from("email_otps")
+    .insert({ email, code_hash, expires_at })
+    .select("id")
+    .single();
+  if (insertErr || !otpRow) {
+    return { ok: false, error: "Could not create sign-in code." };
+  }
+
+  let sendResult: OtpSendResult;
+  if (channel === "whatsapp") {
+    sendResult = await sendWhatsAppOtp(phone ?? "", code);
+    if (!sendResult.ok) {
+      // If WhatsApp fails, try email as a fallback so the user isn't stuck.
+      const fallback = await sendEmailOtp(email, code);
+      if (fallback.ok) {
+        return { ok: true };
+      }
+    }
+  } else {
+    sendResult = await sendEmailOtp(email, code);
+  }
+
+  if (!sendResult.ok) {
+    await supabaseAdmin.from("email_otps").delete().eq("id", otpRow.id);
+    return sendResult;
+  }
 
   return { ok: true };
 }
@@ -106,20 +193,27 @@ async function sendOtpTo(email: string): Promise<OtpSendResult> {
  * The user completes sign-in by verifying the code.
  */
 export const signUpUser = createServerFn({ method: "POST" })
-  .inputValidator((data: { email: string; password: string; name?: string }) => {
-    const email = data.email?.trim().toLowerCase();
-    const password = data.password ?? "";
-    const name = data.name?.trim() || undefined;
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      throw new Error("Enter a valid email address.");
-    }
-    if (password.length < 8) {
-      throw new Error("Password must be at least 8 characters.");
-    }
-    return { email, password, name };
-  })
+  .inputValidator(
+    (data: { email: string; password: string; name?: string; phone?: string; channel?: Channel }) => {
+      const email = data.email?.trim().toLowerCase();
+      const password = data.password ?? "";
+      const name = data.name?.trim() || undefined;
+      const phone = data.phone?.trim() || undefined;
+      const channel: Channel = data.channel === "whatsapp" ? "whatsapp" : "email";
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error("Enter a valid email address.");
+      }
+      if (password.length < 8) {
+        throw new Error("Password must be at least 8 characters.");
+      }
+      if (channel === "whatsapp" && !phone) {
+        throw new Error("Phone number is required for WhatsApp verification.");
+      }
+      return { email, password, name, phone, channel };
+    },
+  )
   .handler(async ({ data }): Promise<BasicResult> => {
-    const { email, password, name } = data;
+    const { email, password, name, phone, channel } = data;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
@@ -128,17 +222,21 @@ export const signUpUser = createServerFn({ method: "POST" })
       return { ok: false, error: "An account with this email already exists. Please sign in instead." };
     }
 
+    const metadata: Record<string, unknown> = {};
+    if (name) metadata.name = name;
+    if (phone) metadata.phone = phone;
+
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: name ? { name } : undefined,
+      user_metadata: Object.keys(metadata).length ? metadata : undefined,
     });
     if (createErr || !created.user) {
       return { ok: false, error: createErr?.message || "Could not create your account." };
     }
 
-    const otpResult = await sendOtpTo(email);
+    const otpResult = await sendOtpTo(email, channel, phone);
     if (!otpResult.ok) {
       await supabaseAdmin.auth.admin.deleteUser(created.user.id).catch(() => {});
       return otpResult;
@@ -148,20 +246,21 @@ export const signUpUser = createServerFn({ method: "POST" })
 
 /**
  * Step 1 of 2FA sign-in: validate the password server-side (no session persisted),
- * then send a one-time code by email.
+ * then send a one-time code by the chosen channel.
  */
 export const startLogin = createServerFn({ method: "POST" })
-  .inputValidator((data: { email: string; password: string }) => {
+  .inputValidator((data: { email: string; password: string; channel?: Channel }) => {
     const email = data.email?.trim().toLowerCase();
     const password = data.password ?? "";
+    const channel: Channel = data.channel === "whatsapp" ? "whatsapp" : "email";
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new Error("Enter a valid email address.");
     }
     if (!password) throw new Error("Enter your password.");
-    return { email, password };
+    return { email, password, channel };
   })
   .handler(async ({ data }): Promise<BasicResult> => {
-    const { email, password } = data;
+    const { email, password, channel } = data;
     const { createClient } = await import("@supabase/supabase-js");
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -180,7 +279,19 @@ export const startLogin = createServerFn({ method: "POST" })
     // Immediately discard the session — we only use password check for step 1.
     await supa.auth.signOut().catch(() => {});
 
-    const otpResult = await sendOtpTo(email);
+    // For existing users choosing WhatsApp, fetch their saved phone from profile.
+    let phone: string | null = null;
+    if (channel === "whatsapp") {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("phone")
+        .eq("id", signIn.user.id)
+        .single();
+      phone = profile?.phone ?? null;
+    }
+
+    const otpResult = await sendOtpTo(email, channel, phone);
     if (!otpResult.ok) return otpResult;
     return { ok: true };
   });
@@ -246,13 +357,16 @@ export const verifyLoginOtp = createServerFn({ method: "POST" })
  * Prefer startLogin + verifyLoginOtp.
  */
 export const sendOtpEmail = createServerFn({ method: "POST" })
-  .inputValidator((data: { email: string }) => {
+  .inputValidator((data: { email: string; channel?: Channel; phone?: string }) => {
     const email = data.email?.trim().toLowerCase();
+    const channel: Channel = data.channel === "whatsapp" ? "whatsapp" : "email";
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new Error("Enter a valid email address.");
     }
-    return { email };
+    return { email, channel, phone: data.phone };
   })
-  .handler(async ({ data }): Promise<BasicResult> => sendOtpTo(data.email));
+  .handler(async ({ data }): Promise<BasicResult> =>
+    sendOtpTo(data.email, data.channel, data.phone),
+  );
 
 export const verifyOtpEmail = verifyLoginOtp;
