@@ -1,8 +1,10 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert } from "lucide-react";
+import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useStore, type Category } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -16,13 +18,22 @@ export const Route = createFileRoute("/admin")({
 });
 
 function Admin() {
-  const { user, products, addProduct, removeProduct } = useStore();
-  const router = useRouter();
+  const { user, authLoading, products, addProduct, removeProduct } = useStore();
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState<Category>("Clothing");
-  const [image, setImage] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!user || user.role !== "Admin") {
     return (
@@ -44,20 +55,67 @@ function Admin() {
     );
   }
 
-  const submit = (e: React.FormEvent) => {
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    setFile(f);
+    if (f) {
+      const reader = new FileReader();
+      reader.onload = () => setPreview(reader.result as string);
+      reader.readAsDataURL(f);
+    } else {
+      setPreview("");
+    }
+  };
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const priceNum = parseFloat(price);
-    if (!name || !priceNum || !image) return;
-    addProduct({
-      name,
-      price: priceNum,
-      category,
-      image,
-    });
-    setName("");
-    setPrice("");
-    setImage("");
-    router.invalidate();
+    if (!name || !priceNum || !file) {
+      toast.error("Please fill all fields and pick an image.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("product-images")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+
+      // Long-lived signed URL (10 years)
+      const { data: signed, error: sErr } = await supabase.storage
+        .from("product-images")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (sErr || !signed) throw sErr ?? new Error("Failed to sign URL");
+
+      await addProduct({
+        name,
+        price: priceNum,
+        category,
+        image: signed.signedUrl,
+      });
+      toast.success("Product added to the boutique.");
+      setName("");
+      setPrice("");
+      setFile(null);
+      setPreview("");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to add product";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const onRemove = async (id: string) => {
+    try {
+      await removeProduct(id);
+      toast.success("Product removed.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to remove";
+      toast.error(msg);
+    }
   };
 
   return (
@@ -77,7 +135,6 @@ function Admin() {
       </motion.div>
 
       <div className="grid lg:grid-cols-5 gap-8">
-        {/* FORM */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -123,19 +180,13 @@ function Admin() {
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const reader = new FileReader();
-                  reader.onload = () => setImage(reader.result as string);
-                  reader.readAsDataURL(file);
-                }}
+                onChange={onFileChange}
                 className="input file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-primary-foreground file:text-xs file:cursor-pointer cursor-pointer"
-                required={!image}
+                required={!file}
               />
-              {image && (
+              {preview && (
                 <img
-                  src={image}
+                  src={preview}
                   alt="Preview"
                   className="mt-3 w-24 h-24 rounded-xl object-cover border border-border/60"
                 />
@@ -144,8 +195,10 @@ function Admin() {
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all"
+              disabled={submitting}
+              className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
             >
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               Add to boutique
             </button>
           </form>
@@ -165,7 +218,6 @@ function Admin() {
           `}</style>
         </motion.div>
 
-        {/* INVENTORY */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -216,7 +268,7 @@ function Admin() {
                       <td className="py-3 px-4 text-right font-medium">${p.price}</td>
                       <td className="py-3 px-4 text-right">
                         <button
-                          onClick={() => removeProduct(p.id)}
+                          onClick={() => onRemove(p.id)}
                           className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                           aria-label="Delete"
                         >

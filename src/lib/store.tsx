@@ -1,4 +1,13 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
 export type Category = "Clothing" | "Accessories";
 
@@ -15,75 +24,17 @@ export interface CartItem extends Product {
 }
 
 export interface User {
+  id: string;
   email: string;
   role: "Admin" | "Customer";
 }
 
-const ADMIN_EMAIL = "admin@zariboutique.com";
-
-const INITIAL_PRODUCTS: Product[] = [
-  {
-    id: "p1",
-    name: "Blossom Silk Saree",
-    price: 189,
-    category: "Clothing",
-    image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&q=80",
-  },
-  {
-    id: "p2",
-    name: "Rose Petal Dress",
-    price: 149,
-    category: "Clothing",
-    image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80",
-  },
-  {
-    id: "p3",
-    name: "Ivory Lace Kurti",
-    price: 89,
-    category: "Clothing",
-    image: "https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=800&q=80",
-  },
-  {
-    id: "p4",
-    name: "Sakura Chiffon Gown",
-    price: 229,
-    category: "Clothing",
-    image: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800&q=80",
-  },
-  {
-    id: "p5",
-    name: "Rose Gold Pearl Earrings",
-    price: 59,
-    category: "Accessories",
-    image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80",
-  },
-  {
-    id: "p6",
-    name: "Blush Silk Scarf",
-    price: 39,
-    category: "Accessories",
-    image: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=800&q=80",
-  },
-  {
-    id: "p7",
-    name: "Petal Charm Bracelet",
-    price: 69,
-    category: "Accessories",
-    image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80",
-  },
-  {
-    id: "p8",
-    name: "Cherry Blossom Clutch",
-    price: 119,
-    category: "Accessories",
-    image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&q=80",
-  },
-];
-
 interface StoreContextValue {
   products: Product[];
-  addProduct: (p: Omit<Product, "id">) => void;
-  removeProduct: (id: string) => void;
+  productsLoading: boolean;
+  refreshProducts: () => Promise<void>;
+  addProduct: (p: Omit<Product, "id">) => Promise<void>;
+  removeProduct: (id: string) => Promise<void>;
 
   cart: CartItem[];
   addToCart: (p: Product) => void;
@@ -95,31 +46,144 @@ interface StoreContextValue {
   cartTotal: number;
 
   user: User | null;
-  login: (email: string) => User;
-  logout: () => void;
+  authLoading: boolean;
+  logout: () => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
+type ProductRow = {
+  id: string;
+  name: string;
+  price: number | string;
+  category: string;
+  image_url: string;
+};
+
+function rowToProduct(r: ProductRow): Product {
+  return {
+    id: r.id,
+    name: r.name,
+    price: Number(r.price),
+    category: r.category as Category,
+    image: r.image_url,
+  };
+}
+
+async function hydrateUser(session: Session | null): Promise<User | null> {
+  if (!session?.user) return null;
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", session.user.id);
+  const isAdmin = (data ?? []).some((r) => r.role === "Admin");
+  return {
+    id: session.user.id,
+    email: session.user.email ?? "",
+    role: isAdmin ? "Admin" : "Customer",
+  };
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      return JSON.parse(localStorage.getItem("zari-cart") ?? "[]");
+    } catch {
+      return [];
+    }
+  });
   const [cartOpen, setCartOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Persist cart
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("zari-cart", JSON.stringify(cart));
+    }
+  }, [cart]);
+
+  const refreshProducts = async () => {
+    setProductsLoading(true);
+    const { data, error } = await supabase
+      .from("products")
+      .select("id,name,price,category,image_url")
+      .order("created_at", { ascending: false });
+    if (!error && data) setProducts(data.map(rowToProduct));
+    setProductsLoading(false);
+  };
+
+  // Initial fetch + realtime updates
+  useEffect(() => {
+    refreshProducts();
+    const channel = supabase
+      .channel("products-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        () => {
+          refreshProducts();
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Auth session
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      // Defer async work to avoid deadlock
+      setTimeout(() => {
+        hydrateUser(session).then((u) => {
+          setUser(u);
+          setAuthLoading(false);
+        });
+      }, 0);
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      hydrateUser(data.session).then((u) => {
+        setUser(u);
+        setAuthLoading(false);
+      });
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   const value = useMemo<StoreContextValue>(() => {
     const cartCount = cart.reduce((n, i) => n + i.qty, 0);
     const cartTotal = cart.reduce((n, i) => n + i.qty * i.price, 0);
     return {
       products,
-      addProduct: (p) =>
-        setProducts((prev) => [{ ...p, id: `p${Date.now()}` }, ...prev]),
-      removeProduct: (id) => setProducts((prev) => prev.filter((x) => x.id !== id)),
+      productsLoading,
+      refreshProducts,
+      addProduct: async (p) => {
+        const { error } = await supabase.from("products").insert({
+          name: p.name,
+          price: p.price,
+          category: p.category,
+          image_url: p.image,
+        });
+        if (error) throw error;
+        await refreshProducts();
+      },
+      removeProduct: async (id) => {
+        const { error } = await supabase.from("products").delete().eq("id", id);
+        if (error) throw error;
+        await refreshProducts();
+      },
       cart,
       addToCart: (p) =>
         setCart((prev) => {
           const found = prev.find((i) => i.id === p.id);
-          if (found) return prev.map((i) => (i.id === p.id ? { ...i, qty: i.qty + 1 } : i));
+          if (found)
+            return prev.map((i) =>
+              i.id === p.id ? { ...i, qty: i.qty + 1 } : i,
+            );
           return [...prev, { ...p, qty: 1 }];
         }),
       removeFromCart: (id) => setCart((prev) => prev.filter((i) => i.id !== id)),
@@ -134,15 +198,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       cartCount,
       cartTotal,
       user,
-      login: (email) => {
-        const role: User["role"] = email.toLowerCase() === ADMIN_EMAIL ? "Admin" : "Customer";
-        const u: User = { email, role };
-        setUser(u);
-        return u;
+      authLoading,
+      logout: async () => {
+        await supabase.auth.signOut();
       },
-      logout: () => setUser(null),
     };
-  }, [products, cart, cartOpen, user]);
+  }, [products, productsLoading, cart, cartOpen, user, authLoading]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
