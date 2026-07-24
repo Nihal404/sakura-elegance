@@ -1,19 +1,21 @@
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useStore, type Product } from "@/lib/store";
 
 export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
   const { addToCart, setCartOpen } = useStore();
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay: index * 0.06, ease: "easeOut" }}
+      transition={{ duration: 0.5, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -6 }}
-      className="group relative rounded-3xl overflow-hidden bg-card shadow-soft"
+      className="group relative rounded-3xl overflow-hidden bg-card shadow-soft transition-shadow duration-500 hover:shadow-petal"
     >
       <Link
         to="/product/$id"
@@ -22,12 +24,18 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
         aria-label={`View ${product.name}`}
       >
         <div className="relative aspect-[3/4] overflow-hidden bg-blush">
+          {!imgLoaded && (
+            <div className="absolute inset-0 bg-sakura-gradient animate-pulse" />
+          )}
           <motion.img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+            onLoad={() => setImgLoaded(true)}
+            className={`w-full h-full object-cover transition-opacity duration-700 ease-out ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             whileHover={{ scale: 1.08 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <motion.button
