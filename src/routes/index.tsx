@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductCard } from "@/components/ProductCard";
@@ -22,10 +22,10 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const float = {
+const float: Variants = {
   animate: {
     y: [0, -14, 0],
-    transition: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+    transition: { duration: 6, repeat: Infinity, ease: "easeInOut" as const },
   },
 };
 
