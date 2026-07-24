@@ -17,6 +17,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { Footer } from "@/components/Footer";
 import { SplashScreen } from "@/components/SplashScreen";
 import { PageTransition } from "@/components/PageTransition";
+import { TopProgressBar } from "@/components/TopProgressBar";
 
 function NotFoundComponent() {
   return (
@@ -135,6 +136,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
+        <TopProgressBar />
         <SplashScreen onFading={() => setEntryPhase("revealed")} />
         <motion.div
           animate={{

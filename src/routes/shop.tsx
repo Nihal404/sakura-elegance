@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { useStore, type Category } from "@/lib/store";
 import { ProductCard } from "@/components/ProductCard";
+import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/shop")({
 function Shop() {
   const { category } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { products } = useStore();
+  const { products, productsLoading } = useStore();
 
   const filtered = category ? products.filter((p) => p.category === category) : products;
   const tabs: (Category | undefined)[] = [undefined, "Clothing", "Accessories"];
@@ -92,7 +93,17 @@ function Shop() {
       </LayoutGroup>
 
       <AnimatePresence mode="wait" initial={false}>
-        {filtered.length === 0 ? (
+        {productsLoading && filtered.length === 0 ? (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ProductGridSkeleton count={8} />
+          </motion.div>
+        ) : filtered.length === 0 ? (
           <motion.p
             key="empty"
             initial={{ opacity: 0, y: 10 }}
