@@ -51,8 +51,17 @@ function Login() {
     setFormError("");
     try {
       if (cleanEmail === ADMIN_EMAIL) {
-        // Ensure the admin account exists with the seeded password before signing in.
+        // Provision the admin account and sign in directly (no OTP step for the owner).
         await provisionAdmin();
+        const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+        if (error) {
+          setFormError(error.message);
+          toast.error(error.message);
+          return;
+        }
+        toast.success("Welcome, admin!");
+        router.navigate({ to: "/admin" });
+        return;
       }
       if (mode === "signup") {
         const result = await signUpFn({ data: { email: cleanEmail, password, name: name.trim() || undefined } });
