@@ -64,6 +64,7 @@ type ProductRow = {
   image_url: string;
   description: string | null;
   features: string[] | null;
+  mockups: string[] | null;
 };
 
 function rowToProduct(r: ProductRow): Product {
@@ -75,6 +76,7 @@ function rowToProduct(r: ProductRow): Product {
     image: r.image_url,
     description: r.description ?? "",
     features: r.features ?? [],
+    mockups: r.mockups ?? [],
   };
 }
 
