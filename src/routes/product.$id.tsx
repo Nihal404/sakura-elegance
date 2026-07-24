@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, Loader2 } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { ProductReviews } from "@/components/ProductReviews";
 
 export const Route = createFileRoute("/product/$id")({
   head: ({ params }) => ({
@@ -185,6 +186,8 @@ function ProductDetail() {
           </div>
         </motion.div>
       </div>
+
+      <ProductReviews productId={product.id} />
     </div>
   );
 }
