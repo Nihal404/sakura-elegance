@@ -1,7 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 
-export function SplashScreen() {
+interface SplashScreenProps {
+  onFading?: () => void;
+}
+
+export function SplashScreen({ onFading }: SplashScreenProps) {
   const [show, setShow] = useState(true);
 
   useEffect(() => {
@@ -11,11 +15,12 @@ export function SplashScreen() {
       return;
     }
     const t = setTimeout(() => {
+      onFading?.();
       sessionStorage.setItem("zari_splash_seen", "1");
       setShow(false);
     }, 2600);
     return () => clearTimeout(t);
-  }, []);
+  }, [onFading]);
 
   const petals = Array.from({ length: 14 });
 
