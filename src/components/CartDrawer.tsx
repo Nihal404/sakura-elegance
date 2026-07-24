@@ -80,7 +80,7 @@ export function CartDrawer() {
                           <span className="font-semibold">₹{(item.qty * item.price).toFixed(2)}</span>
                         </div>
                       </div>
-                    </motion.li>
+                    </li>
                   ))}
                 </ul>
               )}
