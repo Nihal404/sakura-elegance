@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X } from "lucide-react";
+import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
-import { useStore, type Category } from "@/lib/store";
+import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+
+const MAX_MOCKUPS = 6;
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
