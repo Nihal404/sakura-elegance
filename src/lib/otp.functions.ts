@@ -74,7 +74,19 @@ export const sendOtpEmail = createServerFn({ method: "POST" })
     if (!res.ok) {
       const body = await res.text();
       console.error("Resend send failed", res.status, body);
-      throw new Error("Could not send the sign-in email. Please try again.");
+      let msg = "Could not send the sign-in email. Please try again.";
+      try {
+        const parsed = JSON.parse(body) as { message?: string; name?: string };
+        if (parsed?.name === "validation_error" && parsed.message?.includes("testing emails")) {
+          msg =
+            "Email sending is restricted to the Resend account owner's address until a domain is verified. Verify a domain at resend.com/domains and update the sender.";
+        } else if (parsed?.message) {
+          msg = parsed.message;
+        }
+      } catch {
+        // keep default
+      }
+      throw new Error(msg);
     }
     return { ok: true };
   });
