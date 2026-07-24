@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 const ADMIN_EMAIL = "admin@zariboutique.com";
-const ADMIN_PASSWORD = "Zaribotique#2026";
+const ADMIN_PASSWORD = "zaribotique#2026";
 
 /**
  * Idempotently ensures the admin account exists with the canonical strong password.
