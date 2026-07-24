@@ -122,16 +122,33 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [entryPhase, setEntryPhase] = useState<"idle" | "dimmed" | "revealed">("idle");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!sessionStorage.getItem("zari_splash_seen")) {
+      setEntryPhase("dimmed");
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
-        <SplashScreen />
-        <Navbar />
-        <main className="pt-20 min-h-screen">
-          <Outlet />
-        </main>
-        <Footer />
+        <SplashScreen onFading={() => setEntryPhase("revealed")} />
+        <motion.div
+          animate={{
+            opacity: entryPhase === "revealed" ? 1 : entryPhase === "dimmed" ? 0.75 : 1,
+            scale: entryPhase === "revealed" ? 1 : entryPhase === "dimmed" ? 0.98 : 1,
+          }}
+          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          className="origin-center"
+        >
+          <Navbar />
+          <main className="pt-20 min-h-screen">
+            <Outlet />
+          </main>
+          <Footer />
+        </motion.div>
         <CartDrawer />
       </StoreProvider>
     </QueryClientProvider>
