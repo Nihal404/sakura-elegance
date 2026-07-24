@@ -176,12 +176,16 @@ export const signUpUser = createServerFn({ method: "POST" })
       return { ok: false, error: createErr?.message || "Could not create your account." };
     }
 
-    const otpResult = await sendOtpTo(email, channel, phone);
-    if (!otpResult.ok) {
-      await supabaseAdmin.auth.admin.deleteUser(created.user.id).catch(() => {});
-      return otpResult;
+    // Email channel: Supabase's built-in email OTP is triggered from the client
+    // via supabase.auth.signInWithOtp({ email }). Nothing to do here.
+    if (channel === "whatsapp") {
+      const otpResult = await sendWhatsAppOtpWithStore(email, phone!);
+      if (!otpResult.ok) {
+        await supabaseAdmin.auth.admin.deleteUser(created.user.id).catch(() => {});
+        return otpResult;
+      }
     }
-    return { ok: true };
+    return { ok: true, channel };
   });
 
 /**
