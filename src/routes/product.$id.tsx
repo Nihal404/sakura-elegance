@@ -54,9 +54,11 @@ function ProductDetail() {
   }
 
   const description =
-    product.category === "Clothing"
-      ? `Crafted for effortless elegance, the ${product.name} drapes the wearer in whisper-soft fabric with a hand-finished silhouette. Rose-toned stitching and subtle floral motifs bring a modern romance to a timeless piece — perfect for garden weddings, twilight dinners, and quiet afternoons alike.`
-      : `A refined accent piece, the ${product.name} is finished by hand with delicate rose-gold detailing. Designed to complement the Sakura palette, it layers beautifully with everyday looks and special occasions — a small heirloom in the making.`;
+    product.description?.trim()
+      ? product.description
+      : product.category === "Clothing"
+        ? `Crafted for effortless elegance, the ${product.name} drapes the wearer in whisper-soft fabric with a hand-finished silhouette. Rose-toned stitching and subtle floral motifs bring a modern romance to a timeless piece — perfect for garden weddings, twilight dinners, and quiet afternoons alike.`
+        : `A refined accent piece, the ${product.name} is finished by hand with delicate rose-gold detailing. Designed to complement the Sakura palette, it layers beautifully with everyday looks and special occasions — a small heirloom in the making.`;
 
   // Mockup views derived from the same product image with different framings.
   const views = [

@@ -17,6 +17,7 @@ export interface Product {
   price: number;
   category: Category;
   image: string;
+  description: string;
 }
 
 export interface CartItem extends Product {
@@ -59,6 +60,7 @@ type ProductRow = {
   price: number | string;
   category: string;
   image_url: string;
+  description: string | null;
 };
 
 function rowToProduct(r: ProductRow): Product {
@@ -68,6 +70,7 @@ function rowToProduct(r: ProductRow): Product {
     price: Number(r.price),
     category: r.category as Category,
     image: r.image_url,
+    description: r.description ?? "",
   };
 }
 
@@ -115,9 +118,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setProductsLoading(true);
     const { data, error } = await supabase
       .from("products")
-      .select("id,name,price,category,image_url")
+      .select("id,name,price,category,image_url,description")
       .order("created_at", { ascending: false });
-    if (!error && data) setProducts(data.map(rowToProduct));
+    if (!error && data) setProducts((data as unknown as ProductRow[]).map(rowToProduct));
     setProductsLoading(false);
   };
 
@@ -172,6 +175,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           price: p.price,
           category: p.category,
           image_url: p.image,
+          description: p.description,
         });
         if (error) throw error;
         await refreshProducts();
@@ -182,11 +186,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           price?: number;
           category?: string;
           image_url?: string;
+          description?: string;
         } = {};
         if (patch.name !== undefined) dbPatch.name = patch.name;
         if (patch.price !== undefined) dbPatch.price = patch.price;
         if (patch.category !== undefined) dbPatch.category = patch.category;
         if (patch.image !== undefined) dbPatch.image_url = patch.image;
+        if (patch.description !== undefined) dbPatch.description = patch.description;
         const { error } = await supabase.from("products").update(dbPatch).eq("id", id);
         if (error) throw error;
         await refreshProducts();

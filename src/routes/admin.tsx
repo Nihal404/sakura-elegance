@@ -23,11 +23,13 @@ function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState<Category>("Clothing");
+  const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
@@ -99,10 +101,12 @@ function Admin() {
         price: priceNum,
         category,
         image: signed.signedUrl,
+        description: description.trim(),
       });
       toast.success("Product added to the boutique.");
       setName("");
       setPrice("");
+      setDescription("");
       setFile(null);
       setPreview("");
     } catch (err: unknown) {
@@ -123,16 +127,18 @@ function Admin() {
     }
   };
 
-  const startEdit = (id: string, name: string, price: number) => {
+  const startEdit = (id: string, name: string, price: number, description: string) => {
     setEditingId(id);
     setEditName(name);
     setEditPrice(String(price));
+    setEditDescription(description);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditName("");
     setEditPrice("");
+    setEditDescription("");
   };
 
   const saveEdit = async (id: string) => {
@@ -143,7 +149,11 @@ function Admin() {
     }
     setSavingEdit(true);
     try {
-      await updateProduct(id, { name: editName.trim(), price: priceNum });
+      await updateProduct(id, {
+        name: editName.trim(),
+        price: priceNum,
+        description: editDescription.trim(),
+      });
       toast.success("Product updated.");
       cancelEdit();
     } catch (err: unknown) {
@@ -211,6 +221,15 @@ function Admin() {
                 <option value="Clothing">Clothing</option>
                 <option value="Accessories">Accessories</option>
               </select>
+            </Field>
+            <Field label="Description">
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Tell the story of this piece — fabric, craftsmanship, styling notes…"
+                rows={4}
+                className="input resize-y min-h-[110px]"
+              />
             </Field>
             <Field label="Product image">
               <input
@@ -296,14 +315,30 @@ function Admin() {
                             className="w-11 h-11 rounded-lg object-cover"
                           />
                           {editingId === p.id ? (
-                            <input
-                              value={editName}
-                              onChange={(e) => setEditName(e.target.value)}
-                              className="input !py-1.5 !px-3 max-w-[180px]"
-                              autoFocus
-                            />
+                            <div className="flex-1 flex flex-col gap-2">
+                              <input
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                className="input !py-1.5 !px-3 max-w-[240px]"
+                                autoFocus
+                              />
+                              <textarea
+                                value={editDescription}
+                                onChange={(e) => setEditDescription(e.target.value)}
+                                placeholder="Description"
+                                rows={2}
+                                className="input !py-1.5 !px-3 text-xs resize-y min-h-[52px]"
+                              />
+                            </div>
                           ) : (
-                            <span className="font-medium">{p.name}</span>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{p.name}</span>
+                              {p.description && (
+                                <span className="text-xs text-muted-foreground line-clamp-1 max-w-[260px]">
+                                  {p.description}
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                       </td>
@@ -347,7 +382,7 @@ function Admin() {
                           ) : (
                             <>
                               <button
-                                onClick={() => startEdit(p.id, p.name, p.price)}
+                                onClick={() => startEdit(p.id, p.name, p.price, p.description)}
                                 className="p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
                                 aria-label="Edit"
                               >
