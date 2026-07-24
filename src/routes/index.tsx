@@ -75,7 +75,7 @@ function Home() {
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-background/70 backdrop-blur text-xs tracking-[0.2em] uppercase text-primary mb-6 border border-primary/20"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Sakura Collection · Spring
+              ZARIBOUTIQUE | BLOOMING&nbsp;
             </motion.div>
             <h1 className="font-serif text-5xl md:text-7xl leading-[1.05] tracking-tight text-foreground">
               Elegance
