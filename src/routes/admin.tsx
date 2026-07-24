@@ -448,6 +448,50 @@ function Admin() {
                                 rows={3}
                                 className="input !py-1.5 !px-3 text-xs resize-y min-h-[64px]"
                               />
+                              <div>
+                                <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
+                                  Mockups ({editMockups.length}/{MAX_MOCKUPS}) · click to make main
+                                </div>
+                                <div className="grid grid-cols-6 gap-1.5">
+                                  {editMockups.map((src, i) => (
+                                    <div key={src + i} className="relative group">
+                                      <button
+                                        type="button"
+                                        onClick={() => makeEditMain(i)}
+                                        className={`block w-full aspect-square rounded-md overflow-hidden border ${i === 0 ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
+                                        aria-label={`Make image ${i + 1} main`}
+                                      >
+                                        <img src={src} alt="" className="w-full h-full object-cover" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeEditMockup(i)}
+                                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-background border border-border/70 text-muted-foreground hover:text-destructive inline-flex items-center justify-center"
+                                        aria-label="Remove"
+                                      >
+                                        <X className="w-2.5 h-2.5" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  {editMockups.length < MAX_MOCKUPS && (
+                                    <label className="aspect-square rounded-md border border-dashed border-border/70 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary cursor-pointer">
+                                      {editUploading ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                      ) : (
+                                        <ImagePlus className="w-3.5 h-3.5" />
+                                      )}
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={onEditFileChange}
+                                        className="hidden"
+                                        disabled={editUploading}
+                                      />
+                                    </label>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           ) : (
                             <div className="flex flex-col">
