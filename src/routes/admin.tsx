@@ -295,22 +295,76 @@ function Admin() {
                             alt=""
                             className="w-11 h-11 rounded-lg object-cover"
                           />
-                          <span className="font-medium">{p.name}</span>
+                          {editingId === p.id ? (
+                            <input
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              className="input !py-1.5 !px-3 max-w-[180px]"
+                              autoFocus
+                            />
+                          ) : (
+                            <span className="font-medium">{p.name}</span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4 hidden sm:table-cell text-muted-foreground">
                         {p.category}
                       </td>
-                      <td className="py-3 px-4 text-right font-medium">${p.price}</td>
-                      <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => onRemove(p.id)}
-                          className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                          aria-label="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <td className="py-3 px-4 text-right font-medium">
+                        {editingId === p.id ? (
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={editPrice}
+                            onChange={(e) => setEditPrice(e.target.value)}
+                            className="input !py-1.5 !px-3 w-24 text-right ml-auto"
+                          />
+                        ) : (
+                          <>${p.price}</>
+                        )}
                       </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          {editingId === p.id ? (
+                            <>
+                              <button
+                                onClick={() => saveEdit(p.id)}
+                                disabled={savingEdit}
+                                className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors disabled:opacity-50"
+                                aria-label="Save"
+                              >
+                                {savingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                disabled={savingEdit}
+                                className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors"
+                                aria-label="Cancel"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => startEdit(p.id, p.name, p.price)}
+                                className="p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                                aria-label="Edit"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => onRemove(p.id)}
+                                className="p-2 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                                aria-label="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+
                     </motion.tr>
                   ))}
                 </AnimatePresence>
