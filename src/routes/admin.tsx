@@ -75,55 +75,72 @@ function Admin() {
     );
   }
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] ?? null;
-    setFile(f);
-    if (f) {
+  const uploadFile = async (f: File): Promise<string> => {
+    const ext = f.name.split(".").pop() ?? "jpg";
+    const path = `${user!.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("product-images")
+      .upload(path, f, { contentType: f.type, upsert: false });
+    if (upErr) throw upErr;
+    const { data: signed, error: sErr } = await supabase.storage
+      .from("product-images")
+      .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (sErr || !signed) throw sErr ?? new Error("Failed to sign URL");
+    return signed.signedUrl;
+  };
+
+  const readAsDataUrl = (f: File) =>
+    new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => setPreview(reader.result as string);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
       reader.readAsDataURL(f);
-    } else {
-      setPreview("");
+    });
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const chosen = Array.from(e.target.files ?? []);
+    if (!chosen.length) return;
+    const combined = [...files, ...chosen].slice(0, MAX_MOCKUPS);
+    if (files.length + chosen.length > MAX_MOCKUPS) {
+      toast.error(`You can add up to ${MAX_MOCKUPS} images.`);
     }
+    setFiles(combined);
+    const dataUrls = await Promise.all(combined.map(readAsDataUrl));
+    setPreviews(dataUrls);
+    e.target.value = "";
+  };
+
+  const removePreview = (i: number) => {
+    setFiles((prev) => prev.filter((_, idx) => idx !== i));
+    setPreviews((prev) => prev.filter((_, idx) => idx !== i));
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const priceNum = parseFloat(price);
-    if (!name || !priceNum || !file) {
-      toast.error("Please fill all fields and pick an image.");
+    if (!name || !priceNum || files.length === 0) {
+      toast.error("Please fill all fields and add at least one image.");
       return;
     }
     setSubmitting(true);
     try {
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("product-images")
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (upErr) throw upErr;
-
-      // Long-lived signed URL (10 years)
-      const { data: signed, error: sErr } = await supabase.storage
-        .from("product-images")
-        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
-      if (sErr || !signed) throw sErr ?? new Error("Failed to sign URL");
-
+      const urls = await Promise.all(files.map(uploadFile));
       await addProduct({
         name,
         price: priceNum,
         category,
-        image: signed.signedUrl,
+        image: urls[0],
         description: description.trim(),
         features: parseFeatures(features),
+        mockups: urls,
       });
       toast.success("Product added to the boutique.");
       setName("");
       setPrice("");
       setDescription("");
       setFeatures("");
-      setFile(null);
-      setPreview("");
+      setFiles([]);
+      setPreviews([]);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to add product";
       toast.error(msg);
