@@ -216,10 +216,11 @@ function Login() {
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="email"
-                value=""
-                readOnly
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
                 placeholder="Admin email"
-                className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/40 border border-border text-muted-foreground"
+                className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
+                required
               />
             </div>
             <div className="relative">
