@@ -127,16 +127,18 @@ function Admin() {
     }
   };
 
-  const startEdit = (id: string, name: string, price: number) => {
+  const startEdit = (id: string, name: string, price: number, description: string) => {
     setEditingId(id);
     setEditName(name);
     setEditPrice(String(price));
+    setEditDescription(description);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditName("");
     setEditPrice("");
+    setEditDescription("");
   };
 
   const saveEdit = async (id: string) => {
@@ -147,7 +149,11 @@ function Admin() {
     }
     setSavingEdit(true);
     try {
-      await updateProduct(id, { name: editName.trim(), price: priceNum });
+      await updateProduct(id, {
+        name: editName.trim(),
+        price: priceNum,
+        description: editDescription.trim(),
+      });
       toast.success("Product updated.");
       cancelEdit();
     } catch (err: unknown) {
