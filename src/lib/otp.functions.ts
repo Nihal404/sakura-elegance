@@ -370,3 +370,57 @@ export const sendOtpEmail = createServerFn({ method: "POST" })
   );
 
 export const verifyOtpEmail = verifyLoginOtp;
+
+/** Normalize an Indian phone number to E.164 (+91XXXXXXXXXX). */
+const normalizeIndianPhone = (raw: string): string | null => {
+  if (!raw) return null;
+  let digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("91") && digits.length === 12) digits = digits.slice(2);
+  if (digits.length !== 10) return null;
+  if (!/^[6-9]/.test(digits)) return null;
+  return `+91${digits}`;
+};
+
+async function findEmailByPhone(phone: string): Promise<string | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("email, phone")
+    .eq("phone", phone)
+    .limit(1)
+    .maybeSingle();
+  return data?.email ?? null;
+}
+
+/** Send an OTP for phone-based login. Looks up the email tied to the Indian phone number and delivers by email (SMS provider is not configured). */
+export const sendPhoneLoginOtp = createServerFn({ method: "POST" })
+  .inputValidator((data: { phone: string }) => {
+    const phone = normalizeIndianPhone(data.phone ?? "");
+    if (!phone) throw new Error("Enter a valid 10-digit Indian mobile number.");
+    return { phone };
+  })
+  .handler(async ({ data }): Promise<BasicResult> => {
+    const email = await findEmailByPhone(data.phone);
+    if (!email) {
+      return {
+        ok: false,
+        error: "No account is linked to this phone number. Please sign in with email instead.",
+      };
+    }
+    return sendOtpTo(email, "email", data.phone);
+  });
+
+/** Verify the phone-login OTP and return a magic-link token_hash the client exchanges for a session. */
+export const verifyPhoneLoginOtp = createServerFn({ method: "POST" })
+  .inputValidator((data: { phone: string; code: string }) => {
+    const phone = normalizeIndianPhone(data.phone ?? "");
+    const code = data.code?.trim();
+    if (!phone) throw new Error("Enter a valid 10-digit Indian mobile number.");
+    if (!code || !/^\d{6}$/.test(code)) throw new Error("Enter the 6-digit code.");
+    return { phone, code };
+  })
+  .handler(async ({ data }): Promise<VerifyResult> => {
+    const email = await findEmailByPhone(data.phone);
+    if (!email) return { ok: false, error: "No account linked to this phone number." };
+    return verifyLoginOtp({ data: { email, code: data.code } }) as Promise<VerifyResult>;
+  });
