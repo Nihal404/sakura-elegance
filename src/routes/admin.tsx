@@ -222,6 +222,15 @@ function Admin() {
                 <option value="Accessories">Accessories</option>
               </select>
             </Field>
+            <Field label="Description">
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Tell the story of this piece — fabric, craftsmanship, styling notes…"
+                rows={4}
+                className="input resize-y min-h-[110px]"
+              />
+            </Field>
             <Field label="Product image">
               <input
                 type="file"
