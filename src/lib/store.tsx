@@ -176,6 +176,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
         await refreshProducts();
       },
+      updateProduct: async (id, patch) => {
+        const dbPatch: Record<string, unknown> = {};
+        if (patch.name !== undefined) dbPatch.name = patch.name;
+        if (patch.price !== undefined) dbPatch.price = patch.price;
+        if (patch.category !== undefined) dbPatch.category = patch.category;
+        if (patch.image !== undefined) dbPatch.image_url = patch.image;
+        const { error } = await supabase.from("products").update(dbPatch).eq("id", id);
+        if (error) throw error;
+        await refreshProducts();
+      },
       removeProduct: async (id) => {
         const { error } = await supabase.from("products").delete().eq("id", id);
         if (error) throw error;
