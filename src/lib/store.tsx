@@ -87,24 +87,28 @@ async function hydrateUser(session: Session | null): Promise<User | null> {
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      return JSON.parse(localStorage.getItem("zari-cart") ?? "[]");
-    } catch {
-      return [];
-    }
-  });
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cartHydrated, setCartHydrated] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // Persist cart
+  // Hydrate cart from localStorage after mount (avoids SSR mismatch)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("zari-cart", JSON.stringify(cart));
+    try {
+      const stored = localStorage.getItem("zari-cart");
+      if (stored) setCart(JSON.parse(stored));
+    } catch {
+      /* ignore */
     }
-  }, [cart]);
+    setCartHydrated(true);
+  }, []);
+
+  // Persist cart only after hydration
+  useEffect(() => {
+    if (!cartHydrated) return;
+    localStorage.setItem("zari-cart", JSON.stringify(cart));
+  }, [cart, cartHydrated]);
 
   const refreshProducts = async () => {
     setProductsLoading(true);
