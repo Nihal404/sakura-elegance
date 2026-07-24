@@ -60,13 +60,24 @@ function ProductDetail() {
         ? `Crafted for effortless elegance, the ${product.name} drapes the wearer in whisper-soft fabric with a hand-finished silhouette. Rose-toned stitching and subtle floral motifs bring a modern romance to a timeless piece — perfect for garden weddings, twilight dinners, and quiet afternoons alike.`
         : `A refined accent piece, the ${product.name} is finished by hand with delicate rose-gold detailing. Designed to complement the Sakura palette, it layers beautifully with everyday looks and special occasions — a small heirloom in the making.`;
 
-  // Mockup views derived from the same product image with different framings.
-  const views = [
+  // Prefer admin-uploaded mockups; fall back to synthetic framed views of the main image.
+  const hasMockups = product.mockups && product.mockups.length > 0;
+  const syntheticViews = [
     { label: "Studio", frame: "bg-blush", transform: "" },
     { label: "Lookbook", frame: "bg-sakura", transform: "scale-110 translate-y-2" },
     { label: "Detail", frame: "bg-background", transform: "scale-[1.35]" },
     { label: "Editorial", frame: "bg-primary/15", transform: "scale-105 -translate-x-3" },
   ];
+  const gallery = hasMockups
+    ? product.mockups.map((src, i) => ({
+        src,
+        label: i === 0 ? "Main" : `View ${i + 1}`,
+        frame: "bg-blush",
+        transform: "",
+      }))
+    : syntheticViews.map((v) => ({ src: product.image, ...v }));
+
+  const currentView = gallery[Math.min(activeView, gallery.length - 1)];
 
   const onAdd = () => {
     for (let i = 0; i < qty; i++) addToCart(product);
@@ -91,36 +102,38 @@ function ProductDetail() {
             initial={{ opacity: 0.4, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className={`relative aspect-[4/5] rounded-3xl overflow-hidden shadow-petal ${views[activeView].frame}`}
+            className={`relative aspect-[4/5] rounded-3xl overflow-hidden shadow-petal ${currentView.frame}`}
           >
             <img
-              src={product.image}
+              src={currentView.src}
               alt={product.name}
-              className={`w-full h-full object-cover transition-transform duration-700 ${views[activeView].transform}`}
+              className={`w-full h-full object-cover transition-transform duration-700 ${currentView.transform}`}
             />
             <span className="absolute top-5 left-5 text-[10px] uppercase tracking-[0.2em] px-3 py-1 rounded-full bg-background/85 backdrop-blur text-foreground/80">
-              {views[activeView].label}
+              {currentView.label}
             </span>
           </motion.div>
 
-          <div className="mt-4 grid grid-cols-4 gap-3">
-            {views.map((v, i) => (
-              <button
-                key={v.label}
-                onClick={() => setActiveView(i)}
-                className={`relative aspect-square rounded-2xl overflow-hidden ${v.frame} border-2 transition-all ${
-                  activeView === i ? "border-primary shadow-soft" : "border-transparent opacity-70 hover:opacity-100"
-                }`}
-                aria-label={`View ${v.label}`}
-              >
-                <img
-                  src={product.image}
-                  alt=""
-                  className={`w-full h-full object-cover ${v.transform}`}
-                />
-              </button>
-            ))}
-          </div>
+          {gallery.length > 1 && (
+            <div className={`mt-4 grid gap-3 ${gallery.length <= 4 ? "grid-cols-4" : "grid-cols-6"}`}>
+              {gallery.map((v, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveView(i)}
+                  className={`relative aspect-square rounded-2xl overflow-hidden ${v.frame} border-2 transition-all ${
+                    activeView === i ? "border-primary shadow-soft" : "border-transparent opacity-70 hover:opacity-100"
+                  }`}
+                  aria-label={`View ${v.label}`}
+                >
+                  <img
+                    src={v.src}
+                    alt=""
+                    className={`w-full h-full object-cover ${v.transform}`}
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Details */}

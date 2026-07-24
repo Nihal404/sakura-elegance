@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X } from "lucide-react";
+import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
-import { useStore, type Category } from "@/lib/store";
+import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+
+const MAX_MOCKUPS = 6;
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -25,6 +27,8 @@ function Admin() {
   const [editPrice, setEditPrice] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editFeatures, setEditFeatures] = useState("");
+  const [editMockups, setEditMockups] = useState<string[]>([]);
+  const [editUploading, setEditUploading] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [name, setName] = useState("");
@@ -32,8 +36,8 @@ function Admin() {
   const [category, setCategory] = useState<Category>("Clothing");
   const [description, setDescription] = useState("");
   const [features, setFeatures] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string>("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const parseFeatures = (raw: string) =>
@@ -71,55 +75,72 @@ function Admin() {
     );
   }
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] ?? null;
-    setFile(f);
-    if (f) {
+  const uploadFile = async (f: File): Promise<string> => {
+    const ext = f.name.split(".").pop() ?? "jpg";
+    const path = `${user!.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("product-images")
+      .upload(path, f, { contentType: f.type, upsert: false });
+    if (upErr) throw upErr;
+    const { data: signed, error: sErr } = await supabase.storage
+      .from("product-images")
+      .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (sErr || !signed) throw sErr ?? new Error("Failed to sign URL");
+    return signed.signedUrl;
+  };
+
+  const readAsDataUrl = (f: File) =>
+    new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => setPreview(reader.result as string);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
       reader.readAsDataURL(f);
-    } else {
-      setPreview("");
+    });
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const chosen = Array.from(e.target.files ?? []);
+    if (!chosen.length) return;
+    const combined = [...files, ...chosen].slice(0, MAX_MOCKUPS);
+    if (files.length + chosen.length > MAX_MOCKUPS) {
+      toast.error(`You can add up to ${MAX_MOCKUPS} images.`);
     }
+    setFiles(combined);
+    const dataUrls = await Promise.all(combined.map(readAsDataUrl));
+    setPreviews(dataUrls);
+    e.target.value = "";
+  };
+
+  const removePreview = (i: number) => {
+    setFiles((prev) => prev.filter((_, idx) => idx !== i));
+    setPreviews((prev) => prev.filter((_, idx) => idx !== i));
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const priceNum = parseFloat(price);
-    if (!name || !priceNum || !file) {
-      toast.error("Please fill all fields and pick an image.");
+    if (!name || !priceNum || files.length === 0) {
+      toast.error("Please fill all fields and add at least one image.");
       return;
     }
     setSubmitting(true);
     try {
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("product-images")
-        .upload(path, file, { contentType: file.type, upsert: false });
-      if (upErr) throw upErr;
-
-      // Long-lived signed URL (10 years)
-      const { data: signed, error: sErr } = await supabase.storage
-        .from("product-images")
-        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
-      if (sErr || !signed) throw sErr ?? new Error("Failed to sign URL");
-
+      const urls = await Promise.all(files.map(uploadFile));
       await addProduct({
         name,
         price: priceNum,
         category,
-        image: signed.signedUrl,
+        image: urls[0],
         description: description.trim(),
         features: parseFeatures(features),
+        mockups: urls,
       });
       toast.success("Product added to the boutique.");
       setName("");
       setPrice("");
       setDescription("");
       setFeatures("");
-      setFile(null);
-      setPreview("");
+      setFiles([]);
+      setPreviews([]);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to add product";
       toast.error(msg);
@@ -138,18 +159,13 @@ function Admin() {
     }
   };
 
-  const startEdit = (
-    id: string,
-    name: string,
-    price: number,
-    description: string,
-    features: string[],
-  ) => {
-    setEditingId(id);
-    setEditName(name);
-    setEditPrice(String(price));
-    setEditDescription(description);
-    setEditFeatures(features.join("\n"));
+  const startEdit = (p: Product) => {
+    setEditingId(p.id);
+    setEditName(p.name);
+    setEditPrice(String(p.price));
+    setEditDescription(p.description);
+    setEditFeatures(p.features.join("\n"));
+    setEditMockups(p.mockups.length > 0 ? p.mockups : [p.image]);
   };
 
   const cancelEdit = () => {
@@ -158,12 +174,53 @@ function Admin() {
     setEditPrice("");
     setEditDescription("");
     setEditFeatures("");
+    setEditMockups([]);
+  };
+
+  const onEditFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const chosen = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!chosen.length) return;
+    const room = MAX_MOCKUPS - editMockups.length;
+    if (room <= 0) {
+      toast.error(`Up to ${MAX_MOCKUPS} images.`);
+      return;
+    }
+    const toUpload = chosen.slice(0, room);
+    if (chosen.length > room) toast.error(`Only ${room} more allowed.`);
+    setEditUploading(true);
+    try {
+      const urls = await Promise.all(toUpload.map(uploadFile));
+      setEditMockups((prev) => [...prev, ...urls]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      toast.error(msg);
+    } finally {
+      setEditUploading(false);
+    }
+  };
+
+  const removeEditMockup = (i: number) => {
+    setEditMockups((prev) => prev.filter((_, idx) => idx !== i));
+  };
+
+  const makeEditMain = (i: number) => {
+    setEditMockups((prev) => {
+      if (i === 0) return prev;
+      const copy = [...prev];
+      const [picked] = copy.splice(i, 1);
+      return [picked, ...copy];
+    });
   };
 
   const saveEdit = async (id: string) => {
     const priceNum = parseFloat(editPrice);
     if (!editName.trim() || !priceNum || priceNum <= 0) {
       toast.error("Enter a valid name and price.");
+      return;
+    }
+    if (editMockups.length === 0) {
+      toast.error("At least one image is required.");
       return;
     }
     setSavingEdit(true);
@@ -173,6 +230,8 @@ function Admin() {
         price: priceNum,
         description: editDescription.trim(),
         features: parseFeatures(editFeatures),
+        image: editMockups[0],
+        mockups: editMockups,
       });
       toast.success("Product updated.");
       cancelEdit();
@@ -260,21 +319,45 @@ function Admin() {
                 className="input resize-y min-h-[110px]"
               />
             </Field>
-            <Field label="Product image">
+            <Field label={`Product images (1–${MAX_MOCKUPS} · first is the main mockup)`}>
               <input
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={onFileChange}
-                className="input file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-primary-foreground file:text-xs file:cursor-pointer cursor-pointer"
-                required={!file}
+                disabled={files.length >= MAX_MOCKUPS}
+                className="input file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-primary-foreground file:text-xs file:cursor-pointer cursor-pointer disabled:opacity-60"
+                required={files.length === 0}
               />
-              {preview && (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="mt-3 w-24 h-24 rounded-xl object-cover border border-border/60"
-                />
+              {previews.length > 0 && (
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {previews.map((src, i) => (
+                    <div key={i} className="relative group">
+                      <img
+                        src={src}
+                        alt={`Mockup ${i + 1}`}
+                        className={`w-full aspect-square rounded-xl object-cover border ${i === 0 ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
+                      />
+                      {i === 0 && (
+                        <span className="absolute top-1 left-1 text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground">
+                          Main
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removePreview(i)}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-background border border-border/70 text-muted-foreground hover:text-destructive hover:border-destructive inline-flex items-center justify-center shadow-soft"
+                        aria-label="Remove image"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {files.length}/{MAX_MOCKUPS} selected
+              </p>
             </Field>
 
             <button
@@ -365,6 +448,50 @@ function Admin() {
                                 rows={3}
                                 className="input !py-1.5 !px-3 text-xs resize-y min-h-[64px]"
                               />
+                              <div>
+                                <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
+                                  Mockups ({editMockups.length}/{MAX_MOCKUPS}) · click to make main
+                                </div>
+                                <div className="grid grid-cols-6 gap-1.5">
+                                  {editMockups.map((src, i) => (
+                                    <div key={src + i} className="relative group">
+                                      <button
+                                        type="button"
+                                        onClick={() => makeEditMain(i)}
+                                        className={`block w-full aspect-square rounded-md overflow-hidden border ${i === 0 ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
+                                        aria-label={`Make image ${i + 1} main`}
+                                      >
+                                        <img src={src} alt="" className="w-full h-full object-cover" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeEditMockup(i)}
+                                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-background border border-border/70 text-muted-foreground hover:text-destructive inline-flex items-center justify-center"
+                                        aria-label="Remove"
+                                      >
+                                        <X className="w-2.5 h-2.5" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  {editMockups.length < MAX_MOCKUPS && (
+                                    <label className="aspect-square rounded-md border border-dashed border-border/70 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary cursor-pointer">
+                                      {editUploading ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                      ) : (
+                                        <ImagePlus className="w-3.5 h-3.5" />
+                                      )}
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={onEditFileChange}
+                                        className="hidden"
+                                        disabled={editUploading}
+                                      />
+                                    </label>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           ) : (
                             <div className="flex flex-col">
@@ -418,7 +545,7 @@ function Admin() {
                           ) : (
                             <>
                               <button
-                                onClick={() => startEdit(p.id, p.name, p.price, p.description, p.features)}
+                                onClick={() => startEdit(p)}
                                 className="p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
                                 aria-label="Edit"
                               >
