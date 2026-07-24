@@ -119,14 +119,27 @@ function Admin() {
                 <option value="Accessories">Accessories</option>
               </select>
             </Field>
-            <Field label="Image URL">
+            <Field label="Product image">
               <input
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                placeholder="https://images.unsplash.com/..."
-                className="input"
-                required
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => setImage(reader.result as string);
+                  reader.readAsDataURL(file);
+                }}
+                className="input file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-primary-foreground file:text-xs file:cursor-pointer cursor-pointer"
+                required={!image}
               />
+              {image && (
+                <img
+                  src={image}
+                  alt="Preview"
+                  className="mt-3 w-24 h-24 rounded-xl object-cover border border-border/60"
+                />
+              )}
             </Field>
 
             <button
