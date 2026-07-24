@@ -98,12 +98,14 @@ export function CartDrawer() {
                 <span>Total</span>
                 <span className="text-gradient-rose">₹{cartTotal.toFixed(2)}</span>
               </div>
-              <button
-                disabled={cart.length === 0}
-                className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide hover:opacity-90 disabled:opacity-40 transition-all shadow-soft"
+              <Link
+                to="/cart"
+                onClick={() => setCartOpen(false)}
+                aria-disabled={cart.length === 0}
+                className={`block text-center w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide hover:opacity-90 transition-all shadow-soft ${cart.length === 0 ? "pointer-events-none opacity-40" : ""}`}
               >
-                Checkout
-              </button>
+                View Bag & Checkout
+              </Link>
             </div>
           </motion.aside>
         </>
