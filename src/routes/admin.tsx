@@ -366,7 +366,7 @@ function Admin() {
                           ) : (
                             <>
                               <button
-                                onClick={() => startEdit(p.id, p.name, p.price)}
+                                onClick={() => startEdit(p.id, p.name, p.price, p.description)}
                                 className="p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
                                 aria-label="Edit"
                               >
