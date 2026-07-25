@@ -209,6 +209,8 @@ function Login() {
         }
         // Clear the pending_verification flag on the user record.
         await doFinalizeEmail({ data: { email: cleanEmail } }).catch(() => {});
+        verifiedRef.current = true;
+        pendingEmailRef.current = "";
         toast.success("Welcome to Zari!");
         router.navigate({ to: "/" });
         return;
