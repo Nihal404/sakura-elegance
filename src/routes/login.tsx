@@ -222,6 +222,8 @@ function Login() {
         toast.error(result.error);
         return;
       }
+      verifiedRef.current = true;
+      pendingEmailRef.current = "";
       const { error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
