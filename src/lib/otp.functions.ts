@@ -145,10 +145,18 @@ export const signUpUser = createServerFn({ method: "POST" })
     const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const existing = list?.users?.find((u) => u.email?.toLowerCase() === email);
     if (existing) {
-      return { ok: false, error: "An account with this email already exists. Please sign in instead." };
+      // If a prior signup was abandoned (never verified), wipe it so the
+      // user can try again cleanly — nothing stays in the DB for unverified accounts.
+      const isPending =
+        (existing.user_metadata as { pending_verification?: boolean } | null)?.pending_verification === true;
+      if (isPending) {
+        await supabaseAdmin.auth.admin.deleteUser(existing.id).catch(() => {});
+        await supabaseAdmin.from("email_otps").delete().eq("email", email);
+      } else {
+        return { ok: false, error: "An account with this email already exists. Please sign in instead." };
+      }
     }
 
-    // Phone uniqueness check against profiles
     if (phone) {
       const { data: phoneMatch } = await supabaseAdmin
         .from("profiles")
@@ -161,25 +169,22 @@ export const signUpUser = createServerFn({ method: "POST" })
       }
     }
 
-    const metadata: Record<string, unknown> = {};
+    const metadata: Record<string, unknown> = { pending_verification: true };
     if (name) metadata.name = name;
     if (phone) metadata.phone = phone;
 
-    // email_confirm: true — suppresses Supabase's "Confirm signup" link email.
-    // The user is verified separately via a 6-digit OTP delivered by
-    // supabase.auth.signInWithOtp (email) or our WhatsApp code (phone).
+    // We flag the account as pending_verification. It is deleted if the OTP
+    // is not successfully verified — so nothing lingers for failed signups.
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: Object.keys(metadata).length ? metadata : undefined,
+      user_metadata: metadata,
     });
     if (createErr || !created.user) {
       return { ok: false, error: createErr?.message || "Could not create your account." };
     }
 
-    // Email channel: Supabase's built-in email OTP is triggered from the client
-    // via supabase.auth.signInWithOtp({ email }). Nothing to do here.
     if (channel === "whatsapp") {
       const otpResult = await sendWhatsAppOtpWithStore(email, phone!);
       if (!otpResult.ok) {
@@ -190,9 +195,49 @@ export const signUpUser = createServerFn({ method: "POST" })
     return { ok: true, channel };
   });
 
+/** Delete the pending (unverified) account tied to an email. Called when the
+ *  user backs out of the OTP step before verifying. */
+export const cancelPendingSignup = createServerFn({ method: "POST" })
+  .inputValidator((data: { email: string }) => {
+    const email = data.email?.trim().toLowerCase();
+    if (!email) throw new Error("Email required.");
+    return { email };
+  })
+  .handler(async ({ data }): Promise<{ ok: true }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const user = list?.users?.find((u) => u.email?.toLowerCase() === data.email);
+    if (user) {
+      const isPending =
+        (user.user_metadata as { pending_verification?: boolean } | null)?.pending_verification === true;
+      if (isPending) await supabaseAdmin.auth.admin.deleteUser(user.id).catch(() => {});
+    }
+    await supabaseAdmin.from("email_otps").delete().eq("email", data.email);
+    return { ok: true };
+  });
+
+/** Clear the pending_verification flag once the email OTP is verified client-side. */
+export const finalizeEmailSignup = createServerFn({ method: "POST" })
+  .inputValidator((data: { email: string }) => {
+    const email = data.email?.trim().toLowerCase();
+    if (!email) throw new Error("Email required.");
+    return { email };
+  })
+  .handler(async ({ data }): Promise<BasicResult> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const user = list?.users?.find((u) => u.email?.toLowerCase() === data.email);
+    if (!user) return { ok: false, error: "Account not found." };
+    const currentMeta = (user.user_metadata as Record<string, unknown> | null) ?? {};
+    const { pending_verification: _drop, ...rest } = currentMeta;
+    void _drop;
+    await supabaseAdmin.auth.admin.updateUserById(user.id, { user_metadata: rest });
+    return { ok: true };
+  });
+
 /**
- * Verify the signup OTP and mark the user's email as confirmed so they can
- * sign in with their password.
+ * Verify the WhatsApp signup OTP. On failure (expired / too many attempts)
+ * the pending account is deleted so no unverified data stays in the database.
  */
 export const verifySignupOtp = createServerFn({ method: "POST" })
   .inputValidator((data: { email: string; code: string }) => {
@@ -208,6 +253,16 @@ export const verifySignupOtp = createServerFn({ method: "POST" })
     const { email, code } = data;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const deletePendingUser = async () => {
+      const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const user = list?.users?.find((u) => u.email?.toLowerCase() === email);
+      if (user) {
+        const isPending =
+          (user.user_metadata as { pending_verification?: boolean } | null)?.pending_verification === true;
+        if (isPending) await supabaseAdmin.auth.admin.deleteUser(user.id).catch(() => {});
+      }
+    };
+
     const { data: rows } = await supabaseAdmin
       .from("email_otps")
       .select("id, code_hash, expires_at, attempts, used")
@@ -216,25 +271,40 @@ export const verifySignupOtp = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(1);
     const row = rows?.[0];
-    if (!row) return { ok: false, error: "No active code. Request a new one." };
+    if (!row) {
+      await deletePendingUser();
+      return { ok: false, error: "No active code. Please sign up again." };
+    }
     if (new Date(row.expires_at).getTime() < Date.now()) {
-      return { ok: false, error: "Code expired. Request a new one." };
+      await deletePendingUser();
+      return { ok: false, error: "Code expired. Please sign up again." };
     }
     if (row.attempts >= MAX_ATTEMPTS) {
-      return { ok: false, error: "Too many attempts. Request a new code." };
+      await deletePendingUser();
+      return { ok: false, error: "Too many attempts. Please sign up again." };
     }
     if (hashCode(email, code) !== row.code_hash) {
-      await supabaseAdmin.from("email_otps").update({ attempts: row.attempts + 1 }).eq("id", row.id);
+      const nextAttempts = row.attempts + 1;
+      await supabaseAdmin.from("email_otps").update({ attempts: nextAttempts }).eq("id", row.id);
+      if (nextAttempts >= MAX_ATTEMPTS) {
+        await deletePendingUser();
+        return { ok: false, error: "Too many attempts. Please sign up again." };
+      }
       return { ok: false, error: "Invalid code." };
     }
     await supabaseAdmin.from("email_otps").update({ used: true }).eq("id", row.id);
 
-    // Find the user and confirm their email
     const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const user = list?.users?.find((u) => u.email?.toLowerCase() === email);
     if (!user) return { ok: false, error: "Account not found. Please sign up again." };
 
-    await supabaseAdmin.auth.admin.updateUserById(user.id, { email_confirm: true });
+    const currentMeta = (user.user_metadata as Record<string, unknown> | null) ?? {};
+    const { pending_verification: _drop, ...rest } = currentMeta;
+    void _drop;
+    await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      email_confirm: true,
+      user_metadata: rest,
+    });
     return { ok: true };
   });
 

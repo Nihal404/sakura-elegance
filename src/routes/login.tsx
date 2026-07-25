@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   Mail,
@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { ensureAdminAccount } from "@/lib/admin-provision.functions";
-import { signUpUser, verifySignupOtp } from "@/lib/otp.functions";
+import { signUpUser, verifySignupOtp, cancelPendingSignup, finalizeEmailSignup } from "@/lib/otp.functions";
 
 const ADMIN_EMAIL = "admin@zariboutique.com";
 
@@ -44,6 +44,8 @@ function Login() {
   const provisionAdmin = useServerFn(ensureAdminAccount);
   const doSignUp = useServerFn(signUpUser);
   const doVerifySignup = useServerFn(verifySignupOtp);
+  const doCancelSignup = useServerFn(cancelPendingSignup);
+  const doFinalizeEmail = useServerFn(finalizeEmailSignup);
 
   const [mode, setMode] = useState<Mode>("signin");
   const [signupStep, setSignupStep] = useState<SignupStep>("form");
@@ -64,6 +66,26 @@ function Login() {
   const [formError, setFormError] = useState("");
 
   const isAdmin = signinEmail.trim().toLowerCase() === ADMIN_EMAIL;
+  const pendingEmailRef = useRef<string>("");
+  const verifiedRef = useRef(false);
+
+  // If the user navigates away or closes the tab while on the OTP step
+  // without verifying, delete the pending (unverified) account.
+  useEffect(() => {
+    const cleanup = () => {
+      const pending = pendingEmailRef.current;
+      if (!pending || verifiedRef.current) return;
+      // Fire-and-forget; if it fails we can't do anything from here.
+      doCancelSignup({ data: { email: pending } }).catch(() => {});
+    };
+    const onBeforeUnload = () => cleanup();
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      cleanup();
+    };
+  }, [doCancelSignup]);
+
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,6 +172,8 @@ function Login() {
       } else {
         toast.success("Code sent — check WhatsApp.");
       }
+      pendingEmailRef.current = cleanEmail;
+      verifiedRef.current = false;
       setSignupStep("otp");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not create account";
@@ -183,6 +207,10 @@ function Login() {
           toast.error(error.message);
           return;
         }
+        // Clear the pending_verification flag on the user record.
+        await doFinalizeEmail({ data: { email: cleanEmail } }).catch(() => {});
+        verifiedRef.current = true;
+        pendingEmailRef.current = "";
         toast.success("Welcome to Zari!");
         router.navigate({ to: "/" });
         return;
@@ -194,6 +222,8 @@ function Login() {
         toast.error(result.error);
         return;
       }
+      verifiedRef.current = true;
+      pendingEmailRef.current = "";
       const { error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
@@ -455,6 +485,11 @@ function Login() {
               <button
                 type="button"
                 onClick={() => {
+                  const pending = pendingEmailRef.current;
+                  if (pending && !verifiedRef.current) {
+                    doCancelSignup({ data: { email: pending } }).catch(() => {});
+                  }
+                  pendingEmailRef.current = "";
                   setSignupStep("form");
                   setOtp("");
                   setFormError("");
