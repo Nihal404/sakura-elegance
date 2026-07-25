@@ -66,6 +66,26 @@ function Login() {
   const [formError, setFormError] = useState("");
 
   const isAdmin = signinEmail.trim().toLowerCase() === ADMIN_EMAIL;
+  const pendingEmailRef = useRef<string>("");
+  const verifiedRef = useRef(false);
+
+  // If the user navigates away or closes the tab while on the OTP step
+  // without verifying, delete the pending (unverified) account.
+  useEffect(() => {
+    const cleanup = () => {
+      const pending = pendingEmailRef.current;
+      if (!pending || verifiedRef.current) return;
+      // Fire-and-forget; if it fails we can't do anything from here.
+      doCancelSignup({ data: { email: pending } }).catch(() => {});
+    };
+    const onBeforeUnload = () => cleanup();
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      cleanup();
+    };
+  }, [doCancelSignup]);
+
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
