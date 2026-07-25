@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   Mail,
