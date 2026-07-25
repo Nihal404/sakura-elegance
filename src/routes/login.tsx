@@ -172,6 +172,8 @@ function Login() {
       } else {
         toast.success("Code sent — check WhatsApp.");
       }
+      pendingEmailRef.current = cleanEmail;
+      verifiedRef.current = false;
       setSignupStep("otp");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not create account";
