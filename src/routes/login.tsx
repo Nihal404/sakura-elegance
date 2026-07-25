@@ -44,6 +44,8 @@ function Login() {
   const provisionAdmin = useServerFn(ensureAdminAccount);
   const doSignUp = useServerFn(signUpUser);
   const doVerifySignup = useServerFn(verifySignupOtp);
+  const doCancelSignup = useServerFn(cancelPendingSignup);
+  const doFinalizeEmail = useServerFn(finalizeEmailSignup);
 
   const [mode, setMode] = useState<Mode>("signin");
   const [signupStep, setSignupStep] = useState<SignupStep>("form");
