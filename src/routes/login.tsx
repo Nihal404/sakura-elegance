@@ -185,6 +185,8 @@ function Login() {
           toast.error(error.message);
           return;
         }
+        // Clear the pending_verification flag on the user record.
+        await doFinalizeEmail({ data: { email: cleanEmail } }).catch(() => {});
         toast.success("Welcome to Zari!");
         router.navigate({ to: "/" });
         return;
