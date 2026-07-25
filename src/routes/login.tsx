@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { ensureAdminAccount } from "@/lib/admin-provision.functions";
-import { signUpUser, verifySignupOtp } from "@/lib/otp.functions";
+import { signUpUser, verifySignupOtp, cancelPendingSignup, finalizeEmailSignup } from "@/lib/otp.functions";
 
 const ADMIN_EMAIL = "admin@zariboutique.com";
 
