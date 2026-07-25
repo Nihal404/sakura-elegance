@@ -485,6 +485,11 @@ function Login() {
               <button
                 type="button"
                 onClick={() => {
+                  const pending = pendingEmailRef.current;
+                  if (pending && !verifiedRef.current) {
+                    doCancelSignup({ data: { email: pending } }).catch(() => {});
+                  }
+                  pendingEmailRef.current = "";
                   setSignupStep("form");
                   setOtp("");
                   setFormError("");
