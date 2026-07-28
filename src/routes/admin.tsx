@@ -30,6 +30,7 @@ function Admin() {
   const [editMockups, setEditMockups] = useState<string[]>([]);
   const [editUploading, setEditUploading] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [replacingId, setReplacingId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
