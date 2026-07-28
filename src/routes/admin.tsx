@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus } from "lucide-react";
+import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Images } from "lucide-react";
 import { toast } from "sonner";
 import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ function Admin() {
   const [editMockups, setEditMockups] = useState<string[]>([]);
   const [editUploading, setEditUploading] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [replacingId, setReplacingId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -242,6 +243,27 @@ function Admin() {
       setSavingEdit(false);
     }
   };
+
+  const onReplaceMockups = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    id: string,
+  ) => {
+    const chosen = Array.from(e.target.files ?? []).slice(0, MAX_MOCKUPS);
+    e.target.value = "";
+    if (!chosen.length) return;
+    setReplacingId(id);
+    try {
+      const urls = await Promise.all(chosen.map(uploadFile));
+      await updateProduct(id, { image: urls[0], mockups: urls });
+      toast.success("Mockups updated.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update pics";
+      toast.error(msg);
+    } finally {
+      setReplacingId(null);
+    }
+  };
+
 
   return (
     <div className="mx-auto max-w-7xl px-6 lg:px-10 py-14">
@@ -544,6 +566,24 @@ function Admin() {
                             </>
                           ) : (
                             <>
+                              <label
+                                className={`p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer inline-flex ${replacingId === p.id ? "opacity-60 pointer-events-none" : ""}`}
+                                aria-label="Change pics"
+                                title="Change pics"
+                              >
+                                {replacingId === p.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Images className="w-4 h-4" />
+                                )}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  className="hidden"
+                                  onChange={(e) => onReplaceMockups(e, p.id)}
+                                />
+                              </label>
                               <button
                                 onClick={() => startEdit(p)}
                                 className="p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
