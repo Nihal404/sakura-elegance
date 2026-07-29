@@ -26,6 +26,9 @@ type SignupStep = "form" | "otp";
 type Channel = "email" | "whatsapp";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — Zari Boutique" },
@@ -39,8 +42,14 @@ export const Route = createFileRoute("/login")({
   component: Login,
 });
 
+function navigateNext(router: ReturnType<typeof useRouter>, next: string | undefined, fallback: string) {
+  const target = next && next.startsWith("/") && !next.startsWith("//") ? next : fallback;
+  window.location.assign(target);
+}
+
 function Login() {
   const router = useRouter();
+  const { next } = Route.useSearch();
   const provisionAdmin = useServerFn(ensureAdminAccount);
   const doSignUp = useServerFn(signUpUser);
   const doVerifySignup = useServerFn(verifySignupOtp);
