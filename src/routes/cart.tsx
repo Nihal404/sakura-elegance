@@ -6,7 +6,7 @@ import { useStore } from "@/lib/store";
 
 // TODO: Replace with the merchant's WhatsApp number in international format
 // (digits only, with country code, no "+" or spaces). Example: 919876543210
-const WHATSAPP_NUMBER = "919999999999";
+const WHATSAPP_NUMBER = "919972025151";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
