@@ -119,7 +119,7 @@ function Login() {
         return;
       }
       toast.success(isAdmin ? "Welcome, admin!" : "Welcome back!");
-      router.navigate({ to: isAdmin ? "/admin" : "/" });
+      navigateNext(router, next, isAdmin ? "/admin" : "/");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Sign in failed";
       setFormError(message);
@@ -221,7 +221,7 @@ function Login() {
         verifiedRef.current = true;
         pendingEmailRef.current = "";
         toast.success("Welcome to Zari!");
-        router.navigate({ to: "/" });
+        navigateNext(router, next, "/");
         return;
       }
       // WhatsApp channel: verify custom code server-side, then sign in with password.
@@ -245,7 +245,7 @@ function Login() {
         return;
       }
       toast.success("Welcome to Zari!");
-      router.navigate({ to: "/" });
+      navigateNext(router, next, "/");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Verification failed";
       setFormError(message);
