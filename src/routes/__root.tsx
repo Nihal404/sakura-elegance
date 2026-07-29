@@ -131,6 +131,13 @@ function RootComponent() {
     if (!sessionStorage.getItem("zari_splash_seen")) {
       setEntryPhase("dimmed");
     }
+    // Runtime verification: log which Supabase project/key the deployed bundle uses.
+    const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+    const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+    const mask = (v?: string) =>
+      !v ? "(missing)" : v.length <= 12 ? "***" : `${v.slice(0, 8)}…${v.slice(-4)} (len ${v.length})`;
+    // eslint-disable-next-line no-console
+    console.log("[Supabase env]", { VITE_SUPABASE_URL: url, VITE_SUPABASE_PUBLISHABLE_KEY: mask(key) });
   }, []);
 
   return (
