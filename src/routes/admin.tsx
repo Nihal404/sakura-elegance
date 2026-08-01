@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Images } from "lucide-react";
+import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Images, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+import { describeProductImage } from "@/lib/describe-product.functions";
+
 
 const MAX_MOCKUPS = 6;
 
