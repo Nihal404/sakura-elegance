@@ -43,6 +43,10 @@ function Admin() {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+
+  const describeImage = useServerFn(describeProductImage);
+
 
   const parseFeatures = (raw: string) =>
     raw
