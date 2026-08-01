@@ -116,7 +116,25 @@ function Admin() {
     const dataUrls = await Promise.all(combined.map(readAsDataUrl));
     setPreviews(dataUrls);
     e.target.value = "";
+    if (dataUrls[0]) void generateCopy(dataUrls[0]);
   };
+
+  const generateCopy = async (imageDataUrl: string) => {
+    setAiBusy(true);
+    try {
+      const result = await describeImage({
+        data: { imageDataUrl, name: name.trim() || undefined, category },
+      });
+      setDescription(result.description);
+      if (result.features.length > 0) setFeatures(result.features.join("\n"));
+      toast.success("AI wrote the description from your image.");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Could not generate a description.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
 
   const removePreview = (i: number) => {
     setFiles((prev) => prev.filter((_, idx) => idx !== i));
