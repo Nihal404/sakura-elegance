@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Images } from "lucide-react";
+import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Images, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+import { describeProductImage } from "@/lib/describe-product.functions";
+
 
 const MAX_MOCKUPS = 6;
 
@@ -40,6 +43,10 @@ function Admin() {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+
+  const describeImage = useServerFn(describeProductImage);
+
 
   const parseFeatures = (raw: string) =>
     raw
@@ -109,7 +116,25 @@ function Admin() {
     const dataUrls = await Promise.all(combined.map(readAsDataUrl));
     setPreviews(dataUrls);
     e.target.value = "";
+    if (dataUrls[0]) void generateCopy(dataUrls[0]);
   };
+
+  const generateCopy = async (imageDataUrl: string) => {
+    setAiBusy(true);
+    try {
+      const result = await describeImage({
+        data: { imageDataUrl, name: name.trim() || undefined, category },
+      });
+      setDescription(result.description);
+      if (result.features.length > 0) setFeatures(result.features.join("\n"));
+      toast.success("AI wrote the description from your image.");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Could not generate a description.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
 
   const removePreview = (i: number) => {
     setFiles((prev) => prev.filter((_, idx) => idx !== i));
@@ -323,15 +348,33 @@ function Admin() {
                 <option value="Accessories">Accessories</option>
               </select>
             </Field>
-            <Field label="Description">
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Tell the story of this piece — fabric, craftsmanship, styling notes…"
-                rows={4}
-                className="input resize-y min-h-[110px]"
-              />
+            <Field label="Description (written by AI from your image)">
+              <div className="relative">
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={aiBusy ? "AI is looking at your image…" : "Add an image and AI writes this for you — edit freely."}
+                  rows={4}
+                  className="input resize-y min-h-[110px]"
+                />
+                {aiBusy && (
+                  <div className="absolute inset-0 rounded-[0.9rem] bg-background/60 flex items-center justify-center gap-2 text-xs text-primary">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Writing from your image…
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => previews[0] && generateCopy(previews[0])}
+                disabled={aiBusy || previews.length === 0}
+                className="mt-2 inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-blush text-primary hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50"
+              >
+                <Sparkles className="w-3 h-3" />
+                Regenerate with AI
+              </button>
             </Field>
+
             <Field label="Highlights (one per line, up to 8)">
               <textarea
                 value={features}
