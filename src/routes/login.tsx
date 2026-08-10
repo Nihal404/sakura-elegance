@@ -16,6 +16,8 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
+import { describeAuthError, isNetworkError, checkAuthReachable } from "@/lib/auth-errors";
+
 
 import { signUpUser, verifySignupOtp, cancelPendingSignup, finalizeEmailSignup } from "@/lib/otp.functions";
 
