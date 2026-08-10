@@ -69,7 +69,7 @@ export function ProductReviews({ productId }: { productId: string }) {
       setLoading(true);
       const { data, error } = await supabase
         .from("reviews")
-        .select("*")
+        .select("id, product_id, name, rating, comment, created_at")
         .eq("product_id", productId)
         .order("created_at", { ascending: false });
       if (!active) return;
@@ -127,7 +127,7 @@ export function ProductReviews({ productId }: { productId: string }) {
         comment: comment.trim().slice(0, 1000),
         user_id: user.id,
       })
-      .select()
+      .select("id, product_id, name, rating, comment, created_at")
       .single();
     setSubmitting(false);
     if (error) {

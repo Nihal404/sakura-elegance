@@ -27,7 +27,7 @@ export default defineTool({
     const { data, error } = await supabaseForUser(ctx)
       .from("reviews")
       .insert({ product_id, name, rating, comment, user_id: ctx.getUserId() })
-      .select()
+      .select("id, product_id, name, rating, comment, created_at")
       .single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
