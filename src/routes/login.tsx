@@ -32,9 +32,17 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in — Zari Boutique" },
-      { name: "description", content: "Sign in or create your Zari Boutique account." },
+      {
+        name: "description",
+        content:
+          "Sign in to your Zari Boutique account to manage your bag, track orders and discover elegant Sakura-inspired clothing and accessories.",
+      },
       { property: "og:title", content: "Sign in — Zari Boutique" },
-      { property: "og:description", content: "Sign in or create your Zari Boutique account." },
+      {
+        property: "og:description",
+        content:
+          "Sign in to your Zari Boutique account to manage your bag, track orders and discover elegant Sakura-inspired clothing and accessories.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -328,6 +336,7 @@ function Login() {
                 <input
                   type="email"
                   value={signinEmail}
+                  aria-label="Email address"
                   onChange={(e) => setSigninEmail(e.target.value)}
                   placeholder="you@example.com"
                   className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
@@ -339,6 +348,7 @@ function Login() {
                 <input
                   type="password"
                   value={signinPassword}
+                  aria-label="Password"
                   onChange={(e) => setSigninPassword(e.target.value)}
                   placeholder="Password"
                   className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
@@ -376,6 +386,7 @@ function Login() {
                 <input
                   type="text"
                   value={name}
+                  aria-label="Your name"
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
                   className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
@@ -387,6 +398,7 @@ function Login() {
                 <input
                   type="email"
                   value={email}
+                  aria-label="Email address"
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
@@ -402,6 +414,7 @@ function Login() {
                   type="tel"
                   inputMode="numeric"
                   value={phone}
+                  aria-label="Mobile number"
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                   placeholder="9876543210"
                   maxLength={10}
@@ -414,6 +427,7 @@ function Login() {
                 <input
                   type="password"
                   value={password}
+                  aria-label="Password"
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password (min 8 chars)"
                   className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all"
@@ -477,6 +491,7 @@ function Login() {
                   pattern="[0-9]{6}"
                   maxLength={6}
                   value={otp}
+                  aria-label="6-digit verification code"
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                   placeholder="123456"
                   className="w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all tracking-[0.5em] text-center font-mono"

@@ -84,6 +84,9 @@ function Home() {
               ZARIBOUTIQUE | BLOOMING&nbsp;
             </motion.div>
             <h1 className="font-serif text-5xl md:text-7xl leading-[1.05] tracking-tight text-foreground">
+              <span className="block text-2xl md:text-3xl not-italic tracking-[0.12em] uppercase text-foreground/70">
+                Zari Boutique
+              </span>
               Elegance
               <span className="block italic text-gradient-rose">Blooms Here</span>
             </h1>

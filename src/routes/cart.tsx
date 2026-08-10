@@ -169,7 +169,7 @@ function CartPage() {
             </ul>
 
             <aside className="h-fit rounded-3xl bg-background/95 border border-border shadow-petal p-6 lg:sticky lg:top-28">
-              <h3 className="font-serif text-2xl">Order Summary</h3>
+              <h2 className="font-serif text-2xl">Order Summary</h2>
               <div className="mt-5 space-y-3 text-sm">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
