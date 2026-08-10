@@ -116,10 +116,16 @@ function Login() {
         password: signinPassword,
       });
       if (error) {
-        const msg =
-          error.message.toLowerCase().includes("email not confirmed")
-            ? "Please verify your email first. Create an account to receive a new code."
-            : "Invalid email or password.";
+        const lower = error.message.toLowerCase();
+        // Only mask the credential-mismatch case; every other failure keeps its
+        // real message so misconfiguration is diagnosable in production.
+        const msg = lower.includes("email not confirmed")
+          ? "Please verify your email first. Create an account to receive a new code."
+          : lower.includes("invalid login credentials")
+            ? "Invalid email or password."
+            : isNetworkError(error)
+              ? describeAuthError(error)
+              : `${error.message}${error.status ? ` (status ${error.status})` : ""}`;
         setFormError(msg);
         toast.error(msg);
         return;
@@ -127,13 +133,21 @@ function Login() {
       toast.success(isAdmin ? "Welcome, admin!" : "Welcome back!");
       navigateNext(router, next, isAdmin ? "/admin" : "/");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Sign in failed";
+      // A thrown (not returned) error means the request never completed:
+      // surface the underlying cause instead of a bare "fetch failed".
+      let message = describeAuthError(err);
+      if (isNetworkError(err)) {
+        const reachability = await checkAuthReachable();
+        if (reachability) message = reachability;
+      }
+      console.error("[Zari] sign-in failed", err);
       setFormError(message);
       toast.error(message);
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
