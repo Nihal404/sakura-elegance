@@ -96,7 +96,12 @@ function Shop() {
         </div>
       </LayoutGroup>
 
+      <h2 className="font-serif text-2xl md:text-3xl mt-12 mb-6">
+        {category ? `${category} Collection` : "Our Collection"}
+      </h2>
+
       <AnimatePresence mode="wait" initial={false}>
+
         {productsLoading && filtered.length === 0 ? (
           <motion.div
             key="loading"
