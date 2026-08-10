@@ -4,20 +4,77 @@ import { useState } from "react";
 import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, Loader2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductReviews } from "@/components/ProductReviews";
+import { supabase } from "@/integrations/supabase/client";
+
+const SITE_URL = "https://zaris-elegance.lovable.app";
 
 export const Route = createFileRoute("/product/$id")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `Product · ${params.id.slice(0, 6)} — Zari Boutique` },
-      { name: "description", content: "Discover this Zari Boutique piece — details, price, and styling mockups." },
-      { property: "og:title", content: "Zari Boutique — Product" },
-      { property: "og:description", content: "Elegant clothing and accessories, curated with a Sakura touch." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  loader: async ({ params }) => {
+    try {
+      const { data } = await supabase
+        .from("products")
+        .select("name, price, image_url, description, category")
+        .eq("id", params.id)
+        .maybeSingle();
+      return { seo: data ?? null };
+    } catch {
+      return { seo: null };
+    }
+  },
+  head: ({ params, loaderData }) => {
+    const p = loaderData?.seo;
+    const name = p?.name ?? "Product";
+    const title = `${name} — Zari Boutique`.slice(0, 60);
+    const description =
+      (p?.description && p.description.slice(0, 155)) ||
+      `Shop ${name} at Zari Boutique — elegant ${p?.category?.toLowerCase() ?? "pieces"} with prices in INR and 2–7 day shipping.`;
+    const url = `${SITE_URL}/product/${params.id}`;
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "product" },
+        { property: "og:url", content: url },
+        { name: "twitter:card", content: "summary_large_image" },
+        ...(p?.image_url?.startsWith("https://")
+          ? [
+              { property: "og:image", content: p.image_url },
+              { name: "twitter:image", content: p.image_url },
+            ]
+          : []),
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: p
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Product",
+                name: p.name,
+                description,
+                ...(p.image_url ? { image: p.image_url } : {}),
+                category: p.category,
+                brand: { "@type": "Brand", name: "Zari Boutique" },
+                offers: {
+                  "@type": "Offer",
+                  price: Number(p.price),
+                  priceCurrency: "INR",
+                  availability: "https://schema.org/InStock",
+                  url,
+                },
+              }),
+            },
+          ]
+        : [],
+    };
+  },
   component: ProductDetail,
 });
+
 
 function ProductDetail() {
   const { id } = Route.useParams();

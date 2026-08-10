@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /.lovable/
+
+Sitemap: https://zaris-elegance.lovable.app/sitemap.xml

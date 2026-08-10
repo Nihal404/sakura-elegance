@@ -27,7 +27,7 @@ export function CartDrawer() {
           >
             <div className="flex items-center justify-between px-6 py-5 border-b border-border">
               <h3 className="font-serif text-2xl">Your Bag</h3>
-              <button onClick={() => setCartOpen(false)} className="p-2 rounded-full hover:bg-blush">
+              <button onClick={() => setCartOpen(false)} aria-label="Close cart" className="p-2 rounded-full hover:bg-blush">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -56,6 +56,7 @@ export function CartDrawer() {
                           </div>
                           <button
                             onClick={() => removeFromCart(item.id)}
+                            aria-label={`Remove ${item.name} from cart`}
                             className="text-muted-foreground hover:text-destructive"
                           >
                             <X className="w-4 h-4" />
@@ -65,6 +66,7 @@ export function CartDrawer() {
                           <div className="flex items-center gap-2 bg-background rounded-full px-1 py-1">
                             <button
                               onClick={() => updateQty(item.id, item.qty - 1)}
+                              aria-label={`Decrease quantity of ${item.name}`}
                               className="w-7 h-7 rounded-full hover:bg-sakura/40 flex items-center justify-center"
                             >
                               <Minus className="w-3 h-3" />
@@ -72,6 +74,7 @@ export function CartDrawer() {
                             <span className="text-sm w-6 text-center">{item.qty}</span>
                             <button
                               onClick={() => updateQty(item.id, item.qty + 1)}
+                              aria-label={`Increase quantity of ${item.name}`}
                               className="w-7 h-7 rounded-full hover:bg-sakura/40 flex items-center justify-center"
                             >
                               <Plus className="w-3 h-3" />
