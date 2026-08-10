@@ -8,18 +8,23 @@ import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Zari Boutique — Elegance Blooms Here" },
+      { title: "Zari Boutique | Sakura Clothing & Accessories Online" },
       {
         name: "description",
-        content: "Discover Zari Boutique's Sakura collection — elegant clothing and accessories for the modern romantic.",
+        content:
+          "Shop the Sakura collection at Zari Boutique: silk and chiffon silhouettes, rose gold jewellery and pearl accessories, with prices in INR and 2–7 day shipping.",
       },
-      { property: "og:title", content: "Zari Boutique — Elegance Blooms Here" },
+      { property: "og:title", content: "Zari Boutique | Sakura Clothing & Accessories Online" },
       {
         property: "og:description",
-        content: "Discover Zari Boutique's Sakura collection — elegant clothing and accessories.",
+        content:
+          "Silks, chiffons and rose gold accessories from the Zari Boutique Sakura collection — shop new Spring '26 arrivals.",
       },
+      { property: "og:url", content: "https://zaris-elegance.lovable.app/" },
     ],
+    links: [{ rel: "canonical", href: "https://zaris-elegance.lovable.app/" }],
   }),
+
   component: Home,
 });
 

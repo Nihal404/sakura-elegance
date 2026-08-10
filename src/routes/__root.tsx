@@ -101,7 +101,45 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap",
       },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Zari Boutique",
+          url: "https://zaris-elegance.lovable.app",
+          description:
+            "Boutique selling elegant clothing and accessories curated for the modern romantic.",
+          email: "hello@zariboutique.com",
+          contactPoint: [
+            {
+              "@type": "ContactPoint",
+              contactType: "customer support",
+              telephone: "+91 99720 25151",
+              contactOption: "TollFree",
+              availableLanguage: ["en", "hi"],
+            },
+          ],
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Zari Boutique",
+          url: "https://zaris-elegance.lovable.app",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://zaris-elegance.lovable.app/shop?category={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }),
+      },
+    ],
   }),
+
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
