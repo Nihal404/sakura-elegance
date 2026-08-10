@@ -20,7 +20,11 @@ export const Route = createFileRoute("/shop")({
       },
       { property: "og:title", content: "Shop — Zari Boutique" },
       { property: "og:description", content: "Browse elegant clothing and accessories at Zari Boutique." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://zaris-elegance.lovable.app/shop" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://zaris-elegance.lovable.app/shop" }],
   }),
   component: Shop,
 });
