@@ -203,10 +203,11 @@ export function ProductReviews({ productId }: { productId: string }) {
               <StarRow value={rating} onChange={setRating} interactive size={26} />
             </div>
 
-            <label className="block mt-5 text-xs uppercase tracking-widest text-foreground/70">
+            <label htmlFor="review-name" className="block mt-5 text-xs uppercase tracking-widest text-foreground/70">
               Display name
             </label>
             <input
+              id="review-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={60}
@@ -215,10 +216,11 @@ export function ProductReviews({ productId }: { productId: string }) {
               className="mt-2 w-full rounded-full bg-background border border-border/70 px-5 py-3 focus:outline-none focus:border-primary transition-colors"
             />
 
-            <label className="block mt-5 text-xs uppercase tracking-widest text-foreground/70">
+            <label htmlFor="review-comment" className="block mt-5 text-xs uppercase tracking-widest text-foreground/70">
               Review
             </label>
             <textarea
+              id="review-comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={1000}

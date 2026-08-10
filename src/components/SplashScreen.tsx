@@ -87,7 +87,7 @@ export function SplashScreen({ onFading }: SplashScreenProps) {
                     "radial-gradient(circle, oklch(0.85 0.08 15 / 0.6), transparent 70%)",
                 }}
               />
-              <motion.h1
+              <motion.div
                 initial={{ letterSpacing: "0.5em", opacity: 0 }}
                 animate={{ letterSpacing: "0.02em", opacity: 1 }}
                 transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
@@ -95,7 +95,7 @@ export function SplashScreen({ onFading }: SplashScreenProps) {
               >
                 <span className="text-gradient-rose">Zari</span>
                 <span className="text-foreground ml-2">Boutique</span>
-              </motion.h1>
+              </motion.div>
             </motion.div>
 
             <motion.div
