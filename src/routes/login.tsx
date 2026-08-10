@@ -271,9 +271,11 @@ function Login() {
       toast.success("Welcome to Zari!");
       navigateNext(router, next, "/");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Verification failed";
+      const message = describeAuthError(err);
+      console.error("[Zari] verification failed", err);
       setFormError(message);
       toast.error(message);
+
     } finally {
       setLoading(false);
     }
