@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { ensureAdminAccount } from "@/lib/admin-provision.functions";
+
 import { signUpUser, verifySignupOtp, cancelPendingSignup, finalizeEmailSignup } from "@/lib/otp.functions";
 
 const ADMIN_EMAIL = "admin@zariboutique.com";
@@ -58,7 +58,7 @@ function navigateNext(router: ReturnType<typeof useRouter>, next: string | undef
 function Login() {
   const router = useRouter();
   const { next } = Route.useSearch();
-  const provisionAdmin = useServerFn(ensureAdminAccount);
+  
   const doSignUp = useServerFn(signUpUser);
   const doVerifySignup = useServerFn(verifySignupOtp);
   const doCancelSignup = useServerFn(cancelPendingSignup);
@@ -110,9 +110,6 @@ function Login() {
     setFormError("");
     try {
       const cleanEmail = signinEmail.trim().toLowerCase();
-      if (isAdmin) {
-        await provisionAdmin();
-      }
       const { error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password: signinPassword,
