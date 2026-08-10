@@ -136,7 +136,7 @@ function CartPage() {
                       <button
                         onClick={() => removeFromCart(item.id)}
                         className="text-muted-foreground hover:text-destructive p-1"
-                        aria-label="Remove"
+                        aria-label={`Remove ${item.name} from bag`}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -145,6 +145,7 @@ function CartPage() {
                       <div className="flex items-center gap-2 bg-blush/60 rounded-full px-1 py-1">
                         <button
                           onClick={() => updateQty(item.id, item.qty - 1)}
+                          aria-label={`Decrease quantity of ${item.name}`}
                           className="w-8 h-8 rounded-full hover:bg-background flex items-center justify-center"
                         >
                           <Minus className="w-3.5 h-3.5" />
@@ -152,6 +153,7 @@ function CartPage() {
                         <span className="text-sm w-7 text-center font-medium">{item.qty}</span>
                         <button
                           onClick={() => updateQty(item.id, item.qty + 1)}
+                          aria-label={`Increase quantity of ${item.name}`}
                           className="w-8 h-8 rounded-full hover:bg-background flex items-center justify-center"
                         >
                           <Plus className="w-3.5 h-3.5" />
