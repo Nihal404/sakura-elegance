@@ -207,9 +207,11 @@ function Login() {
       verifiedRef.current = false;
       setSignupStep("otp");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not create account";
+      const message = describeAuthError(err);
+      console.error("[Zari] sign-up failed", err);
       setFormError(message);
       toast.error(message);
+
     } finally {
       setLoading(false);
     }
