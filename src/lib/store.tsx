@@ -66,6 +66,8 @@ interface StoreContextValue {
     fullName: string;
     phone?: string;
   }) => Promise<{ needsEmailConfirmation: boolean }>;
+  /** TEMPORARY testing auth — real anonymous Supabase session. See src/lib/zari/test-auth.ts */
+  signInAsTestUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
