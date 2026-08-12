@@ -11,6 +11,7 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import { supabase, describeError } from "@/lib/zari/supabase";
 import type { Database } from "@/lib/zari/database.types";
+import { signInAsTestUser } from "@/lib/zari/test-auth";
 
 export type Category = "Clothing" | "Accessories";
 
@@ -66,6 +67,8 @@ interface StoreContextValue {
     fullName: string;
     phone?: string;
   }) => Promise<{ needsEmailConfirmation: boolean }>;
+  /** TEMPORARY testing auth — real anonymous Supabase session. See src/lib/zari/test-auth.ts */
+  signInAsTestUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -168,6 +171,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const hydrateUser = useCallback(async (session: Session | null): Promise<User | null> => {
     if (!session?.user) return null;
+    // Anonymous (test) sessions are always customers — never admins, whatever any row says.
+    const isAnonymous = Boolean((session.user as { is_anonymous?: boolean }).is_anonymous);
+    if (isAnonymous) {
+      return {
+        id: session.user.id,
+        email: "Test user",
+        fullName: "Test User",
+        role: "Customer",
+      };
+    }
     const { data: profile } = await supabase
       .from("profiles")
       .select("id, full_name, role")
@@ -554,6 +567,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       authLoading,
       signIn,
       signUp,
+      signInAsTestUser,
       logout,
     };
   }, [
