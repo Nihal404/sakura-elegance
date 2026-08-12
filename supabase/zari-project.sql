@@ -64,3 +64,9 @@ $$;
 
 REVOKE ALL ON FUNCTION public.create_zari_order(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.create_zari_order(text) TO authenticated;
+
+-- 3) products.features / products.mockups — the storefront ships a highlight-chip list
+--    and a multi-image gallery (up to 6 shots) per product. Additive text[] columns with
+--    empty-array defaults, so existing rows and existing queries keep working.
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS features text[] NOT NULL DEFAULT '{}';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS mockups text[] NOT NULL DEFAULT '{}';
