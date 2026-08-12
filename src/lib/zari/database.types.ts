@@ -39,6 +39,8 @@ export interface Database {
           image_url: string | null;
           description: string | null;
           stock: number | null;
+          features: string[] | null;
+          mockups: string[] | null;
           created_at: string;
           updated_at: string | null;
         };
@@ -50,6 +52,8 @@ export interface Database {
           image_url?: string | null;
           description?: string | null;
           stock?: number | null;
+          features?: string[];
+          mockups?: string[];
         };
         Update: {
           name?: string;
@@ -58,6 +62,8 @@ export interface Database {
           image_url?: string | null;
           description?: string | null;
           stock?: number | null;
+          features?: string[];
+          mockups?: string[];
         };
         Relationships: [];
       };

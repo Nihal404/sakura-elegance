@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Star, Loader2, Lock } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/zari/supabase";
 import { useStore } from "@/lib/store";
 
 type Review = {
   id: string;
   product_id: string;
-  name: string;
+  reviewer_name: string | null;
   rating: number;
   comment: string;
   created_at: string;
@@ -69,7 +69,7 @@ export function ProductReviews({ productId }: { productId: string }) {
       setLoading(true);
       const { data, error } = await supabase
         .from("reviews")
-        .select("id, product_id, name, rating, comment, created_at")
+        .select("id, product_id, reviewer_name, rating, comment, created_at")
         .eq("product_id", productId)
         .order("created_at", { ascending: false });
       if (!active) return;
@@ -122,12 +122,12 @@ export function ProductReviews({ productId }: { productId: string }) {
       .from("reviews")
       .insert({
         product_id: productId,
-        name: name.trim().slice(0, 60),
+        reviewer_name: name.trim().slice(0, 60),
         rating,
         comment: comment.trim().slice(0, 1000),
         user_id: user.id,
       })
-      .select("id, product_id, name, rating, comment, created_at")
+      .select("id, product_id, reviewer_name, rating, comment, created_at")
       .single();
     setSubmitting(false);
     if (error) {
