@@ -1,9 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/zari/supabase";
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 
 function supabaseForUser(ctx: ToolContext) {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+  return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -26,8 +27,8 @@ export default defineTool({
     }
     const { data, error } = await supabaseForUser(ctx)
       .from("reviews")
-      .insert({ product_id, name, rating, comment, user_id: ctx.getUserId() })
-      .select("id, product_id, name, rating, comment, created_at")
+      .insert({ product_id, reviewer_name: name, rating, comment, user_id: ctx.getUserId() })
+      .select("id, product_id, reviewer_name, rating, comment, created_at")
       .single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {

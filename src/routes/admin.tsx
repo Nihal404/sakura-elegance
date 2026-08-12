@@ -5,7 +5,7 @@ import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, C
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useStore, type Category, type Product } from "@/lib/store";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, PRODUCT_IMAGE_BUCKET } from "@/lib/zari/supabase";
 import { describeProductImage } from "@/lib/describe-product.functions";
 
 
@@ -87,14 +87,12 @@ function Admin() {
     const ext = f.name.split(".").pop() ?? "jpg";
     const path = `${user!.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error: upErr } = await supabase.storage
-      .from("product-images")
+      .from(PRODUCT_IMAGE_BUCKET)
       .upload(path, f, { contentType: f.type, upsert: false });
     if (upErr) throw upErr;
-    const { data: signed, error: sErr } = await supabase.storage
-      .from("product-images")
-      .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
-    if (sErr || !signed) throw sErr ?? new Error("Failed to sign URL");
-    return signed.signedUrl;
+    // product-images is a public bucket, so the URL never expires.
+    const { data } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(path);
+    return data.publicUrl;
   };
 
   const readAsDataUrl = (f: File) =>

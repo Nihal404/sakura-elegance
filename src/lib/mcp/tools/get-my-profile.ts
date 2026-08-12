@@ -1,8 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/lib/zari/supabase";
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 
 function supabaseForUser(ctx: ToolContext) {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+  return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -20,7 +21,7 @@ export default defineTool({
     }
     const { data, error } = await supabaseForUser(ctx)
       .from("profiles")
-      .select("id, email, phone, created_at")
+      .select("id, full_name, phone, role, created_at")
       .eq("id", ctx.getUserId())
       .maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
