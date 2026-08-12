@@ -170,6 +170,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const hydrateUser = useCallback(async (session: Session | null): Promise<User | null> => {
     if (!session?.user) return null;
+    // Anonymous (test) sessions are always customers — never admins, whatever any row says.
+    const isAnonymous = Boolean((session.user as { is_anonymous?: boolean }).is_anonymous);
+    if (isAnonymous) {
+      return {
+        id: session.user.id,
+        email: "Test user",
+        fullName: "Test User",
+        role: "Customer",
+      };
+    }
     const { data: profile } = await supabase
       .from("profiles")
       .select("id, full_name, role")
