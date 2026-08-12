@@ -32,7 +32,7 @@ function CartPage() {
   const handleBuyNow = async () => {
     if (cart.length === 0 || placing) return;
     if (!user) {
-      router.navigate({ to: "/login", search: { redirect: "/cart" } });
+      router.navigate({ to: "/login", search: { next: "/cart" } });
       return;
     }
 
