@@ -510,6 +510,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (lower.includes("already registered") || lower.includes("already been registered")) {
           throw new Error("An account with this email already exists. Try signing in instead.");
         }
+        if (lower.includes("rate limit")) {
+          throw new Error(
+            "Sign-up email limit reached on the backend. For testing, turn off \u201cConfirm email\u201d in your Supabase Auth settings so accounts work without email delivery.",
+          );
+        }
         throw new Error(describeError(error, "Could not create your account."));
       }
       return { needsEmailConfirmation: !data.session };
