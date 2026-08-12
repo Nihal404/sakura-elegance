@@ -2,6 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Minus, Plus, X, ShoppingBag, ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 
 // TODO: Replace with the merchant's WhatsApp number in international format
@@ -21,42 +22,54 @@ export const Route = createFileRoute("/cart")({
 });
 
 function CartPage() {
-  const { cart, updateQty, removeFromCart, cartTotal, cartCount, user } = useStore();
+  const { cart, updateQty, removeFromCart, cartTotal, cartCount, user, placeOrder } =
+    useStore();
   const router = useRouter();
   const [popup, setPopup] = useState(false);
 
-  const handleBuyNow = () => {
-    if (cart.length === 0) return;
+  const [placing, setPlacing] = useState(false);
+
+  const handleBuyNow = async () => {
+    if (cart.length === 0 || placing) return;
     if (!user) {
-      router.navigate({ to: "/login", search: { redirect: "/cart" } as any });
+      router.navigate({ to: "/login", search: { redirect: "/cart" } });
       return;
     }
-    setPopup(true);
 
+    // Snapshot the bag: placing the order clears it server-side.
     const lines = cart.map(
       (i, idx) =>
-        `${idx + 1}. ${i.name} (${i.category}) — Qty: ${i.qty} × ₹${i.price.toFixed(
-          2,
-        )} = ₹${(i.qty * i.price).toFixed(2)}`,
+        `${idx + 1}. ${i.name} (${i.category}) — Qty: ${i.qty} × ₹${i.price.toFixed(2)} = ₹${(
+          i.qty * i.price
+        ).toFixed(2)}`,
     );
-    const message =
-      `Hello Zari Boutique 🌸%0A%0AI would like to order:%0A%0A` +
-      encodeURIComponent(lines.join("\n")).replace(/%0A/g, "%0A") +
-      `%0A%0A*Total: ₹${cartTotal.toFixed(2)}*%0A%0APlease confirm availability and next steps.`;
+    const total = cartTotal;
 
-    // Rebuild cleanly using encodeURIComponent to be safe
+    setPlacing(true);
+    let orderId: string;
+    try {
+      // The order (and its authoritative total) is recorded in the database first,
+      // so WhatsApp is a confirmation channel, not the source of truth.
+      orderId = await placeOrder();
+    } catch (err: unknown) {
+      setPlacing(false);
+      toast.error(err instanceof Error ? err.message : "Could not place your order.");
+      return;
+    }
+    setPlacing(false);
+    setPopup(true);
+
     const body =
       `Hello Zari Boutique 🌸\n\nI would like to order:\n\n` +
       lines.join("\n") +
-      `\n\n*Total: ₹${cartTotal.toFixed(2)}*\n\nPlease confirm availability and next steps.`;
+      `\n\n*Total: ₹${total.toFixed(2)}*\nOrder ref: ${orderId.slice(0, 8).toUpperCase()}` +
+      `\n\nPlease confirm availability and next steps.`;
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(body)}`;
 
     setTimeout(() => {
       window.open(url, "_blank");
       setPopup(false);
     }, 1800);
-    // suppress unused
-    void message;
   };
 
   return (
@@ -186,9 +199,10 @@ function CartPage() {
               </div>
               <button
                 onClick={handleBuyNow}
-                className="mt-6 w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide hover:opacity-90 transition-all shadow-soft"
+                disabled={placing}
+                className="mt-6 w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide hover:opacity-90 transition-all shadow-soft disabled:opacity-60"
               >
-                Buy Now via WhatsApp
+                {placing ? "Placing your order…" : "Buy Now via WhatsApp"}
               </button>
               <p className="text-[11px] text-muted-foreground text-center mt-3">
                 You'll be redirected to WhatsApp with your order details prefilled.
