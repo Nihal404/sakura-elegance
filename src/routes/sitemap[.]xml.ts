@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/zari/supabase";
 
 const BASE_URL = "https://zaris-elegance.lovable.app";
 

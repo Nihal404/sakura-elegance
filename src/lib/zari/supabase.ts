@@ -23,7 +23,7 @@ const envKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefin
 const usingEnv = Boolean(envUrl && envKey && envUrl.includes(ZARI_PROJECT_REF));
 
 export const SUPABASE_URL = usingEnv ? envUrl! : DEFAULT_URL;
-const SUPABASE_PUBLISHABLE_KEY = usingEnv ? envKey! : DEFAULT_PUBLISHABLE_KEY;
+export const SUPABASE_PUBLISHABLE_KEY = usingEnv ? envKey! : DEFAULT_PUBLISHABLE_KEY;
 
 /** Where the client got its config from — handy when diagnosing a deployment. */
 export const supabaseConfigSource: "env" | "fallback" = usingEnv ? "env" : "fallback";
