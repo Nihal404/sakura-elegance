@@ -21,7 +21,7 @@ export interface Product {
   category: Category;
   image: string;
   description: string;
-  stock: number | null;
+  stock?: number | null;
   features: string[];
   mockups: string[];
 }
