@@ -11,6 +11,7 @@ import {
   Smartphone,
   User as UserIcon,
   MailCheck,
+  FlaskConical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
@@ -52,7 +53,7 @@ const inputClass =
 function Login() {
   const router = useRouter();
   const { next } = Route.useSearch();
-  const { signIn, signUp, user } = useStore();
+  const { signIn, signUp, signInAsTestUser, user } = useStore();
 
   const [mode, setMode] = useState<Mode>("signin");
   const [loading, setLoading] = useState(false);
@@ -72,6 +73,25 @@ function Login() {
     const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
     router.navigate({ to: target, replace: true });
   };
+
+  // ---- TEST AUTH (temporary) -------------------------------------------------
+  const handleTestUser = async () => {
+    if (loading) return;
+    setLoading(true);
+    setFormError("");
+    try {
+      await signInAsTestUser();
+      toast.success("Signed in as a test user 🌸");
+      goNext();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not start a test session.";
+      setFormError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+  // ---- end TEST AUTH ---------------------------------------------------------
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -346,6 +366,29 @@ function Login() {
                 </motion.form>
               )}
             </AnimatePresence>
+
+            {/* TEST AUTH (temporary): real anonymous Supabase session, no email sent. */}
+            {TEST_AUTH_ENABLED && (
+              <div className="mt-6 pt-6 border-t border-border">
+                <p className="text-[11px] uppercase tracking-widest text-muted-foreground text-center mb-3">
+                  Testing only
+                </p>
+                <button
+                  type="button"
+                  onClick={handleTestUser}
+                  disabled={loading}
+                  className="w-full py-3.5 rounded-full border border-primary/40 bg-blush/50 text-foreground font-medium tracking-wide hover:bg-blush transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
+                >
+                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <FlaskConical className="w-4 h-4 text-primary" />
+                  Continue as Test User
+                </button>
+                <p className="text-[11px] text-muted-foreground text-center mt-2 leading-relaxed">
+                  Temporary guest session for testing — no email needed. Customer access only.
+                </p>
+              </div>
+            )}
+            {/* end TEST AUTH */}
           </>
         )}
       </motion.div>
