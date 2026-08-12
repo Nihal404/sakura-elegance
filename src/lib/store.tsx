@@ -72,8 +72,14 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 const GUEST_CART_KEY = "zari-cart";
-const PRODUCT_COLUMNS =
-  "id,name,price,category,image_url,description,stock,features,mockups,created_at";
+const BASE_PRODUCT_COLUMNS = "id,name,price,category,image_url,description,stock,created_at";
+// features/mockups power the highlight chips and the 6-shot gallery. They are added by
+// supabase/zari-project.sql; until that script is run the app degrades to single-image
+// products instead of erroring, so the storefront is never blank.
+const FULL_PRODUCT_COLUMNS = `${BASE_PRODUCT_COLUMNS},features,mockups`;
+let galleryColumns = true;
+const productColumns = () => (galleryColumns ? FULL_PRODUCT_COLUMNS : BASE_PRODUCT_COLUMNS);
+const MISSING_COLUMN = "42703";
 
 type ProductRow = {
   id: string;
@@ -125,10 +131,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const refreshProducts = useCallback(async () => {
     setProductsLoading(true);
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("products")
-      .select(PRODUCT_COLUMNS)
+      .select(productColumns())
       .order("created_at", { ascending: false });
+    if (error?.code === MISSING_COLUMN && galleryColumns) {
+      galleryColumns = false;
+      ({ data, error } = await supabase
+        .from("products")
+        .select(productColumns())
+        .order("created_at", { ascending: false }));
+    }
     if (error) {
       setProductsError(describeError(error, "Could not load the collection."));
     } else {
@@ -242,9 +255,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const loadServerCart = useCallback(async (cartId: string) => {
     const { data, error } = await supabase
       .from("cart_items")
-      .select(
-        `id, product_id, quantity, products(${PRODUCT_COLUMNS})`,
-      )
+      .select(`id, product_id, quantity, products(${productColumns()})`)
       .eq("cart_id", cartId);
     if (error) throw error;
     const rows = (data ?? []) as unknown as {
@@ -420,8 +431,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         category: p.category,
         image_url: p.image,
         description: p.description,
-        features: p.features,
-        mockups: p.mockups,
+        ...(galleryColumns ? { features: p.features, mockups: p.mockups } : {}),
         ...(p.stock !== null && p.stock !== undefined ? { stock: p.stock } : {}),
       });
       if (error) throw new Error(describeError(error, "Could not add the product."));
@@ -438,8 +448,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (patch.category !== undefined) dbPatch.category = patch.category;
       if (patch.image !== undefined) dbPatch.image_url = patch.image;
       if (patch.description !== undefined) dbPatch.description = patch.description;
-      if (patch.features !== undefined) dbPatch.features = patch.features;
-      if (patch.mockups !== undefined) dbPatch.mockups = patch.mockups;
+      if (galleryColumns && patch.features !== undefined) dbPatch.features = patch.features;
+      if (galleryColumns && patch.mockups !== undefined) dbPatch.mockups = patch.mockups;
       if (patch.stock !== undefined && patch.stock !== null) dbPatch.stock = patch.stock;
       const { error } = await supabase.from("products").update(dbPatch).eq("id", id);
       if (error) throw new Error(describeError(error, "Could not update the product."));
