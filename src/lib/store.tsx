@@ -11,6 +11,7 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import { supabase, describeError } from "@/lib/zari/supabase";
 import type { Database } from "@/lib/zari/database.types";
+import { signInAsTestUser } from "@/lib/zari/test-auth";
 
 export type Category = "Clothing" | "Accessories";
 
@@ -566,6 +567,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       authLoading,
       signIn,
       signUp,
+      signInAsTestUser,
       logout,
     };
   }, [
