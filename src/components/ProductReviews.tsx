@@ -266,7 +266,7 @@ export function ProductReviews({ productId }: { productId: string }) {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="font-medium">{r.name}</div>
+                    <div className="font-medium">{r.reviewer_name || "Zari member"}</div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(r.created_at).toLocaleDateString(undefined, {
                         year: "numeric",
