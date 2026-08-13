@@ -3,10 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Images, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
 import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase, PRODUCT_IMAGE_BUCKET } from "@/lib/zari/supabase";
-import { describeProductImage } from "@/lib/describe-product.functions";
+import { describeProductImage } from "@/lib/zari/describe-product";
 
 
 const MAX_MOCKUPS = 6;
@@ -45,7 +44,6 @@ function Admin() {
   const [submitting, setSubmitting] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
 
-  const describeImage = useServerFn(describeProductImage);
 
 
   const parseFeatures = (raw: string) =>
@@ -120,8 +118,10 @@ function Admin() {
   const generateCopy = async (imageDataUrl: string) => {
     setAiBusy(true);
     try {
-      const result = await describeImage({
-        data: { imageDataUrl, name: name.trim() || undefined, category },
+      const result = await describeProductImage({
+        imageDataUrl,
+        name: name.trim() || undefined,
+        category,
       });
       setDescription(result.description);
       if (result.features.length > 0) setFeatures(result.features.join("\n"));
@@ -364,7 +364,13 @@ function Admin() {
               </div>
               <button
                 type="button"
-                onClick={() => previews[0] && generateCopy(previews[0])}
+                onClick={() => {
+                  if (!previews[0]) {
+                    toast.error("Add a product image first.");
+                    return;
+                  }
+                  void generateCopy(previews[0]);
+                }}
                 disabled={aiBusy || previews.length === 0}
                 className="mt-2 inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-blush text-primary hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50"
               >
