@@ -69,15 +69,17 @@ export const Route = createFileRoute("/api/public/describe-product")({
         }
 
         const prompt = `You are a copywriter for "Zari Boutique", an elegant Indian clothing and accessories boutique with a soft pink Sakura aesthetic.
-Look at the product image and write catalog copy.
+Look at the product image and write catalog copy grounded ONLY in what is visible.
 ${parsed.name ? `Product name: ${parsed.name}.` : ""}${parsed.category ? ` Category: ${parsed.category}.` : ""}
+Rules: never invent fabric composition, brand, designer, measurements, price, care instructions, certifications, origin or claims you cannot see. If a detail is unclear, describe it in visual terms instead of guessing.
 Respond with ONLY minified JSON, no markdown, shaped exactly:
-{"description":"2-3 sentence elegant product description based on what you actually see (colour, fabric, embroidery, silhouette, occasion)","features":["4 short highlight chips, max 4 words each"]}`;
+{"description":"2-3 sentence elegant description of what is visible (colour, pattern, embroidery/detailing, silhouette, styling occasion)","features":["up to 8 short highlight chips, max 5 words each, visible details only"]}`;
 
         let res: Response;
         try {
           res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
+            signal: AbortSignal.timeout(45_000),
             headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: "google/gemini-2.5-flash",
@@ -93,9 +95,18 @@ Respond with ONLY minified JSON, no markdown, shaped exactly:
             }),
           });
         } catch (err) {
+          const timedOut = err instanceof Error && err.name === "TimeoutError";
           console.error("[describe-product] gateway unreachable", err);
-          return json({ error: "Could not reach the AI service. Please try again." }, 502);
+          return json(
+            {
+              error: timedOut
+                ? "The AI took too long to respond. Try a smaller photo or try again."
+                : "Could not reach the AI service. Please try again.",
+            },
+            timedOut ? 504 : 502,
+          );
         }
+
 
         if (!res.ok) {
           const text = await res.text();
