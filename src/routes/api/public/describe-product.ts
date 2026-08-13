@@ -1,35 +1,62 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
-// Raw HTTP endpoint so the admin form can post a (possibly large) image payload
-// and get precise status codes back. The AI key stays server-side only.
+// Public (cross-origin) AI endpoint. It lives under /api/public/* so the Vercel
+// storefront can call this Lovable-hosted deployment, where LOVABLE_API_KEY is
+// already available server-side. The key never leaves the server.
+// Authorization: the caller must send an access token from the storefront's own
+// Supabase project (header `x-store-access-token`) and be an admin there.
+
+const STORE_SUPABASE_URL = "https://ubmxuhzlvyjomuopcoxk.supabase.co";
+const STORE_PUBLISHABLE_KEY = "sb_publishable_4HVRiWgOTNeHeYzF6JBPSQ_Dz-3q1eN";
+
 const schema = z.object({
   imageDataUrl: z.string().min(20).max(8_000_000),
   name: z.string().trim().max(120).optional(),
   category: z.string().trim().max(60).optional(),
 });
 
+const cors: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "content-type, x-store-access-token",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Max-Age": "86400",
+};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json" },
+    headers: { ...cors, "content-type": "application/json" },
   });
 }
 
-export const Route = createFileRoute("/api/describe-product")({
+async function isStoreAdmin(token: string): Promise<boolean> {
+  const headers = { apikey: STORE_PUBLISHABLE_KEY, Authorization: `Bearer ${token}` };
+  const userRes = await fetch(`${STORE_SUPABASE_URL}/auth/v1/user`, { headers });
+  if (!userRes.ok) return false;
+  const user = (await userRes.json()) as { id?: string };
+  if (!user.id) return false;
+  const profileRes = await fetch(
+    `${STORE_SUPABASE_URL}/rest/v1/profiles?select=role&id=eq.${user.id}`,
+    { headers },
+  );
+  if (!profileRes.ok) return false;
+  const rows = (await profileRes.json()) as { role?: string | null }[];
+  return (rows[0]?.role ?? "").toLowerCase() === "admin";
+}
+
+export const Route = createFileRoute("/api/public/describe-product")({
   server: {
     handlers: {
+      OPTIONS: async () => new Response(null, { status: 204, headers: cors }),
       POST: async ({ request }) => {
         const key = process.env["LOVABLE_API_KEY"];
-        if (!key) {
-          return json(
-            {
-              error:
-                "AI is not configured on the server. Add the LOVABLE_API_KEY secret to this deployment, then redeploy.",
-            },
-            503,
-          );
-        }
+        if (!key) return json({ error: "AI is not configured on the server." }, 503);
+
+        const token = (request.headers.get("x-store-access-token") ?? "").trim();
+        if (!token) return json({ error: "Please sign in as an admin and try again." }, 401);
+        const allowed = await isStoreAdmin(token).catch(() => false);
+        if (!allowed) return json({ error: "Only admins can generate descriptions." }, 403);
 
         let parsed: z.infer<typeof schema>;
         try {
@@ -37,12 +64,8 @@ export const Route = createFileRoute("/api/describe-product")({
         } catch {
           return json({ error: "Add a product image first, then try again." }, 400);
         }
-
         if (!/^data:image\/(png|jpe?g|webp|gif);base64,/i.test(parsed.imageDataUrl)) {
-          return json(
-            { error: "That image format isn't supported. Use a JPG, PNG or WebP photo." },
-            400,
-          );
+          return json({ error: "Use a JPG, PNG or WebP product photo." }, 400);
         }
 
         const prompt = `You are a copywriter for "Zari Boutique", an elegant Indian clothing and accessories boutique with a soft pink Sakura aesthetic.
@@ -75,17 +98,14 @@ Respond with ONLY minified JSON, no markdown, shaped exactly:
         }
 
         if (!res.ok) {
-          const body = await res.text();
-          console.error("[describe-product] gateway error", res.status, body.slice(0, 500));
+          const text = await res.text();
+          console.error("[describe-product] gateway error", res.status, text.slice(0, 500));
           if (res.status === 429)
             return json({ error: "AI rate limit reached — try again in a moment." }, 429);
           if (res.status === 402)
             return json({ error: "AI credits exhausted. Top up to keep using this." }, 402);
           if (res.status === 400)
-            return json(
-              { error: "The AI could not read that image. Try a clearer product photo." },
-              400,
-            );
+            return json({ error: "The AI could not read that image. Try a clearer photo." }, 400);
           return json({ error: "The AI service failed. Please try again." }, 502);
         }
 
