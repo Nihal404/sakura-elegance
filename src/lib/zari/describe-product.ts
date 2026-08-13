@@ -46,6 +46,7 @@ type Parsed = { ok: boolean; status: number; body: { description?: string; featu
 async function post(url: string, payload: unknown, token: string): Promise<Parsed> {
   const res = await fetch(url, {
     method: "POST",
+    signal: AbortSignal.timeout(60_000),
     headers: { "content-type": "application/json", "x-store-access-token": token },
     body: JSON.stringify(payload),
   });
@@ -80,8 +81,11 @@ export async function describeProductImage(input: {
     let attempt: Parsed;
     try {
       attempt = await post(url, payload, token);
-    } catch {
-      lastError = "Network error — could not reach the AI service.";
+    } catch (err) {
+      lastError =
+        err instanceof Error && err.name === "TimeoutError"
+          ? "The AI request timed out. Try again with a smaller photo."
+          : "Network error — could not reach the AI service.";
       continue; // try the next host
     }
     if (attempt.ok && attempt.body.description) {
