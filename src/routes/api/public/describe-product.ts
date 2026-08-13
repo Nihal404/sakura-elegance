@@ -32,13 +32,13 @@ function json(body: unknown, status = 200) {
 
 async function isStoreAdmin(token: string): Promise<boolean> {
   const headers = { apikey: STORE_PUBLISHABLE_KEY, Authorization: `Bearer ${token}` };
-  const userRes = await fetch(`${STORE_SUPABASE_URL}/auth/v1/user`, { headers });
+  const userRes = await fetch(`${STORE_SUPABASE_URL}/auth/v1/user`, { headers, signal: AbortSignal.timeout(10_000) });
   if (!userRes.ok) return false;
   const user = (await userRes.json()) as { id?: string };
   if (!user.id) return false;
   const profileRes = await fetch(
     `${STORE_SUPABASE_URL}/rest/v1/profiles?select=role&id=eq.${user.id}`,
-    { headers },
+    { headers, signal: AbortSignal.timeout(10_000) },
   );
   if (!profileRes.ok) return false;
   const rows = (await profileRes.json()) as { role?: string | null }[];
