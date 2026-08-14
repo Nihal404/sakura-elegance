@@ -241,13 +241,17 @@ function Home() {
         </div>
         {productsLoading && featured.length === 0 ? (
           <ProductGridSkeleton count={4} />
+        ) : featured.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-16">
+            New blooms are on their way — check back soon.
+          </p>
         ) : (
           <DepthCarousel
             items={featured.map((p: any) => ({ ...p, alt: `${p.name} — Zari Boutique ${p.category ?? "product"}` }))}
-            cardWidth={340}
-            cardHeight={450}
+            cardWidth={320}
+            cardHeight={420}
             depth={200}
-            spread={78}
+            spread={75}
             tilt={20}
             perspective={1300}
             falloff={0.2}
