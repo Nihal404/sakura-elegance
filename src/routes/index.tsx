@@ -36,8 +36,9 @@ const float: Variants = {
 };
 
 function Home() {
+  const navigate = useNavigate();
   const { products, productsLoading } = useStore();
-  const featured = products.slice(0, 4);
+  const featured = products.slice(0, 8);
 
   return (
     <div>
