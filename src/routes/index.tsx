@@ -207,7 +207,7 @@ function Home() {
         </div>
       </section>
 
-      {/* FEATURED */}
+      {/* FEATURED — depth carousel showcase */}
       <section className="mx-auto max-w-7xl px-6 lg:px-10 pb-24">
         <div className="flex items-end justify-between mb-10">
           <div>
@@ -221,11 +221,21 @@ function Home() {
         {productsLoading && featured.length === 0 ? (
           <ProductGridSkeleton count={4} />
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-            {featured.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} />
-            ))}
-          </div>
+          <DepthCarousel
+            items={featured}
+            cardWidth={350}
+            cardHeight={470}
+            depth={200}
+            spread={78}
+            visibleCards={4}
+            autoplay
+            loop
+            controls
+            indicators
+            onItemClick={(item: { id: string }) =>
+              navigate({ to: "/product/$id", params: { id: item.id } })
+            }
+          />
         )}
       </section>
     </div>
