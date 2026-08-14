@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { ProductCard } from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
+import { DepthCarousel } from "@/components/DepthCarousel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,8 +36,9 @@ const float: Variants = {
 };
 
 function Home() {
+  const navigate = useNavigate();
   const { products, productsLoading } = useStore();
-  const featured = products.slice(0, 4);
+  const featured = products.slice(0, 8);
 
   return (
     <div>
@@ -207,7 +208,7 @@ function Home() {
         </div>
       </section>
 
-      {/* FEATURED */}
+      {/* FEATURED — depth carousel showcase */}
       <section className="mx-auto max-w-7xl px-6 lg:px-10 pb-24">
         <div className="flex items-end justify-between mb-10">
           <div>
@@ -221,11 +222,21 @@ function Home() {
         {productsLoading && featured.length === 0 ? (
           <ProductGridSkeleton count={4} />
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-            {featured.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} />
-            ))}
-          </div>
+          <DepthCarousel
+            items={featured}
+            cardWidth={350}
+            cardHeight={470}
+            depth={200}
+            spread={78}
+            visibleCards={4}
+            autoplay
+            loop
+            controls
+            indicators
+            onItemClick={(item: { id: string }) =>
+              navigate({ to: "/product/$id", params: { id: item.id } })
+            }
+          />
         )}
       </section>
     </div>
