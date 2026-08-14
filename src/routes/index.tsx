@@ -4,6 +4,8 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { DepthCarousel } from "@/components/DepthCarousel";
+import { MorphSlider } from "@/components/MorphSlider";
+import { buildProductMockSlides } from "@/lib/zari/product-mock-slides";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -120,11 +122,25 @@ function Home() {
             className="relative hidden md:block"
           >
             <motion.div variants={float} animate="animate" className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80"
-                alt="Sakura collection"
-                className="rounded-[2.5rem] object-cover w-full aspect-[4/5] shadow-petal"
+              {/* PRODUCT MOCK SHOWCASE — slides come from
+                  src/lib/zari/product-mock-slides.ts (PRODUCT_MOCK_SLIDES) */}
+              <MorphSlider
+                items={mockSlides}
+                transition="melt"
+                intensity={0.55}
+                aberration={0.35}
+                drift={0.4}
+                autoplay
+                autoplayDelay={4}
+                loop
+                showCaptions
+                showControls
+                showIndicators
+                radius={40}
+                aspect={4 / 5}
+                className="shadow-petal"
               />
+
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
