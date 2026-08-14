@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, Loader2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductReviews } from "@/components/ProductReviews";
+import { ProductMorphGallery } from "@/components/ProductMorphGallery";
+
 import { supabase } from "@/lib/zari/supabase";
 
 const SITE_URL = "https://zaris-elegance.lovable.app";
@@ -179,22 +181,12 @@ function ProductDetail() {
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
         {/* Gallery */}
         <div>
-          <motion.div
-            key={activeView}
-            initial={{ opacity: 0.4, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className={`relative aspect-[4/5] rounded-3xl overflow-hidden shadow-petal ${currentView.frame}`}
-          >
-            <img
-              src={currentView.src}
-              alt={product.name}
-              className={`w-full h-full object-cover transition-transform duration-700 ${currentView.transform}`}
-            />
-            <span className="absolute top-5 left-5 text-[10px] uppercase tracking-[0.2em] px-3 py-1 rounded-full bg-background/85 backdrop-blur text-foreground/80">
-              {currentView.label}
-            </span>
-          </motion.div>
+          <ProductMorphGallery
+            views={gallery}
+            alt={product.name}
+            activeIndex={Math.min(activeView, gallery.length - 1)}
+            onChange={setActiveView}
+          />
 
           {gallery.length > 1 && (
             <div className={`mt-4 grid gap-3 ${gallery.length <= 4 ? "grid-cols-4" : "grid-cols-6"}`}>
@@ -217,6 +209,7 @@ function ProductDetail() {
             </div>
           )}
         </div>
+
 
         {/* Details */}
         <motion.div
