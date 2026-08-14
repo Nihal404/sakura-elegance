@@ -107,7 +107,7 @@ export function ProductMorphGallery({ views, alt, activeIndex, onChange }: Props
     tweenRef.current = tl;
   }, [index, count, views]);
 
-  useEffect(() => () => tweenRef.current?.kill(), []);
+  useEffect(() => () => void tweenRef.current?.kill(), []);
 
   const go = useCallback(
     (dir: number) => {

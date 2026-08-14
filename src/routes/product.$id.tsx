@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, Loader2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductReviews } from "@/components/ProductReviews";
+import { ProductMorphGallery } from "@/components/ProductMorphGallery";
+
 import { supabase } from "@/lib/zari/supabase";
 
 const SITE_URL = "https://zaris-elegance.lovable.app";
