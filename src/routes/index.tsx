@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { ProductCard } from "@/components/ProductCard";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
+import { DepthCarousel } from "@/components/DepthCarousel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
