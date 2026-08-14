@@ -1,0 +1,114 @@
+.morph-slider {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--muted) 70%, transparent);
+  isolation: isolate;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.morph-slider__canvas,
+.morph-slider__fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.morph-slider__fallback {
+  object-fit: cover;
+}
+
+.morph-slider__sizer {
+  width: 100%;
+  display: block;
+}
+
+.morph-slider__veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    color-mix(in oklab, var(--foreground) 55%, transparent),
+    transparent 55%
+  );
+}
+
+.morph-slider__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1.5rem 1.75rem 3rem 8.5rem;
+  text-align: right;
+  pointer-events: none;
+  color: #fff;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35);
+}
+
+.morph-slider__controls {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.75rem;
+  pointer-events: none;
+}
+
+.morph-slider__btn {
+  pointer-events: auto;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.morph-slider__btn:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.06);
+}
+
+.morph-slider__indicators {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.9rem;
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.morph-slider__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.5);
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.morph-slider__dot[data-active="true"] {
+  width: 1.6rem;
+  background: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .morph-slider__btn {
+    transition: none;
+  }
+}
