@@ -41,6 +41,9 @@ function Home() {
   const navigate = useNavigate();
   const { products, productsLoading } = useStore();
   const featured = products.slice(0, 8);
+  // Hero product mock images — edit PRODUCT_MOCK_SLIDES in
+  // src/lib/zari/product-mock-slides.ts to change them.
+  const mockSlides = useMemo(() => buildProductMockSlides(products as any, 5), [products]);
 
   return (
     <div>
