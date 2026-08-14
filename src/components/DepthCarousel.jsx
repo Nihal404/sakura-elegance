@@ -14,6 +14,10 @@ export function DepthCarousel({
   cardHeight = 460,
   depth = 200,
   spread = 75,
+  tilt = 20,
+  perspective = 1300,
+  falloff = 0.2,
+  blur = 5,
   visibleCards = 4,
   autoplay = true,
   autoplayDelay = 3800,
@@ -32,6 +36,16 @@ export function DepthCarousel({
   const hoverRef = useRef(false);
 
   const count = items.length;
+  const reducedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    reducedRef.current = mq.matches;
+    const onChange = () => (reducedRef.current = mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   // Responsive down-scale so large cards fit narrow viewports.
   useEffect(() => {
@@ -65,21 +79,23 @@ export function DepthCarousel({
       const offset = offsetOf(i);
       const abs = Math.abs(offset);
       const hidden = abs > visibleCards;
+      const clamped = Math.max(-1.5, Math.min(1.5, offset));
       gsap.to(el, {
         x: offset * spread * scale - (cardWidth * scale) / 2,
         y: -(cardHeight * scale) / 2 + abs * 6 * scale,
         z: -abs * depth,
-        rotateY: offset * -6,
+        rotateY: -clamped * tilt,
         scale: Math.max(0.6, 1 - abs * 0.08),
-        opacity: hidden ? 0 : Math.max(0.25, 1 - abs * 0.22),
-        duration: 0.75,
+        opacity: hidden ? 0 : Math.max(0.2, 1 - abs * falloff),
+        filter: `blur(${Math.min(blur, abs * (blur / Math.max(1, visibleCards - 1)))}px)`,
+        duration: reducedRef.current ? 0 : 0.75,
         ease: "power3.out",
         overwrite: "auto",
       });
       el.style.zIndex = String(100 - abs);
       el.style.pointerEvents = hidden ? "none" : "auto";
     });
-  }, [active, count, offsetOf, spread, depth, cardWidth, cardHeight, scale, visibleCards]);
+  }, [active, count, offsetOf, spread, depth, cardWidth, cardHeight, scale, visibleCards, tilt, falloff, blur]);
 
   const go = useCallback(
     (dir) => {
@@ -94,7 +110,7 @@ export function DepthCarousel({
   );
 
   useEffect(() => {
-    if (!autoplay || count < 2) return;
+    if (!autoplay || count < 2 || reducedRef.current) return;
     const id = window.setInterval(() => {
       if (!hoverRef.current) go(1);
     }, autoplayDelay);
@@ -128,9 +144,19 @@ export function DepthCarousel({
       <div
         ref={stageRef}
         className="depth-carousel__stage"
-        style={{ height: stageHeight }}
+        style={{ height: stageHeight, perspective: `${perspective}px` }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
+        onPointerCancel={() => (dragRef.current = null)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            go(1);
+          } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            go(-1);
+          }
+        }}
       >
         {items.map((item, i) => (
           <div
@@ -146,7 +172,7 @@ export function DepthCarousel({
             }}
             role="button"
             tabIndex={Math.abs(offsetOf(i)) > visibleCards ? -1 : 0}
-            aria-label={item.name ?? `Slide ${i + 1}`}
+            aria-label={item.alt ?? item.name ?? `Slide ${i + 1}`}
             onClick={() => {
               if (i !== active) setActive(i);
               else onItemClick?.(item, i);
@@ -166,7 +192,7 @@ export function DepthCarousel({
                 <img
                   className="depth-carousel__img"
                   src={item.image}
-                  alt={item.name ?? ""}
+                  alt={item.alt ?? item.name ?? ""}
                   loading="lazy"
                   decoding="async"
                   draggable={false}
