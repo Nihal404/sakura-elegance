@@ -6,6 +6,7 @@ export interface DepthCarouselItem {
   price?: number;
   category?: string;
   image?: string;
+  alt?: string;
   [key: string]: unknown;
 }
 
@@ -15,6 +16,10 @@ export interface DepthCarouselProps<T extends DepthCarouselItem = DepthCarouselI
   cardHeight?: number;
   depth?: number;
   spread?: number;
+  tilt?: number;
+  perspective?: number;
+  falloff?: number;
+  blur?: number;
   visibleCards?: number;
   autoplay?: boolean;
   autoplayDelay?: number;

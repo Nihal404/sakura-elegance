@@ -243,11 +243,15 @@ function Home() {
           <ProductGridSkeleton count={4} />
         ) : (
           <DepthCarousel
-            items={featured}
-            cardWidth={350}
-            cardHeight={470}
+            items={featured.map((p: any) => ({ ...p, alt: `${p.name} — Zari Boutique ${p.category ?? "product"}` }))}
+            cardWidth={340}
+            cardHeight={450}
             depth={200}
             spread={78}
+            tilt={20}
+            perspective={1300}
+            falloff={0.2}
+            blur={5}
             visibleCards={4}
             autoplay
             loop
