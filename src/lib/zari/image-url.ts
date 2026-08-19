@@ -84,8 +84,8 @@ export function cardImageUrl(url: string | undefined | null, width = 400): strin
 }
 
 /** Thumbnail strip / cart line item. */
-export function thumbImageUrl(url: string | undefined | null): string {
-  return sizedImageUrl(url, { width: 160, quality: 65, ladder: [160, 240] });
+export function thumbImageUrl(url: string | undefined | null, width = 160): string {
+  return sizedImageUrl(url, { width, quality: 65, ladder: [160, 240, 320] });
 }
 
 /** Product detail gallery variant (~800–1200px). */

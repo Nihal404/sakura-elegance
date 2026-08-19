@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase, PRODUCT_IMAGE_BUCKET } from "@/lib/zari/supabase";
 import { describeProductImage } from "@/lib/zari/describe-product";
+import { compressImage } from "@/lib/zari/compress-image";
 
 
 const MAX_MOCKUPS = 6;
