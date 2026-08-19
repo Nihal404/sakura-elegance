@@ -197,8 +197,6 @@ function ProductDetail() {
         ...v,
       }));
 
-  const currentView = gallery[Math.min(activeView, gallery.length - 1)];
-
   const onAdd = () => {
     for (let i = 0; i < qty; i++) addToCart(product);
     setCartOpen(true);
@@ -213,6 +211,11 @@ function ProductDetail() {
         <ArrowLeft className="w-4 h-4" />
         Back
       </button>
+
+      <GalleryImageBudget
+        urls={gallery.map((v) => v.src)}
+        activeIndex={Math.min(activeView, gallery.length - 1)}
+      />
 
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
         {/* Gallery */}
@@ -324,4 +327,35 @@ function ProductDetail() {
       <ProductReviews productId={product.id} />
     </div>
   );
+}
+
+/**
+ * Keeps the gallery honest with the rolling image budget: the active image plus at most
+ * one neighbour each way is preloaded, and every reference is released when the shopper
+ * leaves the product page.
+ */
+function GalleryImageBudget({ urls, activeIndex }: { urls: string[]; activeIndex: number }) {
+  const active = urls[activeIndex];
+  const neighbours = useMemo(
+    () => [urls[activeIndex + 1], urls[activeIndex - 1]].filter(Boolean) as string[],
+    [urls, activeIndex],
+  );
+
+  useEffect(() => {
+    if (!active) return;
+    imageBudget.retain(active);
+    imageBudget.setVisible(active, true);
+    return () => {
+      imageBudget.setVisible(active, false);
+      imageBudget.release(active);
+    };
+  }, [active]);
+
+  useEffect(() => {
+    if (!neighbours.length) return;
+    const t = window.setTimeout(() => imageBudget.preload(neighbours.slice(0, 2)), 250);
+    return () => window.clearTimeout(t);
+  }, [neighbours]);
+
+  return null;
 }
