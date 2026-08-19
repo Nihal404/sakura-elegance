@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { useStore, type Category } from "@/lib/store";
+import { Loader2 } from "lucide-react";
+import type { Category } from "@/lib/store";
 import { ProductCard } from "@/components/ProductCard";
+import { LazyMount } from "@/components/LazyMount";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
+import { useNearViewport, useProductFeed } from "@/hooks/useProductFeed";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -32,9 +35,11 @@ export const Route = createFileRoute("/shop")({
 function Shop() {
   const { category } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { products, productsLoading } = useStore();
-
-  const filtered = category ? products.filter((p) => p.category === category) : products;
+  // Server-side filtering + keyset pagination: 24 rows per request, never the whole
+  // catalogue, and the category is part of the query rather than a client-side filter.
+  const { items: filtered, loading: productsLoading, loadingMore, hasMore, error, loadMore } =
+    useProductFeed({ category: category ?? null });
+  const sentinelRef = useNearViewport(loadMore, hasMore && !loadingMore);
   const tabs: (Category | undefined)[] = [undefined, "Clothing", "Accessories"];
 
   return (
@@ -126,34 +131,37 @@ function Shop() {
         ) : (
           <motion.div
             key={category ?? "all"}
-            layout
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="grid grid-cols-2 lg:grid-cols-4 gap-5"
           >
-            <AnimatePresence mode="popLayout">
-              {filtered.map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  layout
-                  initial={{ opacity: 0, y: 16, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -12, scale: 0.96 }}
-                  transition={{
-                    duration: 0.35,
-                    ease: [0.22, 1, 0.36, 1],
-                    delay: i * 0.03,
-                  }}
-                >
-                  <ProductCard product={p} index={i} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
+            {filtered.map((p, i) => (
+              <LazyMount key={p.id}>
+                <ProductCard product={p} index={i} priority={i < 4} />
+              </LazyMount>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {error && (
+        <p className="mt-8 text-center text-sm text-destructive">{error}</p>
+      )}
+
+      {/* Infinite scroll: the next batch is requested only as the user nears the end. */}
+      {hasMore && (
+        <div ref={sentinelRef} className="mt-10">
+          {loadingMore ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            </div>
+          ) : (
+            <ProductGridSkeleton count={4} />
+          )}
+        </div>
+      )}
     </div>
   );
 }
