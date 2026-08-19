@@ -16,6 +16,19 @@
 
 const RENDER_SEGMENT = "/storage/v1/render/image/public/";
 const OBJECT_SEGMENT = "/storage/v1/object/public/";
+const SIGN_SEGMENT = "/storage/v1/object/sign/";
+
+/**
+ * Stored records may still hold a signed URL (`/object/sign/...?token=`) from an earlier
+ * upload flow. Signed URLs carry a per-request token, which defeats CDN/browser reuse and
+ * eventually expires. `product-images` is a public bucket, so we rewrite them to the
+ * stable public object path at read time — the stored row and the object itself are left
+ * untouched, and uploads/deletes stay protected by Storage policies.
+ */
+export function normalizeStorageUrl(url: string): string {
+  if (url.includes(SIGN_SEGMENT)) return url.replace(SIGN_SEGMENT, OBJECT_SEGMENT).split("?")[0]!;
+  return url;
+}
 
 let transformsEnabled = true;
 
@@ -30,13 +43,14 @@ export function imageTransformsEnabled() {
 
 /** Only Supabase-hosted public objects can be transformed. */
 export function isTransformable(url: string | undefined | null): url is string {
-  return Boolean(url && url.includes(OBJECT_SEGMENT));
+  return Boolean(url && normalizeStorageUrl(url).includes(OBJECT_SEGMENT));
 }
 
 export function originalImageUrl(url: string): string {
-  return url.includes(RENDER_SEGMENT)
-    ? url.replace(RENDER_SEGMENT, OBJECT_SEGMENT).split("?")[0]!
-    : url;
+  const normalized = normalizeStorageUrl(url);
+  return normalized.includes(RENDER_SEGMENT)
+    ? normalized.replace(RENDER_SEGMENT, OBJECT_SEGMENT).split("?")[0]!
+    : normalized;
 }
 
 /** Snap to a small set of widths so the CDN keeps a high hit rate. */

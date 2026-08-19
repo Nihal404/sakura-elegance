@@ -96,7 +96,7 @@ export const ProductImage = memo(function ProductImage({
           height={height}
           loading={eager ? "eager" : "lazy"}
           decoding="async"
-          {...(fetchPriority ? { fetchpriority: fetchPriority } : {})}
+          fetchPriority={fetchPriority}
           onLoad={(e) => {
             const img = e.currentTarget;
             imageBudget.measured(resolved, img.naturalWidth, img.naturalHeight);
