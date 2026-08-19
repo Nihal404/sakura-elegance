@@ -81,6 +81,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState<string | null>(null);
+  const [hasMoreProducts, setHasMoreProducts] = useState(false);
+  const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartLoading, setCartLoading] = useState(false);
@@ -96,30 +98,54 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const cartRowsRef = useRef<Map<string, string>>(new Map());
   const productsRef = useRef<Product[]>([]);
   productsRef.current = products;
+  const productCursorRef = useRef<ProductCursor | null>(null);
+  const productsInFlight = useRef(false);
 
   /* ------------------------------------------------------------------ products */
 
+  // Only the first page is kept in global state; the shop grid and admin inventory
+  // paginate on their own so 500 products are never fetched or held at once.
   const refreshProducts = useCallback(async () => {
+    if (productsInFlight.current) return;
+    productsInFlight.current = true;
     setProductsLoading(true);
-    let { data, error } = await supabase
-      .from("products")
-      .select(productColumns())
-      .order("created_at", { ascending: false });
-    if (error?.code === MISSING_COLUMN && galleryColumns) {
-      galleryColumns = false;
-      ({ data, error } = await supabase
-        .from("products")
-        .select(productColumns())
-        .order("created_at", { ascending: false }));
-    }
-    if (error) {
-      setProductsError(describeError(error, "Could not load the collection."));
-    } else {
+    try {
+      const page = await fetchProductPage({ limit: PRODUCT_PAGE_SIZE });
+      productCursorRef.current = page.cursor;
+      setHasMoreProducts(page.hasMore);
       setProductsError(null);
-      setProducts((data as unknown as ProductRow[]).map(rowToProduct));
+      setProducts(page.items);
+    } catch (err) {
+      setProductsError(describeError(err, "Could not load the collection."));
+    } finally {
+      productsInFlight.current = false;
+      setProductsLoading(false);
     }
-    setProductsLoading(false);
   }, []);
+
+  const loadMoreProducts = useCallback(async () => {
+    if (productsInFlight.current || !productCursorRef.current) return;
+    productsInFlight.current = true;
+    setLoadingMoreProducts(true);
+    try {
+      const page = await fetchProductPage({
+        cursor: productCursorRef.current,
+        limit: PRODUCT_PAGE_SIZE,
+      });
+      productCursorRef.current = page.cursor;
+      setHasMoreProducts(page.hasMore);
+      setProducts((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        return [...prev, ...page.items.filter((p) => !seen.has(p.id))];
+      });
+    } catch {
+      /* keep what we have */
+    } finally {
+      productsInFlight.current = false;
+      setLoadingMoreProducts(false);
+    }
+  }, []);
+
 
   useEffect(() => {
     void refreshProducts();
