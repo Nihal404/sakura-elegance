@@ -261,27 +261,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const loadServerCart = useCallback(async (cartId: string) => {
     const { data, error } = await supabase
       .from("cart_items")
-      .select(`id, product_id, quantity, products(${productColumns()})`)
+      .select("id, product_id, quantity")
       .eq("cart_id", cartId);
     if (error) throw error;
-    const rows = (data ?? []) as unknown as {
-      id: string;
-      product_id: string;
-      quantity: number;
-      products: ProductRow | null;
-    }[];
+    const rows = (data ?? []) as { id: string; product_id: string; quantity: number }[];
     const map = new Map<string, string>();
+    for (const row of rows) map.set(row.product_id, row.id);
+    cartRowsRef.current = map;
+
+    // Resolve products in ONE extra query (no per-row lookups) and prefer rows we
+    // already have in memory.
+    const known = new Map(productsRef.current.map((p) => [p.id, p]));
+    const missing = rows.map((r) => r.product_id).filter((id) => !known.has(id));
+    if (missing.length) {
+      try {
+        for (const p of await fetchProductsByIds(missing)) known.set(p.id, p);
+      } catch {
+        /* fall through: unknown products are skipped below */
+      }
+    }
     const items: CartItem[] = [];
     for (const row of rows) {
-      map.set(row.product_id, row.id);
-      const product = row.products
-        ? rowToProduct(row.products)
-        : productsRef.current.find((p) => p.id === row.product_id);
+      const product = known.get(row.product_id);
       if (product) items.push({ ...product, qty: row.quantity });
     }
-    cartRowsRef.current = map;
     setCart(items);
   }, []);
+
 
   // On sign-in: merge whatever the guest added, then mirror the database cart.
   // On sign-out: drop the server cart from memory.
