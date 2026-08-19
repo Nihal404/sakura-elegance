@@ -1,12 +1,15 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, Loader2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductReviews } from "@/components/ProductReviews";
 import { ProductMorphGallery } from "@/components/ProductMorphGallery";
 
 import { supabase } from "@/lib/zari/supabase";
+import { fetchProductById, type Product } from "@/lib/zari/products";
+import { imageBudget } from "@/lib/zari/image-cache";
+import { galleryImageUrl, thumbImageUrl } from "@/lib/zari/image-url";
 
 const SITE_URL = "https://zaris-elegance.lovable.app";
 
@@ -81,13 +84,40 @@ export const Route = createFileRoute("/product/$id")({
 function ProductDetail() {
   const { id } = Route.useParams();
   const router = useRouter();
-  const { products, productsLoading, addToCart, setCartOpen } = useStore();
+  const { products, addToCart, setCartOpen } = useStore();
   const [qty, setQty] = useState(1);
   const [activeView, setActiveView] = useState(0);
 
-  const product = products.find((p) => p.id === id);
+  const cached = products.find((p) => p.id === id);
+  const [fetched, setFetched] = useState<Product | null>(null);
+  const [loadingProduct, setLoadingProduct] = useState(!cached);
 
-  if (productsLoading && !product) {
+  // The listing pages only carry card columns, so the detail row (description, features,
+  // mockups) is fetched here for this product alone. Stale responses are dropped.
+  useEffect(() => {
+    setActiveView(0);
+    if (cached?.mockups?.length) {
+      setFetched(null);
+      setLoadingProduct(false);
+      return;
+    }
+    const controller = new AbortController();
+    setLoadingProduct(true);
+    void fetchProductById(id, controller.signal)
+      .then((p) => {
+        if (!controller.signal.aborted) setFetched(p);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingProduct(false);
+      });
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const product = fetched ?? cached;
+
+  if (loadingProduct && !product) {
     return (
       <div className="mx-auto max-w-7xl px-6 lg:px-10 py-10 lg:py-14">
         <div className="h-4 w-16 rounded-full bg-primary/10 animate-pulse mb-8" />
@@ -152,14 +182,20 @@ function ProductDetail() {
     { label: "Detail", frame: "bg-background", transform: "scale-[1.35]" },
     { label: "Editorial", frame: "bg-primary/15", transform: "scale-105 -translate-x-3" },
   ];
+  // Detail-sized variants (~800–1200px), not the multi-MB originals.
   const gallery = hasMockups
     ? product.mockups.map((src, i) => ({
-        src,
+        src: galleryImageUrl(src, 1000),
+        thumb: thumbImageUrl(src),
         label: i === 0 ? "Main" : `View ${i + 1}`,
         frame: "bg-blush",
         transform: "",
       }))
-    : syntheticViews.map((v) => ({ src: product.image, ...v }));
+    : syntheticViews.map((v) => ({
+        src: galleryImageUrl(product.image, 1000),
+        thumb: thumbImageUrl(product.image),
+        ...v,
+      }));
 
   const currentView = gallery[Math.min(activeView, gallery.length - 1)];
 
@@ -200,8 +236,12 @@ function ProductDetail() {
                   aria-label={`View ${v.label}`}
                 >
                   <img
-                    src={v.src}
+                    src={v.thumb}
                     alt=""
+                    loading="lazy"
+                    decoding="async"
+                    width={160}
+                    height={160}
                     className={`w-full h-full object-cover ${v.transform}`}
                   />
                 </button>
