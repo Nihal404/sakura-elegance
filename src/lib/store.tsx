@@ -12,20 +12,17 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase, describeError } from "@/lib/zari/supabase";
 import type { Database } from "@/lib/zari/database.types";
 import { signInAsTestUser } from "@/lib/zari/test-auth";
+import {
+  fetchProductPage,
+  fetchProductsByIds,
+  hasGalleryColumns,
+  PRODUCT_PAGE_SIZE,
+  type Category,
+  type Product,
+  type ProductCursor,
+} from "@/lib/zari/products";
 
-export type Category = "Clothing" | "Accessories";
-
-export interface Product {
-  id: string;
-  name: string;
-  price: number;
-  category: Category;
-  image: string;
-  description: string;
-  stock?: number | null;
-  features: string[];
-  mockups: string[];
-}
+export type { Category, Product } from "@/lib/zari/products";
 
 export interface CartItem extends Product {
   qty: number;
@@ -39,9 +36,13 @@ export interface User {
 }
 
 interface StoreContextValue {
+  /** First page(s) of the catalogue only — listings paginate, they never hold all rows. */
   products: Product[];
   productsLoading: boolean;
   productsError: string | null;
+  hasMoreProducts: boolean;
+  loadingMoreProducts: boolean;
+  loadMoreProducts: () => Promise<void>;
   refreshProducts: () => Promise<void>;
   addProduct: (p: Omit<Product, "id">) => Promise<void>;
   updateProduct: (id: string, patch: Partial<Omit<Product, "id">>) => Promise<void>;
@@ -75,45 +76,13 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 const GUEST_CART_KEY = "zari-cart";
-const BASE_PRODUCT_COLUMNS = "id,name,price,category,image_url,description,stock,created_at";
-// features/mockups power the highlight chips and the 6-shot gallery. They are added by
-// supabase/zari-project.sql; until that script is run the app degrades to single-image
-// products instead of erroring, so the storefront is never blank.
-const FULL_PRODUCT_COLUMNS = `${BASE_PRODUCT_COLUMNS},features,mockups`;
-let galleryColumns = true;
-const productColumns = () => (galleryColumns ? FULL_PRODUCT_COLUMNS : BASE_PRODUCT_COLUMNS);
-const MISSING_COLUMN = "42703";
-
-type ProductRow = {
-  id: string;
-  name: string;
-  price: number | string;
-  category: string;
-  image_url: string | null;
-  description: string | null;
-  stock: number | null;
-  features?: string[] | null;
-  mockups?: string[] | null;
-};
-
-function rowToProduct(r: ProductRow): Product {
-  return {
-    id: r.id,
-    name: r.name,
-    price: Number(r.price),
-    category: (r.category === "Accessories" ? "Accessories" : "Clothing") as Category,
-    image: r.image_url ?? "",
-    description: r.description ?? "",
-    stock: r.stock,
-    features: r.features ?? [],
-    mockups: r.mockups?.length ? r.mockups : r.image_url ? [r.image_url] : [],
-  };
-}
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState<string | null>(null);
+  const [hasMoreProducts, setHasMoreProducts] = useState(false);
+  const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartLoading, setCartLoading] = useState(false);
@@ -129,30 +98,54 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const cartRowsRef = useRef<Map<string, string>>(new Map());
   const productsRef = useRef<Product[]>([]);
   productsRef.current = products;
+  const productCursorRef = useRef<ProductCursor | null>(null);
+  const productsInFlight = useRef(false);
 
   /* ------------------------------------------------------------------ products */
 
+  // Only the first page is kept in global state; the shop grid and admin inventory
+  // paginate on their own so 500 products are never fetched or held at once.
   const refreshProducts = useCallback(async () => {
+    if (productsInFlight.current) return;
+    productsInFlight.current = true;
     setProductsLoading(true);
-    let { data, error } = await supabase
-      .from("products")
-      .select(productColumns())
-      .order("created_at", { ascending: false });
-    if (error?.code === MISSING_COLUMN && galleryColumns) {
-      galleryColumns = false;
-      ({ data, error } = await supabase
-        .from("products")
-        .select(productColumns())
-        .order("created_at", { ascending: false }));
-    }
-    if (error) {
-      setProductsError(describeError(error, "Could not load the collection."));
-    } else {
+    try {
+      const page = await fetchProductPage({ limit: PRODUCT_PAGE_SIZE });
+      productCursorRef.current = page.cursor;
+      setHasMoreProducts(page.hasMore);
       setProductsError(null);
-      setProducts((data as unknown as ProductRow[]).map(rowToProduct));
+      setProducts(page.items);
+    } catch (err) {
+      setProductsError(describeError(err, "Could not load the collection."));
+    } finally {
+      productsInFlight.current = false;
+      setProductsLoading(false);
     }
-    setProductsLoading(false);
   }, []);
+
+  const loadMoreProducts = useCallback(async () => {
+    if (productsInFlight.current || !productCursorRef.current) return;
+    productsInFlight.current = true;
+    setLoadingMoreProducts(true);
+    try {
+      const page = await fetchProductPage({
+        cursor: productCursorRef.current,
+        limit: PRODUCT_PAGE_SIZE,
+      });
+      productCursorRef.current = page.cursor;
+      setHasMoreProducts(page.hasMore);
+      setProducts((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        return [...prev, ...page.items.filter((p) => !seen.has(p.id))];
+      });
+    } catch {
+      /* keep what we have */
+    } finally {
+      productsInFlight.current = false;
+      setLoadingMoreProducts(false);
+    }
+  }, []);
+
 
   useEffect(() => {
     void refreshProducts();
@@ -268,27 +261,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const loadServerCart = useCallback(async (cartId: string) => {
     const { data, error } = await supabase
       .from("cart_items")
-      .select(`id, product_id, quantity, products(${productColumns()})`)
+      .select("id, product_id, quantity")
       .eq("cart_id", cartId);
     if (error) throw error;
-    const rows = (data ?? []) as unknown as {
-      id: string;
-      product_id: string;
-      quantity: number;
-      products: ProductRow | null;
-    }[];
+    const rows = (data ?? []) as { id: string; product_id: string; quantity: number }[];
     const map = new Map<string, string>();
+    for (const row of rows) map.set(row.product_id, row.id);
+    cartRowsRef.current = map;
+
+    // Resolve products in ONE extra query (no per-row lookups) and prefer rows we
+    // already have in memory.
+    const known = new Map(productsRef.current.map((p) => [p.id, p]));
+    const missing = rows.map((r) => r.product_id).filter((id) => !known.has(id));
+    if (missing.length) {
+      try {
+        for (const p of await fetchProductsByIds(missing)) known.set(p.id, p);
+      } catch {
+        /* fall through: unknown products are skipped below */
+      }
+    }
     const items: CartItem[] = [];
     for (const row of rows) {
-      map.set(row.product_id, row.id);
-      const product = row.products
-        ? rowToProduct(row.products)
-        : productsRef.current.find((p) => p.id === row.product_id);
+      const product = known.get(row.product_id);
       if (product) items.push({ ...product, qty: row.quantity });
     }
-    cartRowsRef.current = map;
     setCart(items);
   }, []);
+
 
   // On sign-in: merge whatever the guest added, then mirror the database cart.
   // On sign-out: drop the server cart from memory.
@@ -444,7 +443,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         category: p.category,
         image_url: p.image,
         description: p.description,
-        ...(galleryColumns ? { features: p.features, mockups: p.mockups } : {}),
+        ...(hasGalleryColumns() ? { features: p.features, mockups: p.mockups } : {}),
         ...(p.stock !== null && p.stock !== undefined ? { stock: p.stock } : {}),
       });
       if (error) throw new Error(describeError(error, "Could not add the product."));
@@ -461,8 +460,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (patch.category !== undefined) dbPatch.category = patch.category;
       if (patch.image !== undefined) dbPatch.image_url = patch.image;
       if (patch.description !== undefined) dbPatch.description = patch.description;
-      if (galleryColumns && patch.features !== undefined) dbPatch.features = patch.features;
-      if (galleryColumns && patch.mockups !== undefined) dbPatch.mockups = patch.mockups;
+      if (hasGalleryColumns() && patch.features !== undefined) dbPatch.features = patch.features;
+      if (hasGalleryColumns() && patch.mockups !== undefined) dbPatch.mockups = patch.mockups;
       if (patch.stock !== undefined && patch.stock !== null) dbPatch.stock = patch.stock;
       const { error } = await supabase.from("products").update(dbPatch).eq("id", id);
       if (error) throw new Error(describeError(error, "Could not update the product."));
@@ -549,6 +548,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       products,
       productsLoading,
       productsError,
+      hasMoreProducts,
+      loadingMoreProducts,
+      loadMoreProducts,
       refreshProducts,
       addProduct,
       updateProduct,
@@ -574,6 +576,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     products,
     productsLoading,
     productsError,
+    hasMoreProducts,
+    loadingMoreProducts,
+    loadMoreProducts,
     refreshProducts,
     addProduct,
     updateProduct,

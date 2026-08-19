@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { thumbImageUrl } from "@/lib/zari/image-url";
 import { useStore } from "@/lib/store";
 
 export function CartDrawer() {
@@ -47,7 +48,15 @@ export function CartDrawer() {
                       key={item.id}
                       className="flex gap-4 p-3 rounded-2xl bg-blush/60"
                     >
-                      <img src={item.image} alt={item.name} className="w-20 h-24 rounded-xl object-cover" />
+                      <img
+                        src={thumbImageUrl(item.image, 160)}
+                        alt={item.name}
+                        loading="lazy"
+                        decoding="async"
+                        width={80}
+                        height={96}
+                        className="w-20 h-24 rounded-xl object-cover"
+                      />
                       <div className="flex-1 flex flex-col">
                         <div className="flex justify-between gap-2">
                           <div>
