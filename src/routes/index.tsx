@@ -6,6 +6,7 @@ import { useStore } from "@/lib/store";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { DepthCarousel } from "@/components/DepthCarousel";
 import { MorphSlider } from "@/components/MorphSlider";
+import { cardImageUrl } from "@/lib/zari/image-url";
 import { buildProductMockSlides } from "@/lib/zari/product-mock-slides";
 
 export const Route = createFileRoute("/")({
@@ -247,7 +248,12 @@ function Home() {
           </p>
         ) : (
           <DepthCarousel
-            items={featured.map((p: any) => ({ ...p, alt: `${p.name} — Zari Boutique ${p.category ?? "product"}` }))}
+            items={featured.map((p: any) => ({
+              ...p,
+              // Carousel cards are 320px wide — serve a 640px variant, not the original.
+              image: cardImageUrl(p.image, 640),
+              alt: `${p.name} — Zari Boutique ${p.category ?? "product"}`,
+            }))}
             cardWidth={320}
             cardHeight={420}
             depth={200}

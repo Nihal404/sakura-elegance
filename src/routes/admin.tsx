@@ -81,12 +81,17 @@ function Admin() {
     );
   }
 
-  const uploadFile = async (f: File): Promise<string> => {
-    const ext = f.name.split(".").pop() ?? "jpg";
+  const uploadFile = async (original: File): Promise<string> => {
+    // Downscale/re-encode before upload so stored objects stay small and every CDN
+    // variant is derived from a lean source.
+    const f = await compressImage(original);
+    const ext = (f.type.split("/")[1] || f.name.split(".").pop() || "jpg").replace("jpeg", "jpg");
     const path = `${user!.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error: upErr } = await supabase.storage
       .from(PRODUCT_IMAGE_BUCKET)
-      .upload(path, f, { contentType: f.type, upsert: false });
+      // Immutable filenames + a 1-year cache header: the CDN and browsers reuse these
+      // objects instead of re-fetching them for every shopper.
+      .upload(path, f, { contentType: f.type, upsert: false, cacheControl: "31536000" });
     if (upErr) throw upErr;
     // product-images is a public bucket, so the URL never expires.
     const { data } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(path);
