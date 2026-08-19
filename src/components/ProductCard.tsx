@@ -1,19 +1,34 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { useStore, type Product } from "@/lib/store";
+import { ProductImage } from "@/components/ProductImage";
+import { CARD_SIZES, cardImageUrl, cardSrcSet } from "@/lib/zari/image-url";
 
-export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
+/**
+ * Grid card. Loads ONLY the product's primary thumbnail (a ~320–500px CDN variant) —
+ * never the 1 MB original, and never the gallery/mockup images, which are fetched on the
+ * product detail page.
+ */
+export const ProductCard = memo(function ProductCard({
+  product,
+  index = 0,
+  priority = false,
+}: {
+  product: Product;
+  index?: number;
+  priority?: boolean;
+}) {
   const { addToCart, setCartOpen } = useStore();
-  const [imgLoaded, setImgLoaded] = useState(false);
+  const thumb = cardImageUrl(product.image, 400);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.5, delay: Math.min(index, 6) * 0.05, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -6 }}
       className="group relative rounded-3xl overflow-hidden bg-card shadow-soft transition-shadow duration-500 hover:shadow-petal"
     >
@@ -23,23 +38,22 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
         className="block"
         aria-label={`View ${product.name}`}
       >
+        {/* Fixed aspect ratio + intrinsic size = no layout shift while images stream in. */}
         <div className="relative aspect-[3/4] overflow-hidden bg-blush">
-          {!imgLoaded && (
-            <div className="absolute inset-0 bg-sakura-gradient animate-pulse" />
-          )}
-          <motion.img
-            src={product.image}
+          <ProductImage
+            src={thumb}
+            srcSet={cardSrcSet(product.image)}
+            sizes={CARD_SIZES}
             alt={product.name}
-            loading="lazy"
-            decoding="async"
-            onLoad={() => setImgLoaded(true)}
-            className={`w-full h-full object-cover transition-opacity duration-700 ease-out ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-            whileHover={{ scale: 1.08 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            width={400}
+            height={533}
+            eager={priority}
+            fetchPriority={priority ? "high" : undefined}
+            className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <motion.button
-            initial={false}
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          <button
+            type="button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -50,7 +64,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           >
             <Plus className="w-4 h-4" />
             Add to Cart
-          </motion.button>
+          </button>
           <span className="absolute top-4 left-4 text-[10px] uppercase tracking-[0.15em] px-3 py-1 rounded-full bg-background/85 backdrop-blur text-foreground/80">
             {product.category}
           </span>
@@ -64,4 +78,4 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
       </Link>
     </motion.div>
   );
-}
+});
