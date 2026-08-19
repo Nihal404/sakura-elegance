@@ -12,20 +12,17 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase, describeError } from "@/lib/zari/supabase";
 import type { Database } from "@/lib/zari/database.types";
 import { signInAsTestUser } from "@/lib/zari/test-auth";
+import {
+  fetchProductPage,
+  fetchProductsByIds,
+  hasGalleryColumns,
+  PRODUCT_PAGE_SIZE,
+  type Category,
+  type Product,
+  type ProductCursor,
+} from "@/lib/zari/products";
 
-export type Category = "Clothing" | "Accessories";
-
-export interface Product {
-  id: string;
-  name: string;
-  price: number;
-  category: Category;
-  image: string;
-  description: string;
-  stock?: number | null;
-  features: string[];
-  mockups: string[];
-}
+export type { Category, Product } from "@/lib/zari/products";
 
 export interface CartItem extends Product {
   qty: number;
@@ -39,9 +36,13 @@ export interface User {
 }
 
 interface StoreContextValue {
+  /** First page(s) of the catalogue only — listings paginate, they never hold all rows. */
   products: Product[];
   productsLoading: boolean;
   productsError: string | null;
+  hasMoreProducts: boolean;
+  loadingMoreProducts: boolean;
+  loadMoreProducts: () => Promise<void>;
   refreshProducts: () => Promise<void>;
   addProduct: (p: Omit<Product, "id">) => Promise<void>;
   updateProduct: (id: string, patch: Partial<Omit<Product, "id">>) => Promise<void>;
@@ -75,40 +76,6 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 const GUEST_CART_KEY = "zari-cart";
-const BASE_PRODUCT_COLUMNS = "id,name,price,category,image_url,description,stock,created_at";
-// features/mockups power the highlight chips and the 6-shot gallery. They are added by
-// supabase/zari-project.sql; until that script is run the app degrades to single-image
-// products instead of erroring, so the storefront is never blank.
-const FULL_PRODUCT_COLUMNS = `${BASE_PRODUCT_COLUMNS},features,mockups`;
-let galleryColumns = true;
-const productColumns = () => (galleryColumns ? FULL_PRODUCT_COLUMNS : BASE_PRODUCT_COLUMNS);
-const MISSING_COLUMN = "42703";
-
-type ProductRow = {
-  id: string;
-  name: string;
-  price: number | string;
-  category: string;
-  image_url: string | null;
-  description: string | null;
-  stock: number | null;
-  features?: string[] | null;
-  mockups?: string[] | null;
-};
-
-function rowToProduct(r: ProductRow): Product {
-  return {
-    id: r.id,
-    name: r.name,
-    price: Number(r.price),
-    category: (r.category === "Accessories" ? "Accessories" : "Clothing") as Category,
-    image: r.image_url ?? "",
-    description: r.description ?? "",
-    stock: r.stock,
-    features: r.features ?? [],
-    mockups: r.mockups?.length ? r.mockups : r.image_url ? [r.image_url] : [],
-  };
-}
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
