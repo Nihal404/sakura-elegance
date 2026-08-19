@@ -125,9 +125,9 @@ export async function fetchProductPage({
 /** Full row for the product detail page (single query — no N+1 over mockups). */
 export async function fetchProductById(id: string, signal?: AbortSignal): Promise<Product | null> {
   const run = async () => {
-    let q = supabase.from("products").select(detailColumns()).eq("id", id).maybeSingle();
+    let q = supabase.from("products").select(detailColumns()).eq("id", id);
     if (signal) q = q.abortSignal(signal) as typeof q;
-    return q;
+    return q.maybeSingle();
   };
   let { data, error } = await run();
   if (error?.code === MISSING_COLUMN && galleryColumns) {
