@@ -443,7 +443,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         category: p.category,
         image_url: p.image,
         description: p.description,
-        ...(galleryColumns ? { features: p.features, mockups: p.mockups } : {}),
+        ...(hasGalleryColumns() ? { features: p.features, mockups: p.mockups } : {}),
         ...(p.stock !== null && p.stock !== undefined ? { stock: p.stock } : {}),
       });
       if (error) throw new Error(describeError(error, "Could not add the product."));
@@ -460,8 +460,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (patch.category !== undefined) dbPatch.category = patch.category;
       if (patch.image !== undefined) dbPatch.image_url = patch.image;
       if (patch.description !== undefined) dbPatch.description = patch.description;
-      if (galleryColumns && patch.features !== undefined) dbPatch.features = patch.features;
-      if (galleryColumns && patch.mockups !== undefined) dbPatch.mockups = patch.mockups;
+      if (hasGalleryColumns() && patch.features !== undefined) dbPatch.features = patch.features;
+      if (hasGalleryColumns() && patch.mockups !== undefined) dbPatch.mockups = patch.mockups;
       if (patch.stock !== undefined && patch.stock !== null) dbPatch.stock = patch.stock;
       const { error } = await supabase.from("products").update(dbPatch).eq("id", id);
       if (error) throw new Error(describeError(error, "Could not update the product."));
@@ -548,6 +548,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       products,
       productsLoading,
       productsError,
+      hasMoreProducts,
+      loadingMoreProducts,
+      loadMoreProducts,
       refreshProducts,
       addProduct,
       updateProduct,
@@ -573,6 +576,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     products,
     productsLoading,
     productsError,
+    hasMoreProducts,
+    loadingMoreProducts,
+    loadMoreProducts,
     refreshProducts,
     addProduct,
     updateProduct,
