@@ -34,11 +34,13 @@ export function Navbar() {
       }`}
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-10 h-20 flex items-center justify-between">
-        <Link to="/" className="group">
-          <span className="font-zari text-2xl md:text-3xl tracking-tight text-gradient-rose">
-            Zari
-          </span>
-          <span className="font-serif text-2xl md:text-3xl tracking-tight text-foreground ml-1.5">
+        <Link to="/" className="group flex items-center gap-2">
+          <img
+            src={zariLogo.url}
+            alt="Zari Boutique — clothes and accessories"
+            className="h-12 w-12 md:h-14 md:w-14 rounded-full object-cover shadow-soft"
+          />
+          <span className="font-serif text-xl md:text-2xl tracking-tight text-foreground">
             Boutique
           </span>
         </Link>
