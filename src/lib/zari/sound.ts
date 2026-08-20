@@ -56,3 +56,62 @@ export function playAddToCartSound() {
     // Audio is optional; ignore browser autoplay or API errors.
   }
 }
+
+/**
+ * Play a bright, delighted chime when the user clicks "Buy Now".
+ * Synthesized with the Web Audio API: a rising major arpeggio plus a soft shimmer.
+ */
+export function playDelightedSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.35, now);
+    master.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    master.connect(ctx.destination);
+
+    // Major arpeggio: C5 - E5 - G5 - C6
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, i) => {
+      const t = now + i * 0.11;
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, t);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.18, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+
+      osc.connect(gain).connect(master);
+      osc.start(t);
+      osc.stop(t + 0.6);
+    });
+
+    // Soft shimmer (high-frequency sparkle) on top of the chime.
+    const shimmerDuration = 1.0;
+    const shimmerBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * shimmerDuration), ctx.sampleRate);
+    const shimmerData = shimmerBuffer.getChannelData(0);
+    for (let i = 0; i < shimmerData.length; i++) {
+      shimmerData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / shimmerData.length, 2.5);
+    }
+    const shimmer = ctx.createBufferSource();
+    shimmer.buffer = shimmerBuffer;
+
+    const shimmerFilter = ctx.createBiquadFilter();
+    shimmerFilter.type = "bandpass";
+    shimmerFilter.frequency.setValueAtTime(3000, now);
+    shimmerFilter.frequency.exponentialRampToValueAtTime(8000, now + shimmerDuration);
+    shimmerFilter.Q.setValueAtTime(2.5, now);
+
+    const shimmerGain = ctx.createGain();
+    shimmerGain.gain.setValueAtTime(0.08, now);
+    shimmerGain.gain.exponentialRampToValueAtTime(0.001, now + shimmerDuration);
+
+    shimmer.connect(shimmerFilter).connect(shimmerGain).connect(master);
+    shimmer.start(now);
+    shimmer.stop(now + shimmerDuration);
+  } catch {
+    // Audio is optional; ignore browser autoplay or API errors.
+  }
+}
