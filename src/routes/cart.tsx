@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Minus, Plus, X, ShoppingBag, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { thumbImageUrl } from "@/lib/zari/image-url";
+import { SizedImg } from "@/components/SizedImg";
 import { useStore } from "@/lib/store";
 
 // TODO: Replace with the merchant's WhatsApp number in international format
@@ -124,8 +124,9 @@ function CartPage() {
                     params={{ id: item.id }}
                     className="shrink-0"
                   >
-                    <img
-                      src={thumbImageUrl(item.image, 200)}
+                    <SizedImg
+                      raw={item.image}
+                      spec={{ width: 200, quality: 65, ladder: [160, 240, 320] }}
                       alt={item.name}
                       loading="lazy"
                       decoding="async"

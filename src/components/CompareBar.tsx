@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Scale, X } from "lucide-react";
 import { useShoppingLists } from "@/lib/shopping-lists";
 import { useProductsByIds } from "@/hooks/useProductsByIds";
-import { thumbImageUrl } from "@/lib/zari/image-url";
+import { SizedImg } from "@/components/SizedImg";
 
 /**
  * Floating compare tray. Shows the current selection (max 4) with a thumbnail each,
@@ -36,8 +36,9 @@ export function CompareBar() {
                   className="relative shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-blush border border-border/60"
                 >
                   {product?.image ? (
-                    <img
-                      src={thumbImageUrl(product.image, 120)}
+                    <SizedImg
+                      raw={product.image}
+                      spec={{ width: 120, quality: 65, ladder: [160, 240, 320] }}
                       alt={product.name}
                       width={120}
                       height={120}

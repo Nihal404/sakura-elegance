@@ -1,16 +1,25 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { imageBudget } from "@/lib/zari/image-cache";
+import { acquireImage, releaseImage } from "@/lib/zari/image-store";
 import {
-  disableImageTransforms,
-  needsSigning,
-  originalImageUrl,
-  resolveSignedSrc,
+  CARD_WIDTHS,
+  invalidateVariants,
+  isStorageSource,
+  signedVariantUrl,
+  cachedVariantUrl,
+  type VariantRequest,
 } from "@/lib/zari/image-url";
-
 
 interface ProductImageProps {
   /** A sized (transformed) URL — build it with cardImageUrl/galleryImageUrl/thumbImageUrl. */
   src: string;
+  /**
+   * The raw stored value (`product.image` / a mockup entry). Required for private-bucket
+   * objects: the right-sized variant has to be signed from the object path.
+   */
+  rawSrc?: string;
+  /** Which resized variant this slot needs (card ~400px, gallery ~1000px, thumb ~160px). */
+  variant?: VariantRequest;
   srcSet?: string;
   sizes?: string;
   alt: string;
@@ -26,13 +35,22 @@ interface ProductImageProps {
 /**
  * The single <img> used for every product image.
  *
- * - lazy by default, so only near-viewport images are fetched
- * - registers with the rolling image budget and releases on unmount
- * - reports visibility so the budget evicts offscreen references first
- * - falls back to the original object URL if a transformed variant ever fails
+ * Pipeline, in order:
+ *  1. resolve a right-sized source — private-bucket objects get a signed *render* URL so a
+ *     card downloads ~60 KB instead of the 2.5–4 MB original (the real reason mobile stalled
+ *     on the pink placeholder);
+ *  2. serve it through the persistent app cache (Cache Storage, ~50 MB LRU) as a blob URL,
+ *     so navigating away and back repaints instantly;
+ *  3. on any cache/network trouble, fall back to the plain signed URL on the <img>;
+ *  4. on an <img> error, re-sign once (stale/invalid token) before showing an error state.
+ *
+ * It also keeps the existing decoded-memory budget accounting, which is tracked separately
+ * from cached bytes.
  */
 export const ProductImage = memo(function ProductImage({
   src,
+  rawSrc,
+  variant,
   srcSet,
   sizes,
   alt,
@@ -43,64 +61,109 @@ export const ProductImage = memo(function ProductImage({
   fetchPriority,
   onLoaded,
 }: ProductImageProps) {
+  const origin = rawSrc || src;
+  const spec: VariantRequest = variant ?? {
+    width: width ?? 400,
+    quality: 70,
+    ladder: CARD_WIDTHS,
+  };
+
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [resolved, setResolved] = useState(() => (needsSigning(src) ? "" : src));
-  const resignedRef = useRef<string | null>(null);
+  /** The network URL for this slot (signed variant, or a plain http URL). */
+  const [netSrc, setNetSrc] = useState(() =>
+    isStorageSource(origin) ? (cachedVariantUrl(origin, spec) ?? "") : src,
+  );
+  /** Blob URL from the persistent cache, when available. */
+  const [blobSrc, setBlobSrc] = useState<string | null>(null);
+  const resignedRef = useRef(false);
   const ref = useRef<HTMLImageElement | null>(null);
 
-  // A bare storage path or an expired signed URL is turned into a fresh signed URL before
-  // it ever reaches the <img>; a normal http(s) URL is used synchronously as-is.
+  const displaySrc = blobSrc ?? netSrc;
+  const isOriginalSrc = displaySrc === src;
+
+  // 1. Resolve the right-sized, valid network URL.
   useEffect(() => {
+    let alive = true;
     setFailed(false);
     setLoaded(false);
-    resignedRef.current = null;
-    if (!needsSigning(src)) {
-      setResolved(src);
+    setBlobSrc(null);
+    resignedRef.current = false;
+
+    if (!isStorageSource(origin)) {
+      setNetSrc(src);
       return;
     }
-    let alive = true;
-    setResolved("");
-    resolveSignedSrc(src)
+    const cached = cachedVariantUrl(origin, spec);
+    if (cached) setNetSrc(cached);
+    signedVariantUrl(origin, spec)
       .then((next) => {
-        if (alive) setResolved(next);
+        if (alive && next) setNetSrc(next);
       })
-      .catch(() => {
-        if (alive) setFailed(true);
+      .catch((error) => {
+        console.warn("[zari:image] could not resolve source", { origin, error });
+        if (alive) setNetSrc(src);
       });
     return () => {
       alive = false;
     };
-  }, [src]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origin, src, spec.width, spec.quality]);
 
-
-  // Budget accounting: one retain per mounted element.
+  // 2. Serve through the persistent cache; failures fall back to the network URL.
   useEffect(() => {
-    if (!resolved) return;
-    imageBudget.retain(resolved);
-    return () => imageBudget.release(resolved);
-  }, [resolved]);
+    if (!netSrc) return;
+    let alive = true;
+    let held: string | null = null;
+    acquireImage(netSrc)
+      .then((objectUrl) => {
+        if (!alive) {
+          releaseImage(netSrc);
+          return;
+        }
+        held = netSrc;
+        setBlobSrc(objectUrl);
+      })
+      .catch((error) => {
+        // Cache Storage unavailable, CORS or network error: use the URL directly.
+        console.warn("[zari:image] cache path unavailable, using network URL", {
+          url: netSrc,
+          error: (error as Error)?.message ?? error,
+        });
+      });
+    return () => {
+      alive = false;
+      if (held) releaseImage(held);
+    };
+  }, [netSrc]);
+
+  // Decoded-memory budget: one retain per mounted element (separate from cached bytes).
+  useEffect(() => {
+    if (!displaySrc) return;
+    imageBudget.retain(displaySrc);
+    return () => imageBudget.release(displaySrc);
+  }, [displaySrc]);
 
   // Visibility feeds eviction order — offscreen references go first.
   useEffect(() => {
     const el = ref.current;
-    if (!el || typeof IntersectionObserver === "undefined" || !resolved) return;
+    if (!el || typeof IntersectionObserver === "undefined" || !displaySrc) return;
     let visible = false;
     const io = new IntersectionObserver(
       ([entry]) => {
         const now = Boolean(entry?.isIntersecting);
         if (now === visible) return;
         visible = now;
-        imageBudget.setVisible(resolved, now);
+        imageBudget.setVisible(displaySrc, now);
       },
       { rootMargin: "200px" },
     );
     io.observe(el);
     return () => {
       io.disconnect();
-      if (visible) imageBudget.setVisible(resolved, false);
+      if (visible) imageBudget.setVisible(displaySrc, false);
     };
-  }, [resolved]);
+  }, [displaySrc]);
 
   return (
     <>
@@ -111,13 +174,13 @@ export const ProductImage = memo(function ProductImage({
         <div className="absolute inset-0 flex items-center justify-center bg-blush text-[10px] uppercase tracking-[0.18em] text-foreground/50">
           Image unavailable
         </div>
-      ) : resolved ? (
+      ) : displaySrc ? (
         <img
           ref={ref}
-          src={resolved}
-          // A re-signed/fallback source must not be overridden by the original srcset.
-          srcSet={resolved === src ? srcSet : undefined}
-          sizes={resolved === src ? sizes : undefined}
+          src={displaySrc}
+          // A signed/blob source must not be overridden by the original srcset.
+          srcSet={isOriginalSrc ? srcSet : undefined}
+          sizes={isOriginalSrc ? sizes : undefined}
           alt={alt}
           width={width}
           height={height}
@@ -126,23 +189,25 @@ export const ProductImage = memo(function ProductImage({
           fetchPriority={fetchPriority}
           onLoad={(e) => {
             const img = e.currentTarget;
-            imageBudget.measured(resolved, img.naturalWidth, img.naturalHeight);
+            imageBudget.measured(displaySrc, img.naturalWidth, img.naturalHeight);
             setLoaded(true);
             onLoaded?.();
           }}
           onError={() => {
-            const original = originalImageUrl(resolved);
-            if (original && original !== resolved) {
-              // Transformations unavailable (or variant missing): serve originals from here on.
-              disableImageTransforms();
-              setResolved(original);
+            console.warn("[zari:image] <img> failed to load", { url: displaySrc, origin });
+            if (blobSrc) {
+              // Blob went stale (revoked): retry over the network.
+              setBlobSrc(null);
               return;
             }
-            // Storage rejected the URL (stale token, wrong path shape): sign it once more.
-            if (resignedRef.current !== resolved) {
-              resignedRef.current = resolved;
-              resolveSignedSrc(resolved)
-                .then((next) => (next && next !== resolved ? setResolved(next) : setFailed(true)))
+            if (!resignedRef.current && isStorageSource(origin)) {
+              resignedRef.current = true;
+              invalidateVariants(origin);
+              signedVariantUrl(origin, spec, { force: true })
+                .then((next) => {
+                  if (next && next !== netSrc) setNetSrc(next);
+                  else setFailed(true);
+                })
                 .catch(() => setFailed(true));
               return;
             }
@@ -153,7 +218,6 @@ export const ProductImage = memo(function ProductImage({
           }`}
         />
       ) : null}
-
     </>
   );
 });

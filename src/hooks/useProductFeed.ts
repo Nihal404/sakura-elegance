@@ -8,7 +8,33 @@ import {
 } from "@/lib/zari/products";
 import { describeError } from "@/lib/zari/supabase";
 import { imageBudget } from "@/lib/zari/image-cache";
-import { cardImageUrl } from "@/lib/zari/image-url";
+import { warmImages } from "@/lib/zari/image-store";
+import { CARD_WIDTHS, signedVariantUrl } from "@/lib/zari/image-url";
+
+/**
+ * Background preload for a handful of upcoming cards: resolve each right-sized (signed)
+ * variant, then let the persistent cache store the bytes. Runs after the visible page has
+ * been handed to React, is capped to a small window, and stops itself once the ~50 MB
+ * cache target is close.
+ */
+async function warmProductCards(products: readonly Product[]) {
+  if (typeof window === "undefined") return;
+  // Let the visible cards win the network first.
+  await new Promise((resolve) => setTimeout(resolve, 600));
+  if (!imageBudget.canPreload()) return;
+  const spec = { width: 400, quality: 70, ladder: CARD_WIDTHS };
+  const urls: string[] = [];
+  for (const p of products) {
+    if (!p.image) continue;
+    try {
+      urls.push(await signedVariantUrl(p.image, spec));
+    } catch {
+      /* skip: the card itself will retry when it mounts */
+    }
+  }
+  await warmImages(urls);
+}
+
 
 interface FeedOptions {
   category?: Category | null;
@@ -65,8 +91,10 @@ export function useProductFeed({ category = null, search = null, pageSize = PROD
           const seen = new Set(prev.map((p) => p.id));
           return [...prev, ...page.items.filter((p) => !seen.has(p.id))];
         });
-        // Warm a small window only — the budget refuses when it is nearly full.
-        imageBudget.preload(page.items.slice(0, 6).map((p) => cardImageUrl(p.image, 400)));
+        // Warm a small window only (never the whole catalogue): sign the card-sized
+        // variants for the next few products and put them in the persistent cache.
+        void warmProductCards(page.items.slice(0, 8));
+
       } catch (err) {
         if ((err as { name?: string })?.name === "AbortError") return;
         if (id === requestId.current) setError(describeError(err, "Could not load the collection."));
