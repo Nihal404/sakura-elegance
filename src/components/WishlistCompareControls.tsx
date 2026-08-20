@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Heart, Scale } from "lucide-react";
 import { toast } from "sonner";
 import { useShoppingLists } from "@/lib/shopping-lists";
