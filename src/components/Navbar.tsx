@@ -5,6 +5,7 @@ import { useShoppingLists } from "@/lib/shopping-lists";
 
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
+import zariLogo from "@/assets/zari-logo.png.asset.json";
 
 export function Navbar() {
   const { cartCount, user, logout, cartShake } = useStore();
