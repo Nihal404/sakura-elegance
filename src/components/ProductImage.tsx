@@ -45,14 +45,34 @@ export const ProductImage = memo(function ProductImage({
 }: ProductImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [resolved, setResolved] = useState(src);
+  const [resolved, setResolved] = useState(() => (needsSigning(src) ? "" : src));
+  const resignedRef = useRef<string | null>(null);
   const ref = useRef<HTMLImageElement | null>(null);
 
+  // A bare storage path or an expired signed URL is turned into a fresh signed URL before
+  // it ever reaches the <img>; a normal http(s) URL is used synchronously as-is.
   useEffect(() => {
-    setResolved(src);
     setFailed(false);
     setLoaded(false);
+    resignedRef.current = null;
+    if (!needsSigning(src)) {
+      setResolved(src);
+      return;
+    }
+    let alive = true;
+    setResolved("");
+    resolveSignedSrc(src)
+      .then((next) => {
+        if (alive) setResolved(next);
+      })
+      .catch(() => {
+        if (alive) setFailed(true);
+      });
+    return () => {
+      alive = false;
+    };
   }, [src]);
+
 
   // Budget accounting: one retain per mounted element.
   useEffect(() => {
