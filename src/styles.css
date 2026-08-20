@@ -38,6 +38,7 @@
   --color-blush: var(--blush);
   --color-rose-gold: var(--rose-gold);
   --color-rose-gold-foreground: var(--rose-gold-foreground);
+  --color-gold: var(--gold);
 }
 
 :root {
@@ -47,6 +48,7 @@
   --blush: oklch(0.97 0.02 10);            /* #FFF0F5 */
   --rose-gold: oklch(0.72 0.09 40);
   --rose-gold-foreground: oklch(0.99 0 0);
+  --gold: oklch(0.75 0.12 85);             /* warm golden */
 
   --background: oklch(0.995 0.005 20);
   --foreground: oklch(0.25 0.05 15);
