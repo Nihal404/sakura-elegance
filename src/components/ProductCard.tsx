@@ -33,18 +33,20 @@ export const ProductCard = memo(function ProductCard({
       transition={{ duration: 0.5, delay: Math.min(index, 6) * 0.05, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -8, scale: 1.015 }}
       whileTap={{ y: -2, scale: 0.965 }}
-      onTapStart={(_, info) => {
-        // Press origin drives the tactile squash toward the finger/cursor.
-        const el = _.currentTarget as HTMLElement | null;
-        if (!el || !("getBoundingClientRect" in el)) return;
+      onTapStart={(event) => {
+        // Press origin follows the finger/cursor for a tactile squash.
+        const el = event.currentTarget as HTMLElement | null;
+        if (!el || typeof el.getBoundingClientRect !== "function") return;
+        const point = event as unknown as { clientX?: number; clientY?: number };
+        if (point.clientX == null || point.clientY == null) return;
         const r = el.getBoundingClientRect();
-        const x = ((info.point.x - r.left) / r.width) * 100;
-        const y = ((info.point.y - r.top) / r.height) * 100;
-        el.style.transformOrigin = `${Math.min(100, Math.max(0, x))}% ${Math.min(100, Math.max(0, y))}%`;
+        const x = Math.min(100, Math.max(0, ((point.clientX - r.left) / r.width) * 100));
+        const y = Math.min(100, Math.max(0, ((point.clientY - r.top) / r.height) * 100));
+        el.style.transformOrigin = `${x}% ${y}%`;
       }}
-      transitionEnd={undefined}
       style={{ WebkitTapHighlightColor: "transparent" }}
       className="group relative rounded-3xl overflow-hidden bg-card shadow-soft transition-shadow duration-500 hover:shadow-petal active:shadow-soft cursor-pointer select-none"
+
     >
       <Link
         to="/product/$id"
