@@ -157,7 +157,7 @@ export function ProductMorphGallery({ views, alt, activeIndex, onChange }: Props
             src={frontView?.src}
             alt={alt}
             draggable={false}
-            className={`w-full h-full object-cover ${frontView?.transform ?? ""}`}
+            className={`w-full h-full object-contain ${frontView?.transform ?? ""}`}
           />
         </div>
         <div
@@ -170,7 +170,7 @@ export function ProductMorphGallery({ views, alt, activeIndex, onChange }: Props
             alt=""
             aria-hidden="true"
             draggable={false}
-            className={`w-full h-full object-cover ${backView?.transform ?? ""}`}
+            className={`w-full h-full object-contain ${backView?.transform ?? ""}`}
           />
         </div>
 
