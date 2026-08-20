@@ -22,9 +22,8 @@ export const ProductCard = memo(function ProductCard({
   index?: number;
   priority?: boolean;
 }) {
-  const { addToCart } = useStore();
-  const [isShaking, setIsShaking] = useState(false);
   const thumb = cardImageUrl(product.image, 400);
+
 
   return (
     <motion.div
