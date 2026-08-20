@@ -102,6 +102,8 @@ function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [activeView, setActiveView] = useState(0);
   const [btnShake, setBtnShake] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
 
   const cached = products.find((p) => p.id === id);
   const [fetched, setFetched] = useState<Product | null>(null);
