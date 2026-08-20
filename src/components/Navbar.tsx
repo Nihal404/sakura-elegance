@@ -88,7 +88,7 @@ export function Navbar() {
 
           <Link
             to="/cart"
-            className="relative p-2.5 rounded-full hover:bg-sakura/30 transition-colors"
+            className={`relative p-2.5 rounded-full hover:bg-sakura/30 transition-colors ${shake ? "animate-cart-shake" : ""}`}
             aria-label="Cart"
           >
             <ShoppingBag className="w-5 h-5 text-foreground/80" />
