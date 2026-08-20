@@ -101,11 +101,14 @@ function ComparePage() {
           /* Mobile-first: one scrollable track of full-width columns, no cramped grid. */
           <div className="overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
             <div
-              className="grid gap-4"
+              className="grid gap-4 justify-start"
               style={{
-                gridTemplateColumns: `repeat(${products.length}, minmax(240px, 1fr))`,
+                gridTemplateColumns: `repeat(${products.length}, minmax(240px, ${
+                  products.length > 2 ? "1fr" : "300px"
+                }))`,
                 minWidth: products.length > 1 ? `${products.length * 244}px` : undefined,
               }}
+
             >
               {products.map((p) => (
                 <div
