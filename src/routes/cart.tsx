@@ -135,9 +135,9 @@ function CartPage() {
                       className="w-28 h-32 md:w-32 md:h-36 rounded-xl object-cover"
                     />
                   </Link>
-                  <div className="flex-1 flex flex-col">
+                  <div className="flex-1 min-w-0 flex flex-col">
                     <div className="flex justify-between gap-2">
-                      <div>
+                      <div className="min-w-0">
                         <Link
                           to="/product/$id"
                           params={{ id: item.id }}
