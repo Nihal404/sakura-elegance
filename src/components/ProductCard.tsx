@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useStore, type Product } from "@/lib/store";
 import { ProductImage } from "@/components/ProductImage";
-import { CARD_SIZES, cardImageUrl, cardSrcSet } from "@/lib/zari/image-url";
+import { CARD_SIZES, CARD_WIDTHS, cardImageUrl, cardSrcSet } from "@/lib/zari/image-url";
 import { CompareButton, WishlistButton } from "@/components/WishlistCompareControls";
 
 
@@ -44,6 +44,8 @@ export const ProductCard = memo(function ProductCard({
         <div className="relative aspect-[3/4] overflow-hidden bg-blush">
           <ProductImage
             src={thumb}
+            rawSrc={product.image}
+            variant={{ width: 400, quality: 70, ladder: CARD_WIDTHS }}
             srcSet={cardSrcSet(product.image)}
             sizes={CARD_SIZES}
             alt={product.name}
