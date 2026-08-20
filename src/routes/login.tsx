@@ -159,7 +159,7 @@ function Login() {
           <div className="inline-flex items-center gap-2 justify-center w-12 h-12 rounded-full bg-sakura mb-4">
             <Sparkles className="w-5 h-5 text-primary" />
           </div>
-          <h1 className="font-serif text-3xl">Welcome to Zari</h1>
+          <h1 className="font-serif text-3xl">Welcome to <span className="font-zari">Zari</span></h1>
           <p className="text-sm text-muted-foreground mt-2 inline-flex items-center gap-1.5 justify-center">
             <ShieldCheck className="w-3.5 h-3.5 text-primary" />
             {mode === "signin" ? "Sign in to your account" : "Create your account"}
