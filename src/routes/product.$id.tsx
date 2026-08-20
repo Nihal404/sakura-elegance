@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, Loader2, Expand } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductReviews } from "@/components/ProductReviews";
 import { ProductMorphGallery } from "@/components/ProductMorphGallery";
+import { ProductLightbox } from "@/components/ProductLightbox";
 
 import { supabase } from "@/lib/zari/supabase";
 import { fetchProductById, type Product } from "@/lib/zari/products";
@@ -101,6 +102,8 @@ function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [activeView, setActiveView] = useState(0);
   const [btnShake, setBtnShake] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
 
   const cached = products.find((p) => p.id === id);
   const [fetched, setFetched] = useState<Product | null>(null);
@@ -258,12 +261,23 @@ function ProductDetail() {
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
         {/* Gallery */}
         <div>
-          <ProductMorphGallery
-            views={gallery}
-            alt={product.name}
-            activeIndex={Math.min(activeView, gallery.length - 1)}
-            onChange={setActiveView}
-          />
+          <div className="relative group">
+            <ProductMorphGallery
+              views={gallery}
+              alt={product.name}
+              activeIndex={Math.min(activeView, gallery.length - 1)}
+              onChange={setActiveView}
+            />
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              aria-label="Open full-screen zoom view"
+              className="absolute top-5 right-5 z-20 inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-border/70 bg-background/85 backdrop-blur text-[11px] tracking-[0.12em] uppercase text-foreground/80 shadow-soft transition-all hover:bg-background hover:text-primary"
+            >
+              <Expand className="w-3.5 h-3.5 text-primary" />
+              Zoom
+            </button>
+          </div>
 
           {gallery.length > 1 && (
             <div className={`mt-4 grid gap-3 ${gallery.length <= 4 ? "grid-cols-4" : "grid-cols-6"}`}>
@@ -271,6 +285,10 @@ function ProductDetail() {
                 <button
                   key={i}
                   onClick={() => setActiveView(i)}
+                  onDoubleClick={() => {
+                    setActiveView(i);
+                    setLightboxOpen(true);
+                  }}
                   className={`relative aspect-square rounded-2xl overflow-hidden ${v.frame} border-2 transition-all ${
                     activeView === i ? "border-primary shadow-soft" : "border-transparent opacity-70 hover:opacity-100"
                   }`}
@@ -289,7 +307,21 @@ function ProductDetail() {
               ))}
             </div>
           )}
+
+          <p className="mt-3 text-center text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            Tap zoom for full-screen detail
+          </p>
+
+          <ProductLightbox
+            open={lightboxOpen}
+            slides={gallery.map((v) => ({ src: v.src, thumb: v.thumb, label: v.label }))}
+            index={Math.min(activeView, gallery.length - 1)}
+            alt={product.name}
+            onIndexChange={setActiveView}
+            onClose={() => setLightboxOpen(false)}
+          />
         </div>
+
 
 
         {/* Details */}
