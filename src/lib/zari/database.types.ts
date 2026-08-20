@@ -1,4 +1,4 @@
-// Types for the Zari Boutique Supabase project (ref: ubmxuhzlvyjomuopcoxk).
+// Types for the Zari Boutique Supabase project (ref: aqlqukvdgleialflldlq).
 // Hand-maintained: this project's schema is owned outside Lovable, so it is NOT
 // the auto-generated src/integrations/supabase/types.ts file.
 
@@ -129,7 +129,7 @@ export interface Database {
           user_id: string;
           rating: number;
           comment: string | null;
-          reviewer_name: string | null;
+          name: string | null;
           created_at: string;
         };
         Insert: {
@@ -138,7 +138,7 @@ export interface Database {
           user_id: string;
           rating: number;
           comment?: string | null;
-          reviewer_name?: string | null;
+          name?: string | null;
         };
         Update: { rating?: number; comment?: string | null };
         Relationships: [];

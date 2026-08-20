@@ -16,17 +16,15 @@
 
 const RENDER_SEGMENT = "/storage/v1/render/image/public/";
 const OBJECT_SEGMENT = "/storage/v1/object/public/";
-const SIGN_SEGMENT = "/storage/v1/object/sign/";
 
 /**
- * Stored records may still hold a signed URL (`/object/sign/...?token=`) from an earlier
- * upload flow. Signed URLs carry a per-request token, which defeats CDN/browser reuse and
- * eventually expires. `product-images` is a public bucket, so we rewrite them to the
- * stable public object path at read time — the stored row and the object itself are left
- * untouched, and uploads/deletes stay protected by Storage policies.
+ * `product-images` is a PRIVATE bucket on this project, so stored records hold long-lived
+ * signed URLs (`/object/sign/...?token=`). Those must be served verbatim: stripping the
+ * token (or swapping in the public path) makes Storage answer 400/404. Signed URLs also
+ * cannot be resized at read time — the transform variant has to be baked in at sign time —
+ * so they are simply passed through untouched.
  */
 export function normalizeStorageUrl(url: string): string {
-  if (url.includes(SIGN_SEGMENT)) return url.replace(SIGN_SEGMENT, OBJECT_SEGMENT).split("?")[0]!;
   return url;
 }
 
