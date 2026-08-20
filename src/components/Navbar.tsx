@@ -14,15 +14,6 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
-  const [shake, setShake] = useState(false);
-
-  useEffect(() => {
-    if (cartShake) {
-      setShake(true);
-      const t = window.setTimeout(() => setShake(false), 550);
-      return () => window.clearTimeout(t);
-    }
-  }, [cartShake]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
