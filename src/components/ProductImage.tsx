@@ -1,6 +1,12 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { imageBudget } from "@/lib/zari/image-cache";
-import { disableImageTransforms, originalImageUrl } from "@/lib/zari/image-url";
+import {
+  disableImageTransforms,
+  needsSigning,
+  originalImageUrl,
+  resolveSignedSrc,
+} from "@/lib/zari/image-url";
+
 
 interface ProductImageProps {
   /** A sized (transformed) URL — build it with cardImageUrl/galleryImageUrl/thumbImageUrl. */
@@ -39,14 +45,34 @@ export const ProductImage = memo(function ProductImage({
 }: ProductImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [resolved, setResolved] = useState(src);
+  const [resolved, setResolved] = useState(() => (needsSigning(src) ? "" : src));
+  const resignedRef = useRef<string | null>(null);
   const ref = useRef<HTMLImageElement | null>(null);
 
+  // A bare storage path or an expired signed URL is turned into a fresh signed URL before
+  // it ever reaches the <img>; a normal http(s) URL is used synchronously as-is.
   useEffect(() => {
-    setResolved(src);
     setFailed(false);
     setLoaded(false);
+    resignedRef.current = null;
+    if (!needsSigning(src)) {
+      setResolved(src);
+      return;
+    }
+    let alive = true;
+    setResolved("");
+    resolveSignedSrc(src)
+      .then((next) => {
+        if (alive) setResolved(next);
+      })
+      .catch(() => {
+        if (alive) setFailed(true);
+      });
+    return () => {
+      alive = false;
+    };
   }, [src]);
+
 
   // Budget accounting: one retain per mounted element.
   useEffect(() => {
@@ -85,12 +111,13 @@ export const ProductImage = memo(function ProductImage({
         <div className="absolute inset-0 flex items-center justify-center bg-blush text-[10px] uppercase tracking-[0.18em] text-foreground/50">
           Image unavailable
         </div>
-      ) : (
+      ) : resolved ? (
         <img
           ref={ref}
           src={resolved}
-          srcSet={srcSet}
-          sizes={sizes}
+          // A re-signed/fallback source must not be overridden by the original srcset.
+          srcSet={resolved === src ? srcSet : undefined}
+          sizes={resolved === src ? sizes : undefined}
           alt={alt}
           width={width}
           height={height}
@@ -111,13 +138,22 @@ export const ProductImage = memo(function ProductImage({
               setResolved(original);
               return;
             }
+            // Storage rejected the URL (stale token, wrong path shape): sign it once more.
+            if (resignedRef.current !== resolved) {
+              resignedRef.current = resolved;
+              resolveSignedSrc(resolved)
+                .then((next) => (next && next !== resolved ? setResolved(next) : setFailed(true)))
+                .catch(() => setFailed(true));
+              return;
+            }
             setFailed(true);
           }}
           className={`${className} transition-opacity duration-500 ease-out ${
             loaded ? "opacity-100" : "opacity-0"
           }`}
         />
-      )}
+      ) : null}
+
     </>
   );
 });
