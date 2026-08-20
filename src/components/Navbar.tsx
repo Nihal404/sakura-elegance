@@ -5,7 +5,6 @@ import { useShoppingLists } from "@/lib/shopping-lists";
 
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
-import zariLogo from "@/assets/zari-logo.png.asset.json";
 
 export function Navbar() {
   const { cartCount, user, logout, cartShake } = useStore();
@@ -35,12 +34,10 @@ export function Navbar() {
       }`}
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-10 h-20 flex items-center justify-between">
-        <Link to="/" className="group flex items-center gap-2">
-          <img
-            src={zariLogo.url}
-            alt="Zari Boutique — clothes and accessories"
-            className="h-12 w-12 md:h-14 md:w-14 rounded-full object-cover shadow-soft"
-          />
+        <Link to="/" className="group flex items-center gap-1.5">
+          <span className="font-zari font-bold text-2xl md:text-3xl tracking-normal text-foreground">
+            Zari
+          </span>
           <span className="font-serif text-xl md:text-2xl tracking-tight text-foreground">
             Boutique
           </span>
