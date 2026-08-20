@@ -38,6 +38,8 @@ function CartPage() {
       return;
     }
 
+    playDelightedSound();
+
     // Snapshot the bag: placing the order clears it server-side.
     const lines = cart.map(
       (i, idx) =>
