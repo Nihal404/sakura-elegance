@@ -237,7 +237,7 @@ function CartPage() {
                   backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                 }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="block font-serif text-6xl sm:text-7xl md:text-9xl font-bold tracking-widest text-center mx-auto"
+                className="block font-zari text-6xl sm:text-7xl md:text-9xl font-bold tracking-widest text-center mx-auto"
                 style={{
                   backgroundImage:
                     "linear-gradient(90deg, #b8860b, #ffd700, #fff4b8, #ffd700, #b8860b)",
