@@ -178,7 +178,7 @@ function CartPage() {
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      <span className="font-serif text-lg">
+                      <span className="ml-auto font-serif text-base sm:text-lg whitespace-nowrap tabular-nums">
                         ₹{(item.qty * item.price).toFixed(2)}
                       </span>
                     </div>
