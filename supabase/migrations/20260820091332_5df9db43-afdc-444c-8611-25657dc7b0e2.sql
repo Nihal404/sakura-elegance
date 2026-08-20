@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.create_zari_order(text) FROM anon;

@@ -174,14 +174,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         role: "Customer",
       };
     }
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, full_name, role")
-      .eq("id", session.user.id)
-      .maybeSingle();
-    // Authorization comes from the database row (and is enforced again by RLS on
-    // every write) — never from the signed-in email address.
-    const role = (profile?.role ?? "").toString().toLowerCase() === "admin" ? "Admin" : "Customer";
+    const [{ data: profile }, { data: roleRows }] = await Promise.all([
+      supabase.from("profiles").select("id, full_name").eq("id", session.user.id).maybeSingle(),
+      // Roles live in their own table (never on the profile row) and are enforced
+      // again by RLS on every write.
+      supabase.from("user_roles").select("role").eq("user_id", session.user.id),
+    ]);
+    // Authorization comes from the database row — never from the signed-in email address.
+    const role = ((roleRows ?? []) as { role: string }[]).some(
+      (r) => (r.role ?? "").toLowerCase() === "admin",
+    )
+      ? "Admin"
+      : "Customer";
     return {
       id: session.user.id,
       email: session.user.email ?? "",

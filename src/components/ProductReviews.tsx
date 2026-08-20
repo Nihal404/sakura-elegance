@@ -8,7 +8,7 @@ import { useStore } from "@/lib/store";
 type Review = {
   id: string;
   product_id: string;
-  reviewer_name: string | null;
+  name: string | null;
   rating: number;
   comment: string;
   created_at: string;
@@ -69,7 +69,7 @@ export function ProductReviews({ productId }: { productId: string }) {
       setLoading(true);
       const { data, error } = await supabase
         .from("reviews")
-        .select("id, product_id, reviewer_name, rating, comment, created_at")
+        .select("id, product_id, name, rating, comment, created_at")
         .eq("product_id", productId)
         .order("created_at", { ascending: false });
       if (!active) return;
@@ -122,12 +122,12 @@ export function ProductReviews({ productId }: { productId: string }) {
       .from("reviews")
       .insert({
         product_id: productId,
-        reviewer_name: name.trim().slice(0, 60),
+        name: name.trim().slice(0, 60),
         rating,
         comment: comment.trim().slice(0, 1000),
         user_id: user.id,
       })
-      .select("id, product_id, reviewer_name, rating, comment, created_at")
+      .select("id, product_id, name, rating, comment, created_at")
       .single();
     setSubmitting(false);
     if (error) {
@@ -266,7 +266,7 @@ export function ProductReviews({ productId }: { productId: string }) {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="font-medium">{r.reviewer_name || "Zari member"}</div>
+                    <div className="font-medium">{r.name || "Zari member"}</div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(r.created_at).toLocaleDateString(undefined, {
                         year: "numeric",

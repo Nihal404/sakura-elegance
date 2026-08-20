@@ -21,7 +21,7 @@ export default defineTool({
     }
     const { data, error } = await supabaseForUser(ctx)
       .from("reviews")
-      .select("id, product_id, reviewer_name, rating, comment, created_at")
+      .select("id, product_id, name, rating, comment, created_at")
       .eq("user_id", ctx.getUserId())
       .order("created_at", { ascending: false })
       .limit(50);

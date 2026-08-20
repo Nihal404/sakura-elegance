@@ -7,8 +7,8 @@ import { z } from "zod";
 // Authorization: the caller must send an access token from the storefront's own
 // Supabase project (header `x-store-access-token`) and be an admin there.
 
-const STORE_SUPABASE_URL = "https://ubmxuhzlvyjomuopcoxk.supabase.co";
-const STORE_PUBLISHABLE_KEY = "sb_publishable_4HVRiWgOTNeHeYzF6JBPSQ_Dz-3q1eN";
+const STORE_SUPABASE_URL = "https://aqlqukvdgleialflldlq.supabase.co";
+const STORE_PUBLISHABLE_KEY = "sb_publishable_9wDsjLU60YK73HWdVHyimQ_7BktbYWT";
 
 const schema = z.object({
   imageDataUrl: z.string().min(20).max(8_000_000),
@@ -36,13 +36,13 @@ async function isStoreAdmin(token: string): Promise<boolean> {
   if (!userRes.ok) return false;
   const user = (await userRes.json()) as { id?: string };
   if (!user.id) return false;
-  const profileRes = await fetch(
-    `${STORE_SUPABASE_URL}/rest/v1/profiles?select=role&id=eq.${user.id}`,
+  const roleRes = await fetch(
+    `${STORE_SUPABASE_URL}/rest/v1/user_roles?select=role&user_id=eq.${user.id}`,
     { headers, signal: AbortSignal.timeout(10_000) },
   );
-  if (!profileRes.ok) return false;
-  const rows = (await profileRes.json()) as { role?: string | null }[];
-  return (rows[0]?.role ?? "").toLowerCase() === "admin";
+  if (!roleRes.ok) return false;
+  const rows = (await roleRes.json()) as { role?: string | null }[];
+  return rows.some((r) => (r.role ?? "").toLowerCase() === "admin");
 }
 
 export const Route = createFileRoute("/api/public/describe-product")({

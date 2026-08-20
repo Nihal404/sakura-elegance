@@ -10,12 +10,12 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
 /** The Supabase project this app is built against. */
-export const ZARI_PROJECT_REF = "ubmxuhzlvyjomuopcoxk";
+export const ZARI_PROJECT_REF = "aqlqukvdgleialflldlq";
 
 // Used when the build environment has no VITE_* values, or when it still carries a
-// different project's values (as the local Lovable preview does). Both are public.
+// different project's values. Both are public.
 const DEFAULT_URL = `https://${ZARI_PROJECT_REF}.supabase.co`;
-const DEFAULT_PUBLISHABLE_KEY = "sb_publishable_4HVRiWgOTNeHeYzF6JBPSQ_Dz-3q1eN";
+const DEFAULT_PUBLISHABLE_KEY = "sb_publishable_9wDsjLU60YK73HWdVHyimQ_7BktbYWT";
 
 const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const envKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
