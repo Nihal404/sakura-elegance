@@ -1,12 +1,11 @@
-import { memo, useState } from "react";
+import { memo } from "react";
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useStore, type Product } from "@/lib/store";
+import { type Product } from "@/lib/store";
 import { ProductImage } from "@/components/ProductImage";
 import { CARD_SIZES, CARD_WIDTHS, cardImageUrl, cardSrcSet } from "@/lib/zari/image-url";
 import { CompareButton, WishlistButton } from "@/components/WishlistCompareControls";
-import { playAddToCartSound } from "@/lib/zari/sound";
 
 
 /**
