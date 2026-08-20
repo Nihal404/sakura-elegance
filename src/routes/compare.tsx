@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { Scale, ShoppingBag, X } from "lucide-react";
 import { useShoppingLists } from "@/lib/shopping-lists";
 import { useProductsByIds } from "@/hooks/useProductsByIds";
 import { useStore } from "@/lib/store";
 import { CARD_WIDTHS } from "@/lib/zari/image-url";
+import { playAddToCartSound } from "@/lib/zari/sound";
 import { SizedImg } from "@/components/SizedImg";
 import type { Product } from "@/lib/zari/products";
 
@@ -53,6 +55,7 @@ function ComparePage() {
   const { compare, removeFromCompare, clearCompare, hydrated, compareLimit } = useShoppingLists();
   const { items, loading } = useProductsByIds(compare);
   const { addToCart } = useStore();
+  const [shakingIds, setShakingIds] = useState<Set<string>>(new Set());
 
   const products = items.filter((i) => i.product).map((i) => i.product!);
 
@@ -179,9 +182,17 @@ function ComparePage() {
                     <button
                       onClick={() => {
                         addToCart(p);
-
+                        playAddToCartSound();
+                        setShakingIds((prev) => new Set(prev).add(p.id));
+                        window.setTimeout(() => {
+                          setShakingIds((prev) => {
+                            const next = new Set(prev);
+                            next.delete(p.id);
+                            return next;
+                          });
+                        }, 500);
                       }}
-                      className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-soft hover:shadow-petal transition-all inline-flex items-center justify-center gap-2"
+                      className={`w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-soft hover:shadow-petal transition-all inline-flex items-center justify-center gap-2 ${shakingIds.has(p.id) ? "animate-btn-shake" : ""}`}
                     >
                       <ShoppingBag className="w-4 h-4" />
                       Add to Cart
