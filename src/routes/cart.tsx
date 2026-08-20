@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { SizedImg } from "@/components/SizedImg";
 import { useStore } from "@/lib/store";
+import { playDelightedSound } from "@/lib/zari/sound";
 
 // TODO: Replace with the merchant's WhatsApp number in international format
 // (digits only, with country code, no "+" or spaces). Example: 919876543210
