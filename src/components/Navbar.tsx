@@ -31,7 +31,7 @@ export function Navbar() {
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-10 h-20 flex items-center justify-between">
         <Link to="/" className="group">
-          <span className="font-serif text-2xl md:text-3xl tracking-tight text-gradient-rose">
+          <span className="font-zari text-2xl md:text-3xl tracking-tight text-gradient-rose">
             Zari
           </span>
           <span className="font-serif text-2xl md:text-3xl tracking-tight text-foreground ml-1.5">
