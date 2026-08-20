@@ -159,9 +159,14 @@
   color: transparent;
 }
 @utility font-zari {
-  font-family: "Sacramento", "Dancing Script", "Brush Script MT", cursive;
-  font-weight: 700;
+  font-family: "Times New Roman", Times, Georgia, serif;
+  font-weight: 400;
 }
+@utility font-times {
+  font-family: "Times New Roman", Times, Georgia, serif;
+  font-weight: 400;
+}
+
 @utility no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
