@@ -135,13 +135,13 @@ function CartPage() {
                       className="w-28 h-32 md:w-32 md:h-36 rounded-xl object-cover"
                     />
                   </Link>
-                  <div className="flex-1 flex flex-col">
+                  <div className="flex-1 min-w-0 flex flex-col">
                     <div className="flex justify-between gap-2">
-                      <div>
+                      <div className="min-w-0">
                         <Link
                           to="/product/$id"
                           params={{ id: item.id }}
-                          className="font-serif text-lg md:text-xl leading-tight hover:text-primary transition-colors"
+                          className="block truncate font-serif text-lg md:text-xl leading-tight hover:text-primary transition-colors"
                         >
                           {item.name}
                         </Link>
@@ -154,14 +154,14 @@ function CartPage() {
                       </div>
                       <button
                         onClick={() => removeFromCart(item.id)}
-                        className="text-muted-foreground hover:text-destructive p-1"
+                        className="shrink-0 text-muted-foreground hover:text-destructive p-1"
                         aria-label={`Remove ${item.name} from bag`}
                       >
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="mt-auto flex items-center justify-between pt-3">
-                      <div className="flex items-center gap-2 bg-blush/60 rounded-full px-1 py-1">
+                    <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3">
+                      <div className="flex shrink-0 items-center gap-1 bg-blush/60 rounded-full px-1 py-1">
                         <button
                           onClick={() => updateQty(item.id, item.qty - 1)}
                           aria-label={`Decrease quantity of ${item.name}`}
@@ -178,7 +178,7 @@ function CartPage() {
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      <span className="font-serif text-lg">
+                      <span className="ml-auto font-serif text-base sm:text-lg whitespace-nowrap tabular-nums">
                         ₹{(item.qty * item.price).toFixed(2)}
                       </span>
                     </div>
