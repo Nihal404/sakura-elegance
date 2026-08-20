@@ -141,7 +141,7 @@ function CartPage() {
                         <Link
                           to="/product/$id"
                           params={{ id: item.id }}
-                          className="font-serif text-lg md:text-xl leading-tight hover:text-primary transition-colors"
+                          className="block truncate font-serif text-lg md:text-xl leading-tight hover:text-primary transition-colors"
                         >
                           {item.name}
                         </Link>
