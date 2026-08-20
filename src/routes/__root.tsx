@@ -18,6 +18,10 @@ import { Footer } from "@/components/Footer";
 import { SplashScreen } from "@/components/SplashScreen";
 import { PageTransition } from "@/components/PageTransition";
 import { TopProgressBar } from "@/components/TopProgressBar";
+import { ShoppingListsProvider } from "@/lib/shopping-lists";
+import { CompareBar } from "@/components/CompareBar";
+import { Toaster } from "@/components/ui/sonner";
+
 
 function NotFoundComponent() {
   return (
@@ -181,26 +185,31 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
-        <TopProgressBar />
-        <SplashScreen onFading={() => setEntryPhase("revealed")} />
-        <motion.div
-          animate={{
-            opacity: entryPhase === "revealed" ? 1 : entryPhase === "dimmed" ? 0.75 : 1,
-            scale: entryPhase === "revealed" ? 1 : entryPhase === "dimmed" ? 0.98 : 1,
-          }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          className="origin-center"
-        >
-          <Navbar />
-          <main className="pt-20 min-h-screen">
-            <PageTransition>
-              <Outlet />
-            </PageTransition>
-          </main>
-          <Footer />
-        </motion.div>
-        <CartDrawer />
+        <ShoppingListsProvider>
+          <TopProgressBar />
+          <SplashScreen onFading={() => setEntryPhase("revealed")} />
+          <motion.div
+            animate={{
+              opacity: entryPhase === "revealed" ? 1 : entryPhase === "dimmed" ? 0.75 : 1,
+              scale: entryPhase === "revealed" ? 1 : entryPhase === "dimmed" ? 0.98 : 1,
+            }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="origin-center"
+          >
+            <Navbar />
+            <main className="pt-20 min-h-screen">
+              <PageTransition>
+                <Outlet />
+              </PageTransition>
+            </main>
+            <Footer />
+          </motion.div>
+          <CartDrawer />
+          <CompareBar />
+          <Toaster />
+        </ShoppingListsProvider>
       </StoreProvider>
+
     </QueryClientProvider>
   );
 }
