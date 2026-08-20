@@ -108,12 +108,15 @@ function ProductDetail() {
   // mockups) is fetched here for this product alone. Stale responses are dropped.
   useEffect(() => {
     setActiveView(0);
-    if (cached?.mockups?.length) {
+    // Listing rows only carry image_url, so `cached.mockups` is a single-item fallback.
+    // Only skip the detail fetch when we truly already have the full gallery.
+    if (cached && cached.mockups.length > 1 && cached.description) {
       setFetched(null);
       setLoadingProduct(false);
       return;
     }
     const controller = new AbortController();
+
     setLoadingProduct(true);
     void fetchProductById(id, controller.signal)
       .then((p) => {
