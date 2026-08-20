@@ -236,7 +236,10 @@ export interface VariantRequest {
   ladder?: readonly number[];
 }
 
-const VARIANT_STORE_KEY = "zari.img.variants.v1";
+// v2 invalidates the old `resize: cover` URLs. With only a width supplied, Storage
+// produced malformed portrait variants (for example 4000×3000 -> 1000×3000), which
+// made landscape product photos appear as a narrow, zoomed strip in the gallery.
+const VARIANT_STORE_KEY = "zari.img.variants.v2";
 /** Sign for a year; refresh when less than a week remains. */
 const VARIANT_TTL_SECONDS = 60 * 60 * 24 * 365;
 const VARIANT_REFRESH_MS = 7 * 24 * 60 * 60 * 1000;
@@ -353,13 +356,13 @@ export async function signedVariantUrl(
   }
 
   const task = (async () => {
-    const sign = (transform?: { width: number; quality: number; resize: "cover" }) =>
+    const sign = (transform?: { width: number; quality: number; resize: "contain" }) =>
       supabase.storage
         .from(PRODUCT_IMAGE_BUCKET)
         .createSignedUrl(path, VARIANT_TTL_SECONDS, transform ? { transform } : undefined);
 
     let { data, error } = transformsEnabled
-      ? await sign({ width, quality, resize: "cover" })
+      ? await sign({ width, quality, resize: "contain" })
       : await sign();
 
     if ((error || !data?.signedUrl) && transformsEnabled) {
