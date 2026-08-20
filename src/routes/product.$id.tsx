@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Minus, ShoppingBag, Sparkles, Loader2, Expand } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductReviews } from "@/components/ProductReviews";
 import { ProductMorphGallery } from "@/components/ProductMorphGallery";
+import { ProductLightbox } from "@/components/ProductLightbox";
 
 import { supabase } from "@/lib/zari/supabase";
 import { fetchProductById, type Product } from "@/lib/zari/products";
