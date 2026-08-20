@@ -154,7 +154,7 @@ function CartPage() {
                       </div>
                       <button
                         onClick={() => removeFromCart(item.id)}
-                        className="text-muted-foreground hover:text-destructive p-1"
+                        className="shrink-0 text-muted-foreground hover:text-destructive p-1"
                         aria-label={`Remove ${item.name} from bag`}
                       >
                         <X className="w-4 h-4" />
