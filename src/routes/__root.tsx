@@ -19,6 +19,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { TopProgressBar } from "@/components/TopProgressBar";
 import { ShoppingListsProvider } from "@/lib/shopping-lists";
 import { CompareBar } from "@/components/CompareBar";
+import { RippleEffect } from "@/components/RippleEffect";
 import { Toaster } from "@/components/ui/sonner";
 
 
