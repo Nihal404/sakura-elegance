@@ -31,15 +31,28 @@ export const ProductCard = memo(function ProductCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5, delay: Math.min(index, 6) * 0.05, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -6 }}
-      className="group relative rounded-3xl overflow-hidden bg-card shadow-soft transition-shadow duration-500 hover:shadow-petal"
+      whileHover={{ y: -8, scale: 1.015 }}
+      whileTap={{ y: -2, scale: 0.965 }}
+      onTapStart={(_, info) => {
+        // Press origin drives the tactile squash toward the finger/cursor.
+        const el = _.currentTarget as HTMLElement | null;
+        if (!el || !("getBoundingClientRect" in el)) return;
+        const r = el.getBoundingClientRect();
+        const x = ((info.point.x - r.left) / r.width) * 100;
+        const y = ((info.point.y - r.top) / r.height) * 100;
+        el.style.transformOrigin = `${Math.min(100, Math.max(0, x))}% ${Math.min(100, Math.max(0, y))}%`;
+      }}
+      transitionEnd={undefined}
+      style={{ WebkitTapHighlightColor: "transparent" }}
+      className="group relative rounded-3xl overflow-hidden bg-card shadow-soft transition-shadow duration-500 hover:shadow-petal active:shadow-soft cursor-pointer select-none"
     >
       <Link
         to="/product/$id"
         params={{ id: product.id }}
-        className="block"
+        className="block outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-3xl"
         aria-label={`View ${product.name}`}
       >
+
         {/* Fixed aspect ratio + intrinsic size = no layout shift while images stream in. */}
         <div className="relative aspect-[3/4] overflow-hidden bg-blush">
           <ProductImage
