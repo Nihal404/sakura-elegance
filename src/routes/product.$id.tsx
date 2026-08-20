@@ -100,6 +100,7 @@ function ProductDetail() {
   const { products, addToCart } = useStore();
   const [qty, setQty] = useState(1);
   const [activeView, setActiveView] = useState(0);
+  const [btnShake, setBtnShake] = useState(false);
 
   const cached = products.find((p) => p.id === id);
   const [fetched, setFetched] = useState<Product | null>(null);
@@ -234,7 +235,9 @@ function ProductDetail() {
 
   const onAdd = () => {
     for (let i = 0; i < qty; i++) addToCart(product);
-
+    playAddToCartSound();
+    setBtnShake(true);
+    window.setTimeout(() => setBtnShake(false), 500);
   };
 
   return (
@@ -356,7 +359,7 @@ function ProductDetail() {
             </div>
             <button
               onClick={onAdd}
-              className="min-w-0 flex-1 rounded-full bg-primary px-6 py-4 text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap"
+              className={`min-w-0 flex-1 rounded-full bg-primary px-6 py-4 text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap ${btnShake ? "animate-btn-shake" : ""}`}
             >
               <ShoppingBag className="w-4 h-4 shrink-0" />
               <span className="truncate">Add to Cart · ₹{(product.price * qty).toFixed(2)}</span>
