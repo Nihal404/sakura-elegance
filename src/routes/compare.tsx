@@ -52,7 +52,7 @@ const ROWS: Row[] = [
 function ComparePage() {
   const { compare, removeFromCompare, clearCompare, hydrated, compareLimit } = useShoppingLists();
   const { items, loading } = useProductsByIds(compare);
-  const { addToCart, setCartOpen } = useStore();
+  const { addToCart } = useStore();
 
   const products = items.filter((i) => i.product).map((i) => i.product!);
 
@@ -179,7 +179,7 @@ function ComparePage() {
                     <button
                       onClick={() => {
                         addToCart(p);
-                        setCartOpen(true);
+
                       }}
                       className="w-full py-3 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-soft hover:shadow-petal transition-all inline-flex items-center justify-center gap-2"
                     >

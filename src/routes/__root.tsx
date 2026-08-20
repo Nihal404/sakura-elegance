@@ -13,7 +13,6 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { StoreProvider } from "@/lib/store";
 import { Navbar } from "@/components/Navbar";
-import { CartDrawer } from "@/components/CartDrawer";
 import { Footer } from "@/components/Footer";
 import { SplashScreen } from "@/components/SplashScreen";
 import { PageTransition } from "@/components/PageTransition";
@@ -204,7 +203,6 @@ function RootComponent() {
             </main>
             <Footer />
           </motion.div>
-          <CartDrawer />
           <CompareBar />
           <Toaster />
         </ShoppingListsProvider>

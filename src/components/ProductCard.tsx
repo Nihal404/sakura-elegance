@@ -22,7 +22,7 @@ export const ProductCard = memo(function ProductCard({
   index?: number;
   priority?: boolean;
 }) {
-  const { addToCart, setCartOpen } = useStore();
+  const { addToCart } = useStore();
   const thumb = cardImageUrl(product.image, 400);
 
   return (
@@ -67,7 +67,7 @@ export const ProductCard = memo(function ProductCard({
               e.preventDefault();
               e.stopPropagation();
               addToCart(product);
-              setCartOpen(true);
+
             }}
             className="absolute bottom-4 left-4 right-4 py-3 rounded-full bg-background/95 backdrop-blur text-foreground font-medium text-sm tracking-wide flex items-center justify-center gap-2 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 hover:bg-primary hover:text-primary-foreground"
           >
