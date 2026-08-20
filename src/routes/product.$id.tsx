@@ -279,7 +279,7 @@ function ProductDetail() {
                     decoding="async"
                     width={160}
                     height={160}
-                    className={`w-full h-full object-cover ${v.transform}`}
+                    className={`w-full h-full object-contain ${v.transform}`}
                   />
                 </button>
               ))}
