@@ -68,9 +68,12 @@ export const ProductCard = memo(function ProductCard({
             height={533}
             eager={priority}
             fetchPriority={priority ? "high" : undefined}
-            className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-700 ease-out"
+            className="w-full h-full object-cover group-hover:scale-[1.06] group-active:scale-[1.02] transition-transform duration-700 ease-out"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          {/* Press wash: instant visual confirmation the card was tapped. */}
+          <div className="absolute inset-0 bg-foreground/10 opacity-0 group-active:opacity-100 transition-opacity duration-150 pointer-events-none" />
+
           <div className="absolute top-3 right-3 flex flex-col gap-2">
             <WishlistButton productId={product.id} productName={product.name} />
             <CompareButton productId={product.id} productName={product.name} />
