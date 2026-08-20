@@ -111,12 +111,13 @@ export const ProductImage = memo(function ProductImage({
         <div className="absolute inset-0 flex items-center justify-center bg-blush text-[10px] uppercase tracking-[0.18em] text-foreground/50">
           Image unavailable
         </div>
-      ) : (
+      ) : resolved ? (
         <img
           ref={ref}
           src={resolved}
-          srcSet={srcSet}
-          sizes={sizes}
+          // A re-signed/fallback source must not be overridden by the original srcset.
+          srcSet={resolved === src ? srcSet : undefined}
+          sizes={resolved === src ? sizes : undefined}
           alt={alt}
           width={width}
           height={height}
@@ -137,7 +138,16 @@ export const ProductImage = memo(function ProductImage({
               setResolved(original);
               return;
             }
+            // Storage rejected the URL (stale token, wrong path shape): sign it once more.
+            if (resignedRef.current !== resolved) {
+              resignedRef.current = resolved;
+              resolveSignedSrc(resolved)
+                .then((next) => (next && next !== resolved ? setResolved(next) : setFailed(true)))
+                .catch(() => setFailed(true));
+              return;
+            }
             setFailed(true);
+
           }}
           className={`${className} transition-opacity duration-500 ease-out ${
             loaded ? "opacity-100" : "opacity-0"
