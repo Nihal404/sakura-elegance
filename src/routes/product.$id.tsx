@@ -329,34 +329,43 @@ function ProductDetail() {
             ))}
           </ul>
 
-          <div className="mt-10 flex items-center gap-4">
-            <div className="inline-flex items-center rounded-full border border-border/70 bg-card">
-              <button
-                onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="p-3 hover:text-primary transition-colors"
-                aria-label="Decrease"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-              <span className="w-8 text-center font-medium">{qty}</span>
-              <button
-                onClick={() => setQty((q) => q + 1)}
-                className="p-3 hover:text-primary transition-colors"
-                aria-label="Increase"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3">
+              <div className="inline-flex shrink-0 items-center rounded-full border border-border/70 bg-card">
+                <button
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  className="p-3 hover:text-primary transition-colors"
+                  aria-label="Decrease"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-8 text-center font-medium">{qty}</span>
+                <button
+                  onClick={() => setQty((q) => q + 1)}
+                  className="p-3 hover:text-primary transition-colors"
+                  aria-label="Increase"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="ml-auto flex shrink-0 items-center gap-3 sm:hidden">
+                <WishlistButton productId={product.id} productName={product.name} size="lg" />
+                <CompareButton productId={product.id} productName={product.name} size="lg" />
+              </div>
             </div>
             <button
               onClick={onAdd}
-              className="flex-1 py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all inline-flex items-center justify-center gap-2"
+              className="min-w-0 flex-1 rounded-full bg-primary px-6 py-4 text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all inline-flex items-center justify-center gap-2 whitespace-nowrap"
             >
-              <ShoppingBag className="w-4 h-4" />
-              Add to Cart · ₹{(product.price * qty).toFixed(2)}
+              <ShoppingBag className="w-4 h-4 shrink-0" />
+              <span className="truncate">Add to Cart · ₹{(product.price * qty).toFixed(2)}</span>
             </button>
-            <WishlistButton productId={product.id} productName={product.name} size="lg" />
-            <CompareButton productId={product.id} productName={product.name} size="lg" />
+            <div className="hidden shrink-0 items-center gap-3 sm:flex">
+              <WishlistButton productId={product.id} productName={product.name} size="lg" />
+              <CompareButton productId={product.id} productName={product.name} size="lg" />
+            </div>
           </div>
+
 
         </motion.div>
       </div>
