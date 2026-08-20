@@ -57,6 +57,8 @@ interface StoreContextValue {
   setCartOpen: (v: boolean) => void;
   cartCount: number;
   cartTotal: number;
+  cartShake: boolean;
+  setCartShake: (v: boolean) => void;
   placeOrder: (shippingAddress?: string) => Promise<string>;
 
   user: User | null;
@@ -88,6 +90,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [cartLoading, setCartLoading] = useState(false);
   const [cartHydrated, setCartHydrated] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [cartShake, setCartShake] = useState(false);
 
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);

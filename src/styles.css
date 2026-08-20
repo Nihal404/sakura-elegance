@@ -141,3 +141,20 @@
   }
 }
 
+@utility animate-cart-shake {
+  animation: cart-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes cart-shake {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-18deg); }
+  20% { transform: rotate(14deg); }
+  30% { transform: rotate(-10deg); }
+  40% { transform: rotate(8deg); }
+  50% { transform: rotate(-6deg); }
+  60% { transform: rotate(4deg); }
+  70% { transform: rotate(-2deg); }
+  80% { transform: rotate(1deg); }
+  90% { transform: rotate(-0.5deg); }
+}
+
