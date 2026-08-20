@@ -160,8 +160,8 @@ function CartPage() {
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="mt-auto flex items-center justify-between pt-3">
-                      <div className="flex items-center gap-2 bg-blush/60 rounded-full px-1 py-1">
+                    <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3">
+                      <div className="flex shrink-0 items-center gap-1 bg-blush/60 rounded-full px-1 py-1">
                         <button
                           onClick={() => updateQty(item.id, item.qty - 1)}
                           aria-label={`Decrease quantity of ${item.name}`}
