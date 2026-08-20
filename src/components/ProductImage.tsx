@@ -1,6 +1,12 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { imageBudget } from "@/lib/zari/image-cache";
-import { disableImageTransforms, originalImageUrl } from "@/lib/zari/image-url";
+import {
+  disableImageTransforms,
+  needsSigning,
+  originalImageUrl,
+  resolveSignedSrc,
+} from "@/lib/zari/image-url";
+
 
 interface ProductImageProps {
   /** A sized (transformed) URL — build it with cardImageUrl/galleryImageUrl/thumbImageUrl. */
