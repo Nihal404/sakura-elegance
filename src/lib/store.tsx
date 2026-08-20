@@ -363,6 +363,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ? prev.map((i) => (i.id === product.id ? { ...i, qty: i.qty + qty } : i))
           : [...prev, { ...product, qty }];
       });
+      setCartShake(true);
+      window.setTimeout(() => setCartShake(false), 550);
       if (!user) return;
       void (async () => {
         try {
@@ -571,6 +573,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setCartOpen,
       cartCount,
       cartTotal,
+      cartShake,
+      setCartShake,
       placeOrder,
       user,
       authLoading,
@@ -597,6 +601,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     updateQty,
     cartOpen,
     placeOrder,
+    cartShake,
+    setCartShake,
     user,
     authLoading,
     signIn,
