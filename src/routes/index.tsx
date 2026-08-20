@@ -92,12 +92,14 @@ function Home() {
               ZARIBOUTIQUE | BLOOMING&nbsp;
             </motion.div>
             <h1 className="font-serif text-5xl md:text-7xl leading-[1.05] tracking-tight text-foreground">
-              <span className="block text-2xl md:text-3xl not-italic tracking-[0.12em] uppercase text-foreground/70">
-                <span className="font-zari">Zari</span> Boutique
+              <span className="block text-2xl md:text-3xl not-italic tracking-[0.12em] uppercase text-foreground/70 font-times">
+                Zari Boutique
               </span>
               Elegance
               <span className="block italic text-gradient-rose">Blooms Here</span>
             </h1>
+
+
             <p className="mt-6 text-base md:text-lg text-foreground/75 max-w-md leading-relaxed">
               Handcrafted silhouettes and heirloom accessories, curated for the modern romantic.
               Bloom in every occasion.
