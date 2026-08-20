@@ -1,11 +1,15 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingBag, User as UserIcon, Menu, X, LogOut, LayoutDashboard } from "lucide-react";
+import { Search, ShoppingBag, User as UserIcon, Menu, X, LogOut, LayoutDashboard, Heart, Clock, Scale } from "lucide-react";
+import { useShoppingLists } from "@/lib/shopping-lists";
+
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 
 export function Navbar() {
   const { cartCount, user, logout } = useStore();
+  const { wishlist, compare } = useShoppingLists();
+
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -61,6 +65,19 @@ export function Navbar() {
             <Search className="w-5 h-5 text-foreground/80" />
           </button>
           <Link
+            to="/wishlist"
+            className="relative p-2.5 rounded-full hover:bg-sakura/30 transition-colors"
+            aria-label="Wishlist"
+          >
+            <Heart className="w-5 h-5 text-foreground/80" />
+            {wishlist.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-semibold rounded-full w-5 h-5 flex items-center justify-center">
+                {wishlist.length}
+              </span>
+            )}
+          </Link>
+
+          <Link
             to="/cart"
             className="relative p-2.5 rounded-full hover:bg-sakura/30 transition-colors"
             aria-label="Cart"
@@ -110,6 +127,31 @@ export function Navbar() {
                       Admin Dashboard
                     </Link>
                   )}
+                  <Link
+                    to="/wishlist"
+                    onClick={() => setUserMenu(false)}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg hover:bg-blush transition-colors"
+                  >
+                    <Heart className="w-4 h-4" />
+                    My Wishlist
+                  </Link>
+                  <Link
+                    to="/recently-viewed"
+                    onClick={() => setUserMenu(false)}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg hover:bg-blush transition-colors"
+                  >
+                    <Clock className="w-4 h-4" />
+                    Recently Viewed
+                  </Link>
+                  <Link
+                    to="/compare"
+                    onClick={() => setUserMenu(false)}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-lg hover:bg-blush transition-colors"
+                  >
+                    <Scale className="w-4 h-4" />
+                    Compare{compare.length ? ` (${compare.length})` : ""}
+                  </Link>
+
                   <button
                     onClick={() => {
                       logout();
@@ -151,9 +193,13 @@ export function Navbar() {
               <Link to="/shop" search={{ category: "Accessories" } as any} onClick={() => setMenuOpen(false)}>
                 Shop Accessories
               </Link>
+              <Link to="/wishlist" onClick={() => setMenuOpen(false)}>Wishlist</Link>
+              <Link to="/recently-viewed" onClick={() => setMenuOpen(false)}>Recently Viewed</Link>
+              <Link to="/compare" onClick={() => setMenuOpen(false)}>Compare</Link>
               {!user && (
                 <Link to="/login" onClick={() => setMenuOpen(false)}>Sign in</Link>
               )}
+
             </div>
           </motion.div>
         )}

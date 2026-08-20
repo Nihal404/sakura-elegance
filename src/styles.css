@@ -133,3 +133,11 @@
   font-family: "Espiritu", "Espiritu Script", "Great Vibes", "Brush Script MT", cursive;
   font-weight: 400;
 }
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+

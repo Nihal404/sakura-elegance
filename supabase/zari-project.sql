@@ -70,3 +70,45 @@ GRANT EXECUTE ON FUNCTION public.create_zari_order(text) TO authenticated;
 --    empty-array defaults, so existing rows and existing queries keep working.
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS features text[] NOT NULL DEFAULT '{}';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS mockups text[] NOT NULL DEFAULT '{}';
+
+-- 4) wishlist_items / recently_viewed — server-side persistence for the Wishlist and
+--    Recently Viewed features. Both are strictly per-user: RLS scopes every row to
+--    auth.uid(), so a shopper can never read or write another account's lists.
+--    Guests keep the same lists in localStorage and they merge in on sign-in.
+CREATE TABLE IF NOT EXISTS public.wishlist_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  product_id uuid NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, product_id)
+);
+CREATE INDEX IF NOT EXISTS wishlist_items_user_created_idx
+  ON public.wishlist_items (user_id, created_at DESC);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.wishlist_items TO authenticated;
+GRANT ALL ON public.wishlist_items TO service_role;
+ALTER TABLE public.wishlist_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage their own wishlist" ON public.wishlist_items;
+CREATE POLICY "Users manage their own wishlist"
+  ON public.wishlist_items FOR ALL TO authenticated
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE TABLE IF NOT EXISTS public.recently_viewed (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  product_id uuid NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+  viewed_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, product_id)
+);
+CREATE INDEX IF NOT EXISTS recently_viewed_user_viewed_idx
+  ON public.recently_viewed (user_id, viewed_at DESC);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.recently_viewed TO authenticated;
+GRANT ALL ON public.recently_viewed TO service_role;
+ALTER TABLE public.recently_viewed ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage their own view history" ON public.recently_viewed;
+CREATE POLICY "Users manage their own view history"
+  ON public.recently_viewed FOR ALL TO authenticated
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);

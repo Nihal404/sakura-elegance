@@ -10,6 +10,9 @@ import { supabase } from "@/lib/zari/supabase";
 import { fetchProductById, type Product } from "@/lib/zari/products";
 import { imageBudget } from "@/lib/zari/image-cache";
 import { galleryImageUrl, thumbImageUrl } from "@/lib/zari/image-url";
+import { useShoppingLists } from "@/lib/shopping-lists";
+import { CompareButton, WishlistButton } from "@/components/WishlistCompareControls";
+
 
 const SITE_URL = "https://zaris-elegance.lovable.app";
 
@@ -115,7 +118,15 @@ function ProductDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Recently viewed: one throttled record per product open (see VIEW_THROTTLE_MS).
+  const { recordView } = useShoppingLists();
+  useEffect(() => {
+    recordView(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
   const product = fetched ?? cached;
+
 
   if (loadingProduct && !product) {
     return (
@@ -320,7 +331,10 @@ function ProductDetail() {
               <ShoppingBag className="w-4 h-4" />
               Add to Cart · ₹{(product.price * qty).toFixed(2)}
             </button>
+            <WishlistButton productId={product.id} productName={product.name} size="lg" />
+            <CompareButton productId={product.id} productName={product.name} size="lg" />
           </div>
+
         </motion.div>
       </div>
 
