@@ -125,7 +125,7 @@ function CartPage() {
                     className="shrink-0"
                   >
                     <img
-                      src={thumbImageUrl(item.image, 200)}
+                      src={useSizedSrc(item.image, { width: 200, quality: 65, ladder: [160, 240, 320] })}
                       alt={item.name}
                       loading="lazy"
                       decoding="async"

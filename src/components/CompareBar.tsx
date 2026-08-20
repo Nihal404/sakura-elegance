@@ -37,7 +37,7 @@ export function CompareBar() {
                 >
                   {product?.image ? (
                     <img
-                      src={thumbImageUrl(product.image, 120)}
+                      src={useSizedSrc(product.image, { width: 120, quality: 65, ladder: [160, 240, 320] })}
                       alt={product.name}
                       width={120}
                       height={120}

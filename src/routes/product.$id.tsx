@@ -9,7 +9,16 @@ import { ProductMorphGallery } from "@/components/ProductMorphGallery";
 import { supabase } from "@/lib/zari/supabase";
 import { fetchProductById, type Product } from "@/lib/zari/products";
 import { imageBudget } from "@/lib/zari/image-cache";
-import { galleryImageUrl, thumbImageUrl } from "@/lib/zari/image-url";
+import {
+  DETAIL_WIDTHS,
+  galleryImageUrl,
+  thumbImageUrl,
+  type VariantRequest,
+} from "@/lib/zari/image-url";
+import { useSizedSrcList } from "@/hooks/useSizedImage";
+
+const GALLERY_SPEC: VariantRequest = { width: 1000, quality: 78, ladder: DETAIL_WIDTHS };
+const THUMB_SPEC: VariantRequest = { width: 160, quality: 65, ladder: [160, 240, 320] };
 import { useShoppingLists } from "@/lib/shopping-lists";
 import { CompareButton, WishlistButton } from "@/components/WishlistCompareControls";
 
@@ -127,6 +136,17 @@ function ProductDetail() {
 
   const product = fetched ?? cached;
 
+  // Right-sized (signed) variants for the gallery + thumb strip. Resolved unconditionally,
+  // above the early returns, so hook order stays stable.
+  const rawViews =
+    product?.mockups && product.mockups.length > 0
+      ? product.mockups
+      : product?.image
+        ? [product.image, product.image, product.image, product.image]
+        : [];
+  const gallerySrcs = useSizedSrcList(rawViews, GALLERY_SPEC);
+  const galleryThumbs = useSizedSrcList(rawViews, THUMB_SPEC);
+
 
   if (loadingProduct && !product) {
     return (
@@ -196,15 +216,15 @@ function ProductDetail() {
   // Detail-sized variants (~800–1200px), not the multi-MB originals.
   const gallery = hasMockups
     ? product.mockups.map((src, i) => ({
-        src: galleryImageUrl(src, 1000),
-        thumb: thumbImageUrl(src),
+        src: gallerySrcs[i] ?? galleryImageUrl(src, 1000),
+        thumb: galleryThumbs[i] ?? thumbImageUrl(src),
         label: i === 0 ? "Main" : `View ${i + 1}`,
         frame: "bg-blush",
         transform: "",
       }))
-    : syntheticViews.map((v) => ({
-        src: galleryImageUrl(product.image, 1000),
-        thumb: thumbImageUrl(product.image),
+    : syntheticViews.map((v, i) => ({
+        src: gallerySrcs[i] ?? galleryImageUrl(product.image, 1000),
+        thumb: galleryThumbs[i] ?? thumbImageUrl(product.image),
         ...v,
       }));
 

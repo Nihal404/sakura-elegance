@@ -49,7 +49,7 @@ export function CartDrawer() {
                       className="flex gap-4 p-3 rounded-2xl bg-blush/60"
                     >
                       <img
-                        src={thumbImageUrl(item.image, 160)}
+                        src={useSizedSrc(item.image, { width: 160, quality: 65, ladder: [160, 240, 320] })}
                         alt={item.name}
                         loading="lazy"
                         decoding="async"
