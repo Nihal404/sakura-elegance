@@ -96,7 +96,7 @@ export const Route = createFileRoute("/product/$id")({
 function ProductDetail() {
   const { id } = Route.useParams();
   const router = useRouter();
-  const { products, addToCart, setCartOpen } = useStore();
+  const { products, addToCart } = useStore();
   const [qty, setQty] = useState(1);
   const [activeView, setActiveView] = useState(0);
 
@@ -233,7 +233,7 @@ function ProductDetail() {
 
   const onAdd = () => {
     for (let i = 0; i < qty; i++) addToCart(product);
-    setCartOpen(true);
+
   };
 
   return (
