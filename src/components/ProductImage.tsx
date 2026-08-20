@@ -147,13 +147,13 @@ export const ProductImage = memo(function ProductImage({
               return;
             }
             setFailed(true);
-
           }}
           className={`${className} transition-opacity duration-500 ease-out ${
             loaded ? "opacity-100" : "opacity-0"
           }`}
         />
-      )}
+      ) : null}
+
     </>
   );
 });
