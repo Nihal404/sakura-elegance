@@ -21,6 +21,7 @@ const GALLERY_SPEC: VariantRequest = { width: 1000, quality: 78, ladder: DETAIL_
 const THUMB_SPEC: VariantRequest = { width: 160, quality: 65, ladder: [160, 240, 320] };
 import { useShoppingLists } from "@/lib/shopping-lists";
 import { CompareButton, WishlistButton } from "@/components/WishlistCompareControls";
+import { playAddToCartSound } from "@/lib/zari/sound";
 
 
 const SITE_URL = "https://zaris-elegance.lovable.app";
