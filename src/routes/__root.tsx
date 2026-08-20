@@ -204,6 +204,7 @@ function RootComponent() {
             <Footer />
           </motion.div>
           <CompareBar />
+          <RippleEffect />
           <Toaster />
         </ShoppingListsProvider>
       </StoreProvider>
