@@ -1,12 +1,11 @@
-import { memo, useState } from "react";
+import { memo } from "react";
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useStore, type Product } from "@/lib/store";
+import { type Product } from "@/lib/store";
 import { ProductImage } from "@/components/ProductImage";
 import { CARD_SIZES, CARD_WIDTHS, cardImageUrl, cardSrcSet } from "@/lib/zari/image-url";
 import { CompareButton, WishlistButton } from "@/components/WishlistCompareControls";
-import { playAddToCartSound } from "@/lib/zari/sound";
 
 
 /**
@@ -23,9 +22,8 @@ export const ProductCard = memo(function ProductCard({
   index?: number;
   priority?: boolean;
 }) {
-  const { addToCart } = useStore();
-  const [isShaking, setIsShaking] = useState(false);
   const thumb = cardImageUrl(product.image, 400);
+
 
   return (
     <motion.div
@@ -63,21 +61,11 @@ export const ProductCard = memo(function ProductCard({
             <CompareButton productId={product.id} productName={product.name} />
           </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              addToCart(product);
-              playAddToCartSound();
-              setIsShaking(true);
-              window.setTimeout(() => setIsShaking(false), 500);
-            }}
-            className={`absolute bottom-4 left-4 right-4 py-3 rounded-full bg-background/95 backdrop-blur text-foreground font-medium text-sm tracking-wide flex items-center justify-center gap-2 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 hover:bg-primary hover:text-primary-foreground ${isShaking ? "animate-btn-shake" : ""}`}
-          >
-            <Plus className="w-4 h-4" />
-            Add to Cart
-          </button>
+          {/* Cards never add to cart directly — they lead to the product page. */}
+          <span className="absolute bottom-4 left-4 right-4 py-3 rounded-full bg-background/95 backdrop-blur text-foreground font-medium text-sm tracking-wide flex items-center justify-center gap-2 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
+            <Eye className="w-4 h-4" />
+            View Details
+          </span>
           <span className="absolute top-4 left-4 text-[10px] uppercase tracking-[0.15em] px-3 py-1 rounded-full bg-background/85 backdrop-blur text-foreground/80">
             {product.category}
           </span>
