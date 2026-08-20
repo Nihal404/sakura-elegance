@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -6,6 +6,7 @@ import { useStore, type Product } from "@/lib/store";
 import { ProductImage } from "@/components/ProductImage";
 import { CARD_SIZES, CARD_WIDTHS, cardImageUrl, cardSrcSet } from "@/lib/zari/image-url";
 import { CompareButton, WishlistButton } from "@/components/WishlistCompareControls";
+import { playAddToCartSound } from "@/lib/zari/sound";
 
 
 /**
@@ -23,6 +24,7 @@ export const ProductCard = memo(function ProductCard({
   priority?: boolean;
 }) {
   const { addToCart } = useStore();
+  const [isShaking, setIsShaking] = useState(false);
   const thumb = cardImageUrl(product.image, 400);
 
   return (
@@ -67,9 +69,11 @@ export const ProductCard = memo(function ProductCard({
               e.preventDefault();
               e.stopPropagation();
               addToCart(product);
-
+              playAddToCartSound();
+              setIsShaking(true);
+              window.setTimeout(() => setIsShaking(false), 500);
             }}
-            className="absolute bottom-4 left-4 right-4 py-3 rounded-full bg-background/95 backdrop-blur text-foreground font-medium text-sm tracking-wide flex items-center justify-center gap-2 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 hover:bg-primary hover:text-primary-foreground"
+            className={`absolute bottom-4 left-4 right-4 py-3 rounded-full bg-background/95 backdrop-blur text-foreground font-medium text-sm tracking-wide flex items-center justify-center gap-2 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 hover:bg-primary hover:text-primary-foreground ${isShaking ? "animate-btn-shake" : ""}`}
           >
             <Plus className="w-4 h-4" />
             Add to Cart
