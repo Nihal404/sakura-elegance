@@ -35,7 +35,7 @@ export function Navbar() {
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-10 h-20 flex items-center justify-between">
         <Link to="/" className="group flex items-center gap-1.5">
-          <span className="font-zari font-bold text-2xl md:text-3xl tracking-normal text-foreground">
+          <span className="font-zari font-bold text-2xl md:text-3xl tracking-normal text-gold drop-shadow-sm">
             Zari
           </span>
           <span className="font-serif text-xl md:text-2xl tracking-tight text-foreground">
