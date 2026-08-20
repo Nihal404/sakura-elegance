@@ -38,6 +38,7 @@
   --color-blush: var(--blush);
   --color-rose-gold: var(--rose-gold);
   --color-rose-gold-foreground: var(--rose-gold-foreground);
+  --color-gold: var(--gold);
 }
 
 :root {
