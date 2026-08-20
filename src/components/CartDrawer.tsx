@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { thumbImageUrl } from "@/lib/zari/image-url";
+import { SizedImg } from "@/components/SizedImg";
 import { useStore } from "@/lib/store";
 
 export function CartDrawer() {
@@ -48,8 +48,9 @@ export function CartDrawer() {
                       key={item.id}
                       className="flex gap-4 p-3 rounded-2xl bg-blush/60"
                     >
-                      <img
-                        src={useSizedSrc(item.image, { width: 160, quality: 65, ladder: [160, 240, 320] })}
+                      <SizedImg
+                        raw={item.image}
+                        spec={{ width: 160, quality: 65, ladder: [160, 240, 320] }}
                         alt={item.name}
                         loading="lazy"
                         decoding="async"

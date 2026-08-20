@@ -4,7 +4,8 @@ import { Scale, ShoppingBag, X } from "lucide-react";
 import { useShoppingLists } from "@/lib/shopping-lists";
 import { useProductsByIds } from "@/hooks/useProductsByIds";
 import { useStore } from "@/lib/store";
-import { cardImageUrl } from "@/lib/zari/image-url";
+import { CARD_WIDTHS } from "@/lib/zari/image-url";
+import { SizedImg } from "@/components/SizedImg";
 import type { Product } from "@/lib/zari/products";
 
 export const Route = createFileRoute("/compare")({
@@ -117,8 +118,9 @@ function ComparePage() {
                 >
                   <div className="relative aspect-[3/4] bg-blush">
                     <Link to="/product/$id" params={{ id: p.id }}>
-                      <img
-                        src={cardImageUrl(p.image, 400)}
+                      <SizedImg
+                        raw={p.image}
+                        spec={{ width: 400, quality: 70, ladder: CARD_WIDTHS }}
                         alt={p.name}
                         width={400}
                         height={533}
