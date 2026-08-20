@@ -166,9 +166,8 @@
   &::-webkit-scrollbar {
     display: none;
   }
-@utility animate-btn-shake {
-  animation: btn-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
+
 
 /* Ink ripple painted by <RippleEffect /> */
 .zari-ripple {
