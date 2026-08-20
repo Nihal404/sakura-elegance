@@ -6,7 +6,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-6 lg:px-10 py-14 grid gap-10 md:grid-cols-3">
         <div>
           <p className="font-serif text-2xl">
-            <span className="text-gradient-rose">Zari</span> Boutique
+            <span className="font-zari text-gradient-rose">Zari</span> Boutique
           </p>
           <p className="mt-3 text-sm text-muted-foreground max-w-xs">
             Timeless elegance, hand-picked for the modern romantic. Bloom in every occasion.

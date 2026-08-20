@@ -93,7 +93,7 @@ export function SplashScreen({ onFading }: SplashScreenProps) {
                 transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
                 className="relative font-serif text-5xl md:text-7xl"
               >
-                <span className="text-gradient-rose">Zari</span>
+                <span className="font-zari text-gradient-rose">Zari</span>
                 <span className="text-foreground ml-2">Boutique</span>
               </motion.div>
             </motion.div>
