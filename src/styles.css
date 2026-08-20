@@ -130,8 +130,8 @@
   color: transparent;
 }
 @utility font-zari {
-  font-family: "Dancing Script", "Brush Script MT", cursive;
-  font-weight: 400;
+  font-family: "Sacramento", "Dancing Script", "Brush Script MT", cursive;
+  font-weight: 700;
 }
 @utility no-scrollbar {
   scrollbar-width: none;
