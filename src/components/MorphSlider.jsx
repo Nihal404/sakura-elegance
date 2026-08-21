@@ -204,20 +204,50 @@ export function MorphSlider({
       const mesh = new Mesh(gl, { geometry: new Triangle(gl), program });
 
       const textures = slides.map(() => null);
+      // Product photos are 3000–4000px originals. Uploading one of those straight into a
+      // texture blows past the texture budget on phones (WebGL silently keeps the blank
+      // texture, so the banner paints white). Downscale onto a canvas first.
+      const MAX_TEX = 1600;
+      const toTextureSource = (img) => {
+        const w = img.naturalWidth || 1;
+        const h = img.naturalHeight || 1;
+        const scale = Math.min(1, MAX_TEX / Math.max(w, h));
+        if (scale >= 1) return { source: img, size: [w, h] };
+        const cw = Math.max(1, Math.round(w * scale));
+        const ch = Math.max(1, Math.round(h * scale));
+        try {
+          const c = document.createElement("canvas");
+          c.width = cw;
+          c.height = ch;
+          const c2d = c.getContext("2d");
+          if (!c2d) return { source: img, size: [w, h] };
+          c2d.drawImage(img, 0, 0, cw, ch);
+          return { source: c, size: [cw, ch] };
+        } catch {
+          return { source: img, size: [w, h] };
+        }
+      };
       const loadTexture = (i) =>
         new Promise((resolve) => {
           if (textures[i]) return resolve(textures[i]);
           const img = new Image();
           img.crossOrigin = "anonymous";
+          img.decoding = "async";
           img.onload = () => {
-            const tex = new Texture(gl, { image: img, generateMipmaps: false });
-            tex.__size = [img.naturalWidth || 1, img.naturalHeight || 1];
-            textures[i] = tex;
-            resolve(tex);
+            try {
+              const { source, size } = toTextureSource(img);
+              const tex = new Texture(gl, { image: source, generateMipmaps: false });
+              tex.__size = size;
+              textures[i] = tex;
+              resolve(tex);
+            } catch {
+              resolve(null);
+            }
           };
           img.onerror = () => resolve(null);
           img.src = slides[i].image;
         });
+
 
       const resize = () => {
         const el = containerRef.current;
@@ -239,7 +269,9 @@ export function MorphSlider({
         raf = requestAnimationFrame(loop_);
       };
 
-      const first = await loadTexture(0);
+      let first = await loadTexture(indexRef.current);
+      if (!first && indexRef.current !== 0) first = await loadTexture(0);
+
       if (disposed) return;
       if (first) {
         program.uniforms.uFrom.value = first;
@@ -249,7 +281,10 @@ export function MorphSlider({
       }
       program.uniforms.uProgress.value = 1;
       raf = requestAnimationFrame(loop_);
-      setReady(true);
+      // Only hide the plain <img> once a real texture is on screen; otherwise WebGL would
+      // paint an empty canvas over a perfectly loadable picture.
+      setReady(Boolean(first));
+
 
       ctx = {
         gsap,

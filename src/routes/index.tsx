@@ -5,8 +5,9 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { DepthCarousel } from "@/components/DepthCarousel";
-import { MorphSlider } from "@/components/MorphSlider";
-import { cardImageUrl } from "@/lib/zari/image-url";
+import { BannerSlider } from "@/components/BannerSlider";
+import { cardImageUrl, DETAIL_WIDTHS } from "@/lib/zari/image-url";
+
 import { buildProductMockSlides } from "@/lib/zari/product-mock-slides";
 import { fetchBanners, type Banner } from "@/lib/zari/banners";
 import { useSizedSrcList } from "@/hooks/useSizedImage";
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const BANNER_SPEC = { width: 1000, quality: 78 } as const;
+const BANNER_SPEC = { width: 1000, quality: 78, ladder: DETAIL_WIDTHS } as const;
 
 const float: Variants = {
   animate: {
@@ -99,24 +100,16 @@ function Home() {
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="rounded-[1.75rem] overflow-hidden shadow-petal"
           >
-            {/* BANNER SLIDES — edit PRODUCT_MOCK_SLIDES in
-                src/lib/zari/product-mock-slides.ts to change them. */}
-            <MorphSlider
-              items={mockSlides}
-              transition="melt"
-              fit="contain"
-              intensity={0.35}
-              aberration={0.35}
-              drift={0.4}
-              autoplay
-              autoplayDelay={4}
-              loop
-              showCaptions
-              showControls
-              showIndicators
-              radius={28}
+            {/* BANNER SLIDES — admin-managed banners, falling back to
+                PRODUCT_MOCK_SLIDES in src/lib/zari/product-mock-slides.ts. */}
+            <BannerSlider
+              slides={mockSlides}
               aspect={4 / 3}
+              radius={28}
+              autoplayDelay={5000}
+              showCaptions
             />
+
           </motion.div>
 
           {/* OFFERS STRIP */}
