@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -8,6 +8,8 @@ import { DepthCarousel } from "@/components/DepthCarousel";
 import { MorphSlider } from "@/components/MorphSlider";
 import { cardImageUrl } from "@/lib/zari/image-url";
 import { buildProductMockSlides } from "@/lib/zari/product-mock-slides";
+import { fetchBanners, type Banner } from "@/lib/zari/banners";
+import { galleryImageUrl } from "@/lib/zari/image-url";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,7 +47,29 @@ function Home() {
   const featured = products.slice(0, 8);
   // Hero product mock images — edit PRODUCT_MOCK_SLIDES in
   // src/lib/zari/product-mock-slides.ts to change them.
-  const mockSlides = useMemo(() => buildProductMockSlides(products as any, 5), [products]);
+  const fallbackSlides = useMemo(() => buildProductMockSlides(products as any, 5), [products]);
+  // Custom banners uploaded from the admin dashboard win over the fallback slides.
+  const [banners, setBanners] = useState<Banner[]>([]);
+  useEffect(() => {
+    let alive = true;
+    fetchBanners(true)
+      .then((rows) => {
+        if (alive) setBanners(rows);
+      })
+      .catch(() => {
+        /* fall back to the curated slides */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const mockSlides = useMemo(
+    () =>
+      banners.length
+        ? banners.map((b) => ({ image: galleryImageUrl(b.image, 1000), caption: b.caption ?? "" }))
+        : fallbackSlides,
+    [banners, fallbackSlides],
+  );
 
   return (
     <div>
@@ -68,7 +92,8 @@ function Home() {
             <MorphSlider
               items={mockSlides}
               transition="melt"
-              intensity={0.55}
+              fit="contain"
+              intensity={0.35}
               aberration={0.35}
               drift={0.4}
               autoplay

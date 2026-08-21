@@ -17,6 +17,7 @@ export interface MorphSliderProps {
   showIndicators?: boolean;
   radius?: number;
   aspect?: number;
+  fit?: "cover" | "contain";
   className?: string;
   onSlideChange?: (index: number) => void;
 }

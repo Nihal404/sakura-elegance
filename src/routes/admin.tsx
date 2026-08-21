@@ -7,6 +7,7 @@ import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase, PRODUCT_IMAGE_BUCKET } from "@/lib/zari/supabase";
 import { describeProductImage } from "@/lib/zari/describe-product";
 import { compressImage } from "@/lib/zari/compress-image";
+import { BannerManager } from "@/components/BannerManager";
 
 
 const MAX_MOCKUPS = 6;
@@ -309,6 +310,8 @@ function Admin() {
           <h1 className="font-serif text-4xl">Boutique Dashboard</h1>
         </div>
       </motion.div>
+
+      {user?.id && <BannerManager userId={user.id} />}
 
       <div className="grid lg:grid-cols-5 gap-8">
         <motion.div
