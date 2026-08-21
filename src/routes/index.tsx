@@ -100,24 +100,16 @@ function Home() {
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="rounded-[1.75rem] overflow-hidden shadow-petal"
           >
-            {/* BANNER SLIDES — edit PRODUCT_MOCK_SLIDES in
-                src/lib/zari/product-mock-slides.ts to change them. */}
-            <MorphSlider
-              items={mockSlides}
-              transition="melt"
-              fit="contain"
-              intensity={0.35}
-              aberration={0.35}
-              drift={0.4}
-              autoplay
-              autoplayDelay={4}
-              loop
-              showCaptions
-              showControls
-              showIndicators
-              radius={28}
+            {/* BANNER SLIDES — admin-managed banners, falling back to
+                PRODUCT_MOCK_SLIDES in src/lib/zari/product-mock-slides.ts. */}
+            <BannerSlider
+              slides={mockSlides}
               aspect={4 / 3}
+              radius={28}
+              autoplayDelay={5000}
+              showCaptions
             />
+
           </motion.div>
 
           {/* OFFERS STRIP */}
