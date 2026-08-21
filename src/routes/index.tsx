@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const BANNER_SPEC = { width: 1000, quality: 78 } as const;
+const BANNER_SPEC = { width: 1000, quality: 78, ladder: DETAIL_WIDTHS } as const;
 
 const float: Variants = {
   animate: {
