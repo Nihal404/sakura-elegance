@@ -30,6 +30,30 @@ export interface Database {
         };
         Relationships: [];
       };
+      banners: {
+        Row: {
+          id: string;
+          image: string;
+          caption: string | null;
+          sort_order: number;
+          active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          image: string;
+          caption?: string | null;
+          sort_order?: number;
+          active?: boolean;
+        };
+        Update: {
+          image?: string;
+          caption?: string | null;
+          sort_order?: number;
+          active?: boolean;
+        };
+        Relationships: [];
+      };
       products: {
         Row: {
           id: string;

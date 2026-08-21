@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -8,6 +8,8 @@ import { DepthCarousel } from "@/components/DepthCarousel";
 import { MorphSlider } from "@/components/MorphSlider";
 import { cardImageUrl } from "@/lib/zari/image-url";
 import { buildProductMockSlides } from "@/lib/zari/product-mock-slides";
+import { fetchBanners, type Banner } from "@/lib/zari/banners";
+import { useSizedSrcList } from "@/hooks/useSizedImage";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,6 +34,8 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
+const BANNER_SPEC = { width: 1000, quality: 78 } as const;
+
 const float: Variants = {
   animate: {
     y: [0, -14, 0],
@@ -45,7 +49,39 @@ function Home() {
   const featured = products.slice(0, 8);
   // Hero product mock images — edit PRODUCT_MOCK_SLIDES in
   // src/lib/zari/product-mock-slides.ts to change them.
-  const mockSlides = useMemo(() => buildProductMockSlides(products as any, 5), [products]);
+  const fallbackSlides = useMemo(() => buildProductMockSlides(products as any, 5), [products]);
+  // Custom banners uploaded from the admin dashboard win over the fallback slides.
+  const [banners, setBanners] = useState<Banner[]>([]);
+  useEffect(() => {
+    let alive = true;
+    fetchBanners(true)
+      .then((rows) => {
+        if (alive) setBanners(rows);
+      })
+      .catch(() => {
+        /* fall back to the curated slides */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const rawSlides = useMemo(
+    () =>
+      banners.length
+        ? banners.map((b) => ({ image: b.image, caption: b.caption ?? "" }))
+        : fallbackSlides,
+    [banners, fallbackSlides],
+  );
+  // Private-bucket banners must be resolved to a signed, right-sized variant before the
+  // WebGL slider can load them as textures.
+  const resolved = useSizedSrcList(
+    useMemo(() => rawSlides.map((s) => s.image), [rawSlides]),
+    BANNER_SPEC,
+  );
+  const mockSlides = useMemo(
+    () => rawSlides.map((s, i) => ({ ...s, image: resolved[i] || s.image })),
+    [rawSlides, resolved],
+  );
 
   return (
     <div>
@@ -68,7 +104,8 @@ function Home() {
             <MorphSlider
               items={mockSlides}
               transition="melt"
-              intensity={0.55}
+              fit="contain"
+              intensity={0.35}
               aberration={0.35}
               drift={0.4}
               autoplay

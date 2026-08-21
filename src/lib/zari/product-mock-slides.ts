@@ -1,4 +1,3 @@
-import { galleryImageUrl } from "@/lib/zari/image-url";
 /**
  * ============================================================
  *  PRODUCT MOCK SLIDES — single source of truth for the hero
@@ -49,8 +48,8 @@ export function buildProductMockSlides(
   for (const p of products) {
     const image = p.image || p.images?.find(Boolean) || null;
     if (!image) continue;
-    // Carousel/hero art is served as a ~900px CDN variant, never the stored original.
-    fromCatalogue.push({ image: galleryImageUrl(image, 900), caption: p.name || "Zari Boutique" });
+    // Raw stored value: the hero resolves it to a signed ~1000px variant at render time.
+    fromCatalogue.push({ image, caption: p.name || "Zari Boutique" });
     if (fromCatalogue.length >= limit) break;
   }
   return fromCatalogue.length >= 2 ? fromCatalogue : PRODUCT_MOCK_SLIDES;

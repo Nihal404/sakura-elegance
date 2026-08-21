@@ -27,6 +27,17 @@ uniform float uIntensity;
 uniform float uAberration;
 uniform float uDrift;
 uniform float uMelt;
+uniform float uFit; // 0 = cover, 1 = contain (letterboxed, never stretched)
+
+vec2 containUv(vec2 uv, vec2 texSize, float zoom) {
+  float canvasAspect = uResolution.x / max(uResolution.y, 1.0);
+  float texAspect = texSize.x / max(texSize.y, 1.0);
+  vec2 scale = canvasAspect > texAspect
+    ? vec2(texAspect / canvasAspect, 1.0)
+    : vec2(1.0, canvasAspect / texAspect);
+  uv = (uv - 0.5) / (scale * zoom) + 0.5;
+  return uv;
+}
 
 vec2 coverUv(vec2 uv, vec2 texSize, float zoom) {
   float canvasAspect = uResolution.x / max(uResolution.y, 1.0);
@@ -55,6 +66,18 @@ float noise(vec2 p) {
 
 vec4 sampleTex(sampler2D tex, vec2 texSize, vec2 uv, float zoom, float ab) {
   vec2 base = coverUv(uv, texSize, zoom);
+  if (uFit > 0.5) {
+    // Contain: the whole banner is visible at its true aspect ratio; the
+    // leftover margin is filled with a dimmed, blown-up version of itself.
+    vec2 inner = containUv(uv, texSize, zoom);
+    bool outside = inner.x < 0.0 || inner.x > 1.0 || inner.y < 0.0 || inner.y > 1.0;
+    if (!outside) {
+      base = inner;
+    } else {
+      vec4 bg = texture2D(tex, clamp(base, 0.0, 1.0));
+      return vec4(bg.rgb * 0.45, 1.0);
+    }
+  }
   if (ab < 0.0005) return texture2D(tex, base);
   vec2 dir = (uv - 0.5) * ab * 0.06;
   float r = texture2D(tex, base + dir).r;
@@ -107,6 +130,7 @@ export function MorphSlider({
   showIndicators = true,
   radius = 16,
   aspect = 4 / 5,
+  fit = "cover",
   className = "",
   onSlideChange,
 }) {
@@ -174,6 +198,7 @@ export function MorphSlider({
           uAberration: { value: aberration },
           uDrift: { value: drift },
           uMelt: { value: transition === "melt" ? 1 : 0 },
+          uFit: { value: fit === "contain" ? 1 : 0 },
         },
       });
       const mesh = new Mesh(gl, { geometry: new Triangle(gl), program });
@@ -366,7 +391,12 @@ export function MorphSlider({
     >
       <canvas ref={canvasRef} className="morph-slider__canvas" aria-hidden="true" />
       {!ready && (
-        <img src={active.image} alt={active.caption || ""} className="morph-slider__fallback" />
+        <img
+          src={active.image}
+          alt={active.caption || ""}
+          className="morph-slider__fallback"
+          style={{ objectFit: fit === "contain" ? "contain" : "cover" }}
+        />
       )}
       <div className="morph-slider__veil" />
 
