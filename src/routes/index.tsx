@@ -5,8 +5,9 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { DepthCarousel } from "@/components/DepthCarousel";
-import { MorphSlider } from "@/components/MorphSlider";
-import { cardImageUrl } from "@/lib/zari/image-url";
+import { BannerSlider } from "@/components/BannerSlider";
+import { cardImageUrl, DETAIL_WIDTHS } from "@/lib/zari/image-url";
+
 import { buildProductMockSlides } from "@/lib/zari/product-mock-slides";
 import { fetchBanners, type Banner } from "@/lib/zari/banners";
 import { useSizedSrcList } from "@/hooks/useSizedImage";
