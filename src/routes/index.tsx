@@ -9,7 +9,7 @@ import { MorphSlider } from "@/components/MorphSlider";
 import { cardImageUrl } from "@/lib/zari/image-url";
 import { buildProductMockSlides } from "@/lib/zari/product-mock-slides";
 import { fetchBanners, type Banner } from "@/lib/zari/banners";
-import { galleryImageUrl } from "@/lib/zari/image-url";
+import { useSizedSrcList } from "@/hooks/useSizedImage";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,6 +33,8 @@ export const Route = createFileRoute("/")({
 
   component: Home,
 });
+
+const BANNER_SPEC = { width: 1000, quality: 78 } as const;
 
 const float: Variants = {
   animate: {
@@ -63,12 +65,22 @@ function Home() {
       alive = false;
     };
   }, []);
-  const mockSlides = useMemo(
+  const rawSlides = useMemo(
     () =>
       banners.length
-        ? banners.map((b) => ({ image: galleryImageUrl(b.image, 1000), caption: b.caption ?? "" }))
+        ? banners.map((b) => ({ image: b.image, caption: b.caption ?? "" }))
         : fallbackSlides,
     [banners, fallbackSlides],
+  );
+  // Private-bucket banners must be resolved to a signed, right-sized variant before the
+  // WebGL slider can load them as textures.
+  const resolved = useSizedSrcList(
+    useMemo(() => rawSlides.map((s) => s.image), [rawSlides]),
+    BANNER_SPEC,
+  );
+  const mockSlides = useMemo(
+    () => rawSlides.map((s, i) => ({ ...s, image: resolved[i] || s.image })),
+    [rawSlides, resolved],
   );
 
   return (
