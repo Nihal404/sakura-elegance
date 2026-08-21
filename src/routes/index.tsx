@@ -53,6 +53,10 @@ function Home() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-sakura-gradient" />
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-10 pt-6 pb-4">
+          <h1 className="sr-only">
+            Zari Boutique — Sakura clothing &amp; accessories
+          </h1>
+
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
