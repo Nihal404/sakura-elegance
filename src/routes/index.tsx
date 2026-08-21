@@ -49,187 +49,121 @@ function Home() {
 
   return (
     <div>
-      {/* HERO */}
-      <section className="relative overflow-hidden -mt-20 pt-20">
+      {/* BANNER — 4:3 ad / campaign showcase */}
+      <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-sakura-gradient" />
-        <img
-          src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1900&q=80"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-multiply"
-        />
-        <div className="absolute inset-0 bg-hero-gradient" />
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-10 pt-6 pb-4">
+          <h1 className="sr-only">
+            Zari Boutique — Sakura clothing &amp; accessories
+          </h1>
 
-        {/* Floating petals */}
-        {[...Array(6)].map((_, i) => (
-          <motion.span
-            key={i}
-            className="absolute w-3 h-3 rounded-full bg-sakura/70 blur-[1px]"
-            style={{
-              top: `${10 + i * 12}%`,
-              left: `${8 + i * 14}%`,
-            }}
-            animate={{
-              y: [0, 20, 0],
-              x: [0, 10, 0],
-              opacity: [0.5, 1, 0.5],
-            }}
-            transition={{ duration: 5 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.4 }}
-          />
-        ))}
-
-        <div className="relative mx-auto max-w-7xl px-6 lg:px-10 py-24 md:py-36 grid md:grid-cols-2 gap-12 items-center">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: "easeOut" }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="rounded-[1.75rem] overflow-hidden shadow-petal"
           >
-            <motion.div
-              variants={float}
-              animate="animate"
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-background/70 backdrop-blur text-xs tracking-[0.2em] uppercase text-primary mb-6 border border-primary/20"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              ZARIBOUTIQUE | BLOOMING&nbsp;
-            </motion.div>
-            <h1 className="font-serif text-5xl md:text-7xl leading-[1.05] tracking-tight text-foreground">
-              <span className="block text-2xl md:text-3xl not-italic tracking-[0.12em] uppercase text-foreground/70 font-times">
-                Zari Boutique
-              </span>
-              Elegance
-              <span className="block italic text-gradient-rose">Blooms Here</span>
-            </h1>
-
-
-            <p className="mt-6 text-base md:text-lg text-foreground/75 max-w-md leading-relaxed">
-              Handcrafted silhouettes and heirloom accessories, curated for the modern romantic.
-              Bloom in every occasion.
-            </p>
-            <div className="mt-10 flex flex-wrap gap-4">
-              <Link
-                to="/shop"
-                className="group inline-flex items-center gap-2 px-8 py-4 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all"
-              >
-                Shop the Collection
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                to="/shop"
-                search={{ category: "Accessories" } as any}
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-full border border-foreground/20 hover:border-primary hover:text-primary font-medium tracking-wide transition-all"
-              >
-                Explore Accessories
-              </Link>
-            </div>
+            {/* BANNER SLIDES — edit PRODUCT_MOCK_SLIDES in
+                src/lib/zari/product-mock-slides.ts to change them. */}
+            <MorphSlider
+              items={mockSlides}
+              transition="melt"
+              intensity={0.55}
+              aberration={0.35}
+              drift={0.4}
+              autoplay
+              autoplayDelay={4}
+              loop
+              showCaptions
+              showControls
+              showIndicators
+              radius={28}
+              aspect={4 / 3}
+            />
           </motion.div>
 
+          {/* OFFERS STRIP */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="relative hidden md:block"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="mt-4 rounded-2xl border border-primary/20 bg-background/80 backdrop-blur px-5 py-3.5 flex items-center gap-3 shadow-soft"
           >
-            <motion.div variants={float} animate="animate" className="relative">
-              {/* PRODUCT MOCK SHOWCASE — slides come from
-                  src/lib/zari/product-mock-slides.ts (PRODUCT_MOCK_SLIDES) */}
-              <MorphSlider
-                items={mockSlides}
-                transition="melt"
-                intensity={0.55}
-                aberration={0.35}
-                drift={0.4}
-                autoplay
-                autoplayDelay={4}
-                loop
-                showCaptions
-                showControls
-                showIndicators
-                radius={40}
-                aspect={4 / 5}
-                className="shadow-petal"
-              />
+            <span className="inline-flex items-center gap-1.5 shrink-0 text-[0.65rem] uppercase tracking-[0.2em] text-primary">
+              <Sparkles className="w-3.5 h-3.5" />
+              Offers
+            </span>
+            <p className="text-sm text-foreground/80 truncate">
+              Spring '26 Edit — flat 15% off silks &amp; free shipping above ₹2,999
+            </p>
+          </motion.div>
 
+          {/* CATEGORY CARDS */}
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
+            {[
+              {
+                title: "Clothes",
+                caption: "Silks, chiffons & couture",
+                image:
+                  "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=1200&q=80",
+                category: "Clothing" as const,
+              },
+              {
+                title: "Accessories",
+                caption: "Rose gold, pearls & charms",
+                image:
+                  "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1200&q=80",
+                category: "Accessories" as const,
+              },
+            ].map((c, i) => (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                key={c.title}
+                initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                className="absolute -bottom-6 -left-6 bg-background rounded-2xl shadow-soft p-4 flex items-center gap-3"
+                transition={{ duration: 0.6, delay: 0.2 + i * 0.1 }}
               >
-                <div className="w-10 h-10 rounded-full bg-sakura flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">New Arrivals</p>
-                  <p className="text-sm font-medium">Spring '26 Edit</p>
-                </div>
+                <Link
+                  to="/shop"
+                  search={{ category: c.category } as any}
+                  className="group relative block rounded-[1.5rem] overflow-hidden aspect-square shadow-soft"
+                >
+                  <motion.img
+                    src={c.image}
+                    alt={c.title}
+                    className="w-full h-full object-cover"
+                    whileHover={{ scale: 1.06 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/65 via-foreground/10 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 text-primary-foreground">
+                    <h2 className="font-serif text-2xl sm:text-3xl text-white">{c.title}</h2>
+                    <p className="mt-1 text-[0.7rem] sm:text-xs opacity-90 text-white truncate">
+                      {c.caption}
+                    </p>
+                  </div>
+                </Link>
               </motion.div>
-            </motion.div>
+            ))}
+          </div>
+
+          {/* EXPLORE */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mt-5 flex justify-center"
+          >
+            <Link
+              to="/shop"
+              className="group inline-flex w-full sm:w-auto justify-center items-center gap-2 px-10 py-4 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all"
+            >
+              Explore
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* CATEGORIES */}
-      <section className="mx-auto max-w-7xl px-6 lg:px-10 py-24">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center max-w-2xl mx-auto mb-14"
-        >
-          <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3">Discover</p>
-          <h2 className="font-serif text-4xl md:text-5xl">Two worlds. One aesthetic.</h2>
-        </motion.div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          {[
-            {
-              title: "Clothing",
-              caption: "Silks, chiffons & couture edits",
-              image:
-                "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=1200&q=80",
-              category: "Clothing" as const,
-            },
-            {
-              title: "Accessories",
-              caption: "Rose gold, pearls & petal charms",
-              image:
-                "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1200&q=80",
-              category: "Accessories" as const,
-            },
-          ].map((c, i) => (
-            <motion.div
-              key={c.title}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.7, delay: i * 0.15 }}
-            >
-              <Link
-                to="/shop"
-                search={{ category: c.category } as any}
-                className="group relative block rounded-[2rem] overflow-hidden aspect-[4/5] md:aspect-[5/6] shadow-soft"
-              >
-                <motion.img
-                  src={c.image}
-                  alt={c.title}
-                  className="w-full h-full object-cover"
-                  whileHover={{ scale: 1.06 }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-foreground/10 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-8 md:p-10 text-primary-foreground">
-                  <p className="text-xs uppercase tracking-[0.25em] opacity-90">Shop</p>
-                  <h3 className="font-serif text-4xl md:text-5xl mt-2 text-white">{c.title}</h3>
-                  <p className="mt-2 text-sm opacity-90 text-white">{c.caption}</p>
-                  <span className="mt-5 inline-flex items-center gap-2 text-sm text-white">
-                    Enter collection
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-                  </span>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </section>
 
       {/* FEATURED — depth carousel showcase */}
       <section className="mx-auto max-w-7xl px-6 lg:px-10 pb-24">
