@@ -14,6 +14,7 @@ export function Navbar() {
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
