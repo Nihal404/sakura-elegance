@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { playSwipeSound } from "@/lib/zari/sound";
 
 export interface BannerSlide {
   image: string;
