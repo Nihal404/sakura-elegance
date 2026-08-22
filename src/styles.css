@@ -238,3 +238,12 @@
   90% { transform: translateX(-1px) scale(1) rotate(0); }
 }
 
+
+/* Banner loading shimmer — sweeps across the blurred placeholder while a slide downloads. */
+@keyframes zari-shimmer {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+.animate-zari-shimmer {
+  animation: zari-shimmer 1.6s ease-in-out infinite;
+}
