@@ -521,26 +521,14 @@ function Admin() {
               Add to boutique
             </button>
           </form>
+        </div>
+    );
+  }
 
-          <style>{`
-            .input {
-              width: 100%;
-              padding: 0.85rem 1rem;
-              border-radius: 0.9rem;
-              background: color-mix(in oklab, var(--blush) 60%, transparent);
-              border: 1px solid var(--border);
-              outline: none;
-              transition: all 0.2s;
-              font-size: 0.9rem;
-            }
-            .input:focus { border-color: var(--primary); background: var(--background); }
-          `}</style>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="lg:col-span-3 bg-card rounded-3xl shadow-soft p-7 border border-border/60"
+  function renderInventory() {
+    return (
+        <div
+          className="bg-card rounded-3xl shadow-soft p-6 sm:p-7 border border-border/60"
         >
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
@@ -549,6 +537,7 @@ function Admin() {
             </div>
             <span className="text-xs text-muted-foreground">{products.length} products</span>
           </div>
+
 
           <div className="overflow-hidden rounded-2xl border border-border/60">
             <table className="w-full text-sm">
