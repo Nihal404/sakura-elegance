@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Trash2, Package, Plus, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Image, Sparkles, Flower2, ChevronDown } from "lucide-react";
+import { Trash2, Package, Plus, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Images, Sparkles, Flower2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase, PRODUCT_IMAGE_BUCKET } from "@/lib/zari/supabase";
@@ -272,6 +272,26 @@ function Admin() {
       toast.error(msg);
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const onReplaceMockups = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    id: string,
+  ) => {
+    const chosen = Array.from(e.target.files ?? []).slice(0, MAX_MOCKUPS);
+    e.target.value = "";
+    if (!chosen.length) return;
+    setReplacingId(id);
+    try {
+      const urls = await Promise.all(chosen.map(uploadFile));
+      await updateProduct(id, { image: urls[0], mockups: urls });
+      toast.success("Mockups updated.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update pics";
+      toast.error(msg);
+    } finally {
+      setReplacingId(null);
     }
   };
 
@@ -666,6 +686,24 @@ function Admin() {
                             </>
                           ) : (
                             <>
+                              <label
+                                className={`p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer inline-flex ${replacingId === p.id ? "opacity-60 pointer-events-none" : ""}`}
+                                aria-label="Change pics"
+                                title="Change pics"
+                              >
+                                {replacingId === p.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Images className="w-4 h-4" />
+                                )}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  multiple
+                                  className="hidden"
+                                  onChange={(e) => onReplaceMockups(e, p.id)}
+                                />
+                              </label>
                               <button
                                 onClick={() => startEdit(p)}
                                 className="p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
