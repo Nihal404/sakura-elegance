@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { playSwipeSound } from "@/lib/zari/sound";
 import { hapticSwipe } from "@/lib/zari/haptics";
 
 export interface BannerSlide {
@@ -51,7 +50,6 @@ export function BannerSlider({
       setIndex((cur) => {
         const target = ((next % count) + count) % count;
         if (target !== cur) {
-          playSwipeSound();
           hapticSwipe();
         }
         return target;
