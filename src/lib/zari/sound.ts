@@ -180,3 +180,63 @@ export function playSwipeSound() {
     // Audio is optional.
   }
 }
+
+/**
+ * Soft, descending "pluck" when an item is removed from the bag or its
+ * quantity is decreased — the mirror of the add-to-cart rattle.
+ */
+export function playRemoveFromCartSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(560, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.22);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.14, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.26);
+
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  } catch {
+    // Audio is optional.
+  }
+}
+
+/**
+ * Warm two-note confirmation for a completed checkout / placed order.
+ */
+export function playCheckoutSuccessSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.3, now);
+    master.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+    master.connect(ctx.destination);
+
+    // G5 then C6 — a clean, resolved "done" cadence.
+    [783.99, 1046.5].forEach((freq, i) => {
+      const t = now + i * 0.16;
+      const osc = ctx.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, t);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.2, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+
+      osc.connect(gain).connect(master);
+      osc.start(t);
+      osc.stop(t + 0.75);
+    });
+  } catch {
+    // Audio is optional.
+  }
+}
