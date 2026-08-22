@@ -668,6 +668,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     authLoading,
     signIn,
     signUp,
+    sendSignupOtp,
+    verifySignupOtp,
+    completeSignup,
     logout,
   ]);
 
