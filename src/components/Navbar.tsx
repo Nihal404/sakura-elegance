@@ -224,9 +224,37 @@ export function Navbar() {
               <Link to="/wishlist" onClick={() => setMenuOpen(false)}>Wishlist</Link>
               <Link to="/recently-viewed" onClick={() => setMenuOpen(false)}>Recently Viewed</Link>
               <Link to="/compare" onClick={() => setMenuOpen(false)}>Compare</Link>
-              {!user && (
+              {!user ? (
                 <Link to="/login" onClick={() => setMenuOpen(false)}>Sign in</Link>
+              ) : (
+                <div className="mt-1 border-t border-border/60 pt-3 flex flex-col gap-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="truncate">{user.fullName || user.email}</span>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                        user.role === "Admin" ? "bg-gold/20 text-gold" : "bg-primary/15 text-primary"
+                      }`}
+                    >
+                      {user.role === "Admin" ? "Admin" : "Customer"}
+                    </span>
+                  </div>
+                  {user.role === "Admin" && (
+                    <Link to="/admin" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>
+                  )}
+                  <button
+                    className="flex items-center gap-2 text-left text-sm"
+                    onClick={() => {
+                      logout();
+                      setMenuOpen(false);
+                      router.navigate({ to: "/" });
+                    }}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign out
+                  </button>
+                </div>
               )}
+
 
             </div>
           </motion.div>
