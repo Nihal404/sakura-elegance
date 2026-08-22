@@ -728,11 +728,11 @@ function Admin() {
               </tbody>
             </table>
           </div>
-        </motion.div>
-      </div>
-    </div>
-  );
+        </div>
+    );
+  }
 }
+
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
