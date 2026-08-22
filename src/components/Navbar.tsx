@@ -33,6 +33,7 @@ export function Navbar() {
   }, [userMenu]);
 
   return (
+    <>
     <motion.header
       initial={{ y: -30, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
