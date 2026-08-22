@@ -71,6 +71,7 @@ function CartPage() {
       `Hello Zari Boutique 🌸\n\nI would like to order:\n\n` +
       lines.join("\n") +
       `\n\n*Total: ₹${total.toFixed(2)}*\nOrder ref: ${orderId.slice(0, 8).toUpperCase()}` +
+      (address.trim() ? `\n\n*Deliver to:*\n${address.trim()}` : "") +
       `\n\nPlease confirm availability and next steps.`;
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(body)}`;
 
