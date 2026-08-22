@@ -295,34 +295,108 @@ function Admin() {
   };
 
 
+  const sections = [
+    { key: "poster" as const, label: "Poster addition", icon: Flower2 },
+    { key: "add" as const, label: "Add product", icon: Plus },
+    { key: "inventory" as const, label: "Inventory", icon: Package },
+  ];
+
   return (
-    <div className="mx-auto max-w-7xl px-6 lg:px-10 py-14">
+    <div className="mx-auto max-w-4xl px-5 sm:px-8 py-12">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-4 mb-10"
+        className="text-center mb-10"
       >
-        <div className="w-12 h-12 rounded-2xl bg-sakura flex items-center justify-center">
-          <LayoutDashboard className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-primary">Admin</p>
-          <h1 className="font-serif text-4xl">Boutique Dashboard</h1>
-        </div>
+        <h1 className="font-times uppercase tracking-[0.18em] text-3xl sm:text-5xl leading-tight">
+          Admin
+          <br />
+          Dashboard
+        </h1>
+        <p className="mt-3 text-lg sm:text-xl">
+          <span className="font-zari text-gold">Zari</span>{" "}
+          <span className="font-times uppercase tracking-[0.25em] text-sm sm:text-base text-muted-foreground">
+            Boutique
+          </span>
+        </p>
       </motion.div>
 
-      {user?.id && <BannerManager userId={user.id} />}
+      <div className="space-y-4">
+        {sections.map(({ key, label, icon: Icon }, idx) => {
+          const open = activeSection === key;
+          return (
+            <motion.div
+              key={key}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.07 }}
+            >
+              <button
+                type="button"
+                onClick={() => setActiveSection(open ? null : key)}
+                aria-expanded={open}
+                className={`w-full flex items-center gap-4 px-6 py-5 sm:py-6 rounded-full border transition-all ${
+                  open
+                    ? "bg-primary text-primary-foreground border-primary shadow-petal"
+                    : "bg-card text-foreground border-border/70 shadow-soft hover:border-primary"
+                }`}
+              >
+                <span
+                  className={`w-10 h-10 shrink-0 rounded-full inline-flex items-center justify-center ${
+                    open ? "bg-primary-foreground/20" : "bg-blush text-primary"
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                </span>
+                <span className="font-serif text-xl sm:text-2xl text-left">{label}</span>
+                <ChevronDown
+                  className={`ml-auto w-5 h-5 transition-transform ${open ? "rotate-180" : ""}`}
+                />
+              </button>
 
-      <div className="grid lg:grid-cols-5 gap-8">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="lg:col-span-2 bg-card rounded-3xl shadow-soft p-7 border border-border/60 h-fit"
+              <AnimatePresence initial={false}>
+                {open && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4">
+                      {key === "poster" && user?.id && <BannerManager userId={user.id} />}
+                      {key === "add" && renderAddProduct()}
+                      {key === "inventory" && renderInventory()}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <style>{`
+        .input {
+          width: 100%;
+          padding: 0.85rem 1rem;
+          border-radius: 0.9rem;
+          background: color-mix(in oklab, var(--blush) 60%, transparent);
+          border: 1px solid var(--border);
+          outline: none;
+          transition: all 0.2s;
+          font-size: 0.9rem;
+        }
+        .input:focus { border-color: var(--primary); background: var(--background); }
+      `}</style>
+    </div>
+  );
+
+  function renderAddProduct() {
+    return (
+        <div
+          className="bg-card rounded-3xl shadow-soft p-6 sm:p-7 border border-border/60"
         >
-          <div className="flex items-center gap-2 mb-5">
-            <Plus className="w-4 h-4 text-primary" />
-            <h2 className="font-serif text-2xl">Add product</h2>
-          </div>
+
 
           <form onSubmit={submit} className="space-y-4">
             <Field label="Product name">
