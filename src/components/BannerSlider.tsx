@@ -69,6 +69,8 @@ export function BannerSlider({
   }
 
   const active = usable[Math.min(index, count - 1)]!;
+  const ready = !!loaded[active.image];
+
 
   return (
     <div
