@@ -666,24 +666,6 @@ function Admin() {
                             </>
                           ) : (
                             <>
-                              <label
-                                className={`p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer inline-flex ${replacingId === p.id ? "opacity-60 pointer-events-none" : ""}`}
-                                aria-label="Change pics"
-                                title="Change pics"
-                              >
-                                {replacingId === p.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <Images className="w-4 h-4" />
-                                )}
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  multiple
-                                  className="hidden"
-                                  onChange={(e) => onReplaceMockups(e, p.id)}
-                                />
-                              </label>
                               <button
                                 onClick={() => startEdit(p)}
                                 className="p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
