@@ -2,6 +2,7 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, User as UserIcon, LogOut, LayoutDashboard, Heart, Clock, Scale } from "lucide-react";
 import { useShoppingLists } from "@/lib/shopping-lists";
+import { SearchModal } from "@/components/SearchModal";
 
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
@@ -13,6 +14,7 @@ export function Navbar() {
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -31,6 +33,7 @@ export function Navbar() {
   }, [userMenu]);
 
   return (
+    <>
     <motion.header
       initial={{ y: -30, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -52,14 +55,14 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <Link
-            to="/shop"
+          <button
+            onClick={() => setSearchOpen(true)}
             className="glass-btn flex h-11 w-11 items-center justify-center rounded-full"
             aria-label="Search"
             data-press
           >
             <Search className="h-5 w-5 text-foreground/80" />
-          </Link>
+          </button>
 
           <div className="relative" data-user-menu>
             <button
@@ -156,5 +159,7 @@ export function Navbar() {
         </div>
       </div>
     </motion.header>
+    <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   );
 }

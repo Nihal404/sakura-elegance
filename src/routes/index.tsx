@@ -11,6 +11,7 @@ import { cardImageUrl, DETAIL_WIDTHS } from "@/lib/zari/image-url";
 import { buildProductMockSlides } from "@/lib/zari/product-mock-slides";
 import { fetchBanners, type Banner } from "@/lib/zari/banners";
 import { useSizedSrcList } from "@/hooks/useSizedImage";
+import { RecentlyViewedStrip } from "@/components/RecentlyViewedStrip";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -194,6 +195,8 @@ function Home() {
         </div>
       </section>
 
+      {/* RECENTLY VIEWED — sits directly under the Explore button */}
+      <RecentlyViewedStrip />
 
       {/* FEATURED — depth carousel showcase */}
       <section className="mx-auto max-w-7xl px-6 lg:px-10 pb-24">
