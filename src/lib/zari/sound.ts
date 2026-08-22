@@ -115,3 +115,68 @@ export function playDelightedSound() {
     // Audio is optional; ignore browser autoplay or API errors.
   }
 }
+
+/**
+ * Tiny, dry "tick" for generic UI clicks (buttons, nav pills, thumbnails).
+ * Kept very short and quiet so it never becomes annoying.
+ */
+export function playClickSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(1250, now);
+    osc.frequency.exponentialRampToValueAtTime(620, now + 0.07);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.07, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.11);
+  } catch {
+    // Audio is optional.
+  }
+}
+
+/**
+ * Airy "whoosh" for swapping slides / images (banner slider, galleries).
+ */
+export function playSwipeSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const duration = 0.26;
+
+    const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      const p = i / data.length;
+      // soft attack + decay envelope so it reads as a swoosh, not a burst of static
+      data[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * p) ** 2;
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(700, now);
+    filter.frequency.exponentialRampToValueAtTime(3200, now + duration);
+    filter.Q.setValueAtTime(0.9, now);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.09, now);
+    gain.gain.exponentialRampToValueAtTime(0.0005, now + duration);
+
+    noise.connect(filter).connect(gain).connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + duration + 0.02);
+  } catch {
+    // Audio is optional.
+  }
+}
