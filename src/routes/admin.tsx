@@ -275,26 +275,6 @@ function Admin() {
     }
   };
 
-  const onReplaceMockups = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    id: string,
-  ) => {
-    const chosen = Array.from(e.target.files ?? []).slice(0, MAX_MOCKUPS);
-    e.target.value = "";
-    if (!chosen.length) return;
-    setReplacingId(id);
-    try {
-      const urls = await Promise.all(chosen.map(uploadFile));
-      await updateProduct(id, { image: urls[0], mockups: urls });
-      toast.success("Mockups updated.");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to update pics";
-      toast.error(msg);
-    } finally {
-      setReplacingId(null);
-    }
-  };
-
 
   const sections = [
     { key: "poster" as const, label: "Poster addition", icon: Flower2 },
