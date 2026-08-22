@@ -5,7 +5,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { SizedImg } from "@/components/SizedImg";
 import { useStore } from "@/lib/store";
-import { playDelightedSound } from "@/lib/zari/sound";
+import {
+  playAddToCartSound,
+  playCheckoutSuccessSound,
+  playDelightedSound,
+  playRemoveFromCartSound,
+} from "@/lib/zari/sound";
+import { hapticSuccess, hapticTap } from "@/lib/zari/haptics";
 
 // TODO: Replace with the merchant's WhatsApp number in international format
 // (digits only, with country code, no "+" or spaces). Example: 919876543210
@@ -65,6 +71,8 @@ function CartPage() {
       return;
     }
     setPlacing(false);
+    playCheckoutSuccessSound();
+    hapticSuccess();
     setPopup(true);
 
     const body =
@@ -161,7 +169,10 @@ function CartPage() {
                         </p>
                       </div>
                       <button
-                        onClick={() => removeFromCart(item.id)}
+                        onClick={() => {
+                          playRemoveFromCartSound();
+                          removeFromCart(item.id);
+                        }}
                         className="shrink-0 text-muted-foreground hover:text-destructive p-1"
                         aria-label={`Remove ${item.name} from bag`}
                       >
@@ -171,7 +182,10 @@ function CartPage() {
                     <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3">
                       <div className="flex shrink-0 items-center gap-1 bg-blush/60 rounded-full px-1 py-1">
                         <button
-                          onClick={() => updateQty(item.id, item.qty - 1)}
+                          onClick={() => {
+                            playRemoveFromCartSound();
+                            updateQty(item.id, item.qty - 1);
+                          }}
                           aria-label={`Decrease quantity of ${item.name}`}
                           className="w-8 h-8 rounded-full hover:bg-background flex items-center justify-center"
                         >

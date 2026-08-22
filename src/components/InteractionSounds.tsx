@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { playClickSound, playSwipeSound } from "@/lib/zari/sound";
+import { hapticSwipe, hapticTap } from "@/lib/zari/haptics";
 
 /**
  * Global UI sound layer. Mounted once at the root.
@@ -25,6 +26,7 @@ export function InteractionSounds() {
       if (now - last < 60) return;
       last = now;
       playClickSound();
+      hapticTap();
     };
 
     let startX: number | null = null;
@@ -43,7 +45,10 @@ export function InteractionSounds() {
       if (sx == null || sy == null || ex == null || ey == null) return;
       const dx = Math.abs(ex - sx);
       const dy = Math.abs(ey - sy);
-      if (dx > 48 && dx > dy * 1.5) playSwipeSound();
+      if (dx > 48 && dx > dy * 1.5) {
+        playSwipeSound();
+        hapticSwipe();
+      }
     };
 
     document.addEventListener("pointerdown", onPointerDown, true);
