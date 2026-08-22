@@ -534,28 +534,6 @@ function Login() {
               )}
             </AnimatePresence>
 
-            {/* TEST AUTH (temporary): real anonymous Supabase session, no email sent. */}
-            {TEST_AUTH_ENABLED && mode === "signin" && (
-              <div className="mt-6 pt-6 border-t border-border">
-                <p className="text-[11px] uppercase tracking-widest text-muted-foreground text-center mb-3">
-                  Testing only
-                </p>
-                <button
-                  type="button"
-                  onClick={handleTestUser}
-                  disabled={loading}
-                  className="w-full py-3.5 rounded-full border border-primary/40 bg-blush/50 text-foreground font-medium tracking-wide hover:bg-blush transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
-                >
-                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  <FlaskConical className="w-4 h-4 text-primary" />
-                  Continue as Test User
-                </button>
-                <p className="text-[11px] text-muted-foreground text-center mt-2 leading-relaxed">
-                  Temporary guest session for testing — no email needed. Customer access only.
-                </p>
-              </div>
-            )}
-            {/* end TEST AUTH */}
           </>
         )}
       </motion.div>
