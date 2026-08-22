@@ -103,7 +103,7 @@ export function Navbar() {
               </motion.span>
             )}
           </Link>
-          <div className="relative">
+          <div className="relative" data-user-menu>
             <button
               onClick={() => (user ? setUserMenu((v) => !v) : router.navigate({ to: "/login" }))}
               className="p-2.5 rounded-full hover:bg-sakura/30 transition-colors flex items-center gap-2"
