@@ -152,3 +152,152 @@ export function BannerManager({ userId }: { userId: string }) {
 }
 
 export default BannerManager;
+
+const ASPECTS = [
+  { label: "4:3", value: 4 / 3 },
+  { label: "16:9", value: 16 / 9 },
+  { label: "1:1", value: 1 },
+] as const;
+
+/**
+ * Live preview panel for a single banner: lets the admin see exactly how the banner
+ * will letterbox at different aspect ratios and fits, and preview a caption edit
+ * before saving it.
+ */
+function BannerPreviewCard({
+  banner,
+  onUp,
+  onDown,
+  onToggle,
+  onRemove,
+  onSaved,
+}: {
+  banner: Banner;
+  onUp: () => void;
+  onDown: () => void;
+  onToggle: () => void;
+  onRemove: () => void;
+  onSaved: () => Promise<void> | void;
+}) {
+  const [caption, setCaption] = useState(banner.caption ?? "");
+  const [aspect, setAspect] = useState<number>(4 / 3);
+  const [fit, setFit] = useState<"contain" | "cover">("contain");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setCaption(banner.caption ?? "");
+  }, [banner.caption]);
+
+  const dirty = caption.trim() !== (banner.caption ?? "");
+  const src = galleryImageUrl(banner.image, 900);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await updateBanner(banner.id, { caption: caption.trim() || null });
+      await onSaved();
+      toast.success("Caption saved.");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Could not save caption");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <li className="rounded-2xl border border-border/60 overflow-hidden bg-background/60">
+      {/* LIVE PREVIEW — mirrors the home page slider framing */}
+      <div className="p-3 pb-0">
+        <div
+          className="relative w-full overflow-hidden rounded-2xl bg-background"
+          style={{ aspectRatio: String(aspect) }}
+        >
+          <img
+            src={src}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-60"
+          />
+          <img
+            src={src}
+            alt={caption || "Banner preview"}
+            loading="lazy"
+            className={`relative w-full h-full ${fit === "contain" ? "object-contain" : "object-cover"}`}
+          />
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-foreground/45 to-transparent pointer-events-none" />
+          {caption && (
+            <div className="absolute bottom-6 right-3 left-3 text-right text-xs sm:text-sm text-white/95 font-medium drop-shadow">
+              {caption}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="p-3 space-y-2">
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+          <span className="text-muted-foreground mr-1">Preview:</span>
+          {ASPECTS.map((a) => (
+            <button
+              key={a.label}
+              type="button"
+              onClick={() => setAspect(a.value)}
+              className={`px-2.5 py-1 rounded-full ${
+                aspect === a.value ? "bg-primary text-primary-foreground" : "bg-blush text-primary"
+              }`}
+            >
+              {a.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setFit(fit === "contain" ? "cover" : "contain")}
+            className="px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground ml-auto"
+          >
+            {fit === "contain" ? "Letterbox" : "Fill (crops)"}
+          </button>
+        </div>
+
+        <input
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          placeholder="Caption"
+          className="input text-sm"
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={onUp} className="px-2.5 py-1 rounded-full bg-blush text-primary text-[11px]">
+            ↑ Up
+          </button>
+          <button type="button" onClick={onDown} className="px-2.5 py-1 rounded-full bg-blush text-primary text-[11px]">
+            ↓ Down
+          </button>
+          <button
+            type="button"
+            onClick={onToggle}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground text-[11px]"
+          >
+            {banner.active ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+            {banner.active ? "Visible" : "Hidden"}
+          </button>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-destructive/10 text-destructive text-[11px]"
+          >
+            <Trash2 className="w-3 h-3" />
+            Remove
+          </button>
+          <button
+            type="button"
+            onClick={() => void save()}
+            disabled={!dirty || saving}
+            className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[11px] disabled:opacity-40"
+          >
+            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+            {dirty ? "Save caption" : "Saved"}
+          </button>
+        </div>
+      </div>
+    </li>
+  );
+}
