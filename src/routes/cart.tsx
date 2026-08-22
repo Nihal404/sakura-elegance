@@ -191,31 +191,95 @@ function CartPage() {
             </ul>
 
             <aside className="h-fit rounded-3xl bg-background/95 border border-border shadow-petal p-6 lg:sticky lg:top-28">
-              <h2 className="font-serif text-2xl">Order Summary</h2>
-              <div className="mt-5 space-y-3 text-sm">
+              {/* Step rail */}
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em]">
+                {(["bag", "checkout"] as const).map((s, i) => {
+                  const active = step === s;
+                  const done = step === "checkout" && s === "bag";
+                  return (
+                    <div key={s} className="flex flex-1 items-center gap-2">
+                      <span
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${
+                          active || done
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-blush text-primary/70"
+                        }`}
+                      >
+                        {done ? <Check className="h-3 w-3" /> : i + 1}
+                      </span>
+                      <span className={active ? "text-primary" : "text-muted-foreground"}>
+                        {s === "bag" ? "Bag" : "Checkout"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <h2 className="mt-5 font-serif text-2xl">Order Summary</h2>
+              <div className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span>₹{cartTotal.toFixed(2)}</span>
+                  <span>
+                    Items ({cartCount})
+                  </span>
+                  <span className="tabular-nums">₹{cartTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Shipping</span>
-                  <span>Calculated on WhatsApp</span>
+                  <span>{freeShipping ? "Free" : "Confirmed on WhatsApp"}</span>
                 </div>
+                {!freeShipping && (
+                  <p className="text-[11px] text-primary/80">
+                    Add ₹{(FREE_SHIPPING_THRESHOLD - cartTotal).toFixed(0)} more for free shipping.
+                  </p>
+                )}
                 <div className="border-t border-border pt-3 flex justify-between text-lg font-semibold">
                   <span>Total</span>
-                  <span className="text-gradient-rose">₹{cartTotal.toFixed(2)}</span>
+                  <span className="text-gradient-rose tabular-nums">₹{cartTotal.toFixed(2)}</span>
                 </div>
               </div>
-              <button
-                onClick={handleBuyNow}
-                disabled={placing}
-                className="mt-6 w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide hover:opacity-90 transition-all shadow-soft disabled:opacity-60"
-              >
-                {placing ? "Placing your order…" : "Buy Now via WhatsApp"}
-              </button>
-              <p className="text-[11px] text-muted-foreground text-center mt-3">
-                You'll be redirected to WhatsApp with your order details prefilled.
-              </p>
+
+              {step === "bag" ? (
+                <>
+                  <button
+                    onClick={() => setStep("checkout")}
+                    className="mt-6 w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide hover:opacity-90 transition-all shadow-soft"
+                  >
+                    Proceed to checkout
+                  </button>
+                  <p className="text-[11px] text-muted-foreground text-center mt-3">
+                    One quick step — delivery details, then confirm on WhatsApp.
+                  </p>
+                </>
+              ) : (
+                <div className="mt-6 space-y-3">
+                  <label className="block text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Delivery address
+                  </label>
+                  <textarea
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    rows={3}
+                    placeholder="Flat / street, city, state, PIN"
+                    className="w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary/60"
+                  />
+                  <button
+                    onClick={handleBuyNow}
+                    disabled={placing || address.trim().length < 8}
+                    className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide hover:opacity-90 transition-all shadow-soft disabled:opacity-60"
+                  >
+                    {placing ? "Placing your order…" : "Confirm order on WhatsApp"}
+                  </button>
+                  <button
+                    onClick={() => setStep("bag")}
+                    className="w-full py-2 text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Back to bag
+                  </button>
+                  <p className="text-[11px] text-muted-foreground text-center">
+                    You'll be redirected to WhatsApp with your order details prefilled.
+                  </p>
+                </div>
+              )}
             </aside>
           </div>
         )}
