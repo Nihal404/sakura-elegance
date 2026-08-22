@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Images, Sparkles } from "lucide-react";
+import { Trash2, Package, Plus, LayoutDashboard, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Images, Sparkles, Flower2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase, PRODUCT_IMAGE_BUCKET } from "@/lib/zari/supabase";
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/admin")({
 function Admin() {
   const { user, authLoading, products, addProduct, removeProduct, updateProduct } = useStore();
 
+  const [activeSection, setActiveSection] = useState<"poster" | "add" | "inventory" | null>("inventory");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editPrice, setEditPrice] = useState("");
