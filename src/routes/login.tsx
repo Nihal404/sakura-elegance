@@ -13,13 +13,9 @@ import {
   KeyRound,
   ArrowLeft,
   Check,
-  FlaskConical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
-// TEMPORARY testing auth — delete this import and the block marked "TEST AUTH" below
-// once production email is configured.
-import { TEST_AUTH_ENABLED } from "@/lib/zari/test-auth";
 
 type Mode = "signin" | "signup";
 type Step = 1 | 2 | 3;
@@ -62,8 +58,7 @@ const STEP_LABELS: Record<Step, string> = {
 function Login() {
   const router = useRouter();
   const { next } = Route.useSearch();
-  const { signIn, sendSignupOtp, verifySignupOtp, completeSignup, signInAsTestUser, user } =
-    useStore();
+  const { signIn, sendSignupOtp, verifySignupOtp, completeSignup, user } = useStore();
 
   const [mode, setMode] = useState<Mode>("signin");
   const [loading, setLoading] = useState(false);
@@ -87,24 +82,6 @@ function Login() {
     router.navigate({ to: target, replace: true });
   };
 
-  // ---- TEST AUTH (temporary) -------------------------------------------------
-  const handleTestUser = async () => {
-    if (loading) return;
-    setLoading(true);
-    setFormError("");
-    try {
-      await signInAsTestUser();
-      toast.success("Signed in as a test user 🌸");
-      goNext();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Could not start a test session.";
-      setFormError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-  // ---- end TEST AUTH ---------------------------------------------------------
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -534,28 +511,6 @@ function Login() {
               )}
             </AnimatePresence>
 
-            {/* TEST AUTH (temporary): real anonymous Supabase session, no email sent. */}
-            {TEST_AUTH_ENABLED && mode === "signin" && (
-              <div className="mt-6 pt-6 border-t border-border">
-                <p className="text-[11px] uppercase tracking-widest text-muted-foreground text-center mb-3">
-                  Testing only
-                </p>
-                <button
-                  type="button"
-                  onClick={handleTestUser}
-                  disabled={loading}
-                  className="w-full py-3.5 rounded-full border border-primary/40 bg-blush/50 text-foreground font-medium tracking-wide hover:bg-blush transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2"
-                >
-                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  <FlaskConical className="w-4 h-4 text-primary" />
-                  Continue as Test User
-                </button>
-                <p className="text-[11px] text-muted-foreground text-center mt-2 leading-relaxed">
-                  Temporary guest session for testing — no email needed. Customer access only.
-                </p>
-              </div>
-            )}
-            {/* end TEST AUTH */}
           </>
         )}
       </motion.div>
