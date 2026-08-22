@@ -22,6 +22,16 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    if (!userMenu) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest("[data-user-menu]")) setUserMenu(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [userMenu]);
+
+
   return (
     <motion.header
       initial={{ y: -30, opacity: 0 }}
@@ -93,7 +103,7 @@ export function Navbar() {
               </motion.span>
             )}
           </Link>
-          <div className="relative">
+          <div className="relative" data-user-menu>
             <button
               onClick={() => (user ? setUserMenu((v) => !v) : router.navigate({ to: "/login" }))}
               className="p-2.5 rounded-full hover:bg-sakura/30 transition-colors flex items-center gap-2"
@@ -112,11 +122,29 @@ export function Navbar() {
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="absolute right-0 mt-2 w-52 rounded-xl bg-card border border-border shadow-petal p-2"
+                  className="absolute right-0 mt-2 w-60 rounded-xl bg-card border border-border shadow-petal p-2"
                 >
-                  <div className="px-3 py-2 text-xs text-muted-foreground border-b border-border/60 mb-1">
-                    {user.email}
+                  <div className="flex items-center gap-3 px-3 py-2.5 border-b border-border/60 mb-1">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary text-sm font-semibold">
+                      {(user.fullName || user.email || "?").trim().charAt(0).toUpperCase()}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {user.fullName || user.email.split("@")[0]}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                      <span
+                        className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ${
+                          user.role === "Admin"
+                            ? "bg-gold/20 text-gold"
+                            : "bg-primary/15 text-primary"
+                        }`}
+                      >
+                        {user.role === "Admin" ? "Admin" : "Customer"}
+                      </span>
+                    </div>
                   </div>
+
                   {user.role === "Admin" && (
                     <Link
                       to="/admin"
@@ -196,9 +224,37 @@ export function Navbar() {
               <Link to="/wishlist" onClick={() => setMenuOpen(false)}>Wishlist</Link>
               <Link to="/recently-viewed" onClick={() => setMenuOpen(false)}>Recently Viewed</Link>
               <Link to="/compare" onClick={() => setMenuOpen(false)}>Compare</Link>
-              {!user && (
+              {!user ? (
                 <Link to="/login" onClick={() => setMenuOpen(false)}>Sign in</Link>
+              ) : (
+                <div className="mt-1 border-t border-border/60 pt-3 flex flex-col gap-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="truncate">{user.fullName || user.email}</span>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                        user.role === "Admin" ? "bg-gold/20 text-gold" : "bg-primary/15 text-primary"
+                      }`}
+                    >
+                      {user.role === "Admin" ? "Admin" : "Customer"}
+                    </span>
+                  </div>
+                  {user.role === "Admin" && (
+                    <Link to="/admin" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>
+                  )}
+                  <button
+                    className="flex items-center gap-2 text-left text-sm"
+                    onClick={() => {
+                      logout();
+                      setMenuOpen(false);
+                      router.navigate({ to: "/" });
+                    }}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign out
+                  </button>
+                </div>
               )}
+
 
             </div>
           </motion.div>
