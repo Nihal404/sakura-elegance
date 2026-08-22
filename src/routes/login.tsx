@@ -87,24 +87,6 @@ function Login() {
     router.navigate({ to: target, replace: true });
   };
 
-  // ---- TEST AUTH (temporary) -------------------------------------------------
-  const handleTestUser = async () => {
-    if (loading) return;
-    setLoading(true);
-    setFormError("");
-    try {
-      await signInAsTestUser();
-      toast.success("Signed in as a test user 🌸");
-      goNext();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Could not start a test session.";
-      setFormError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-  // ---- end TEST AUTH ---------------------------------------------------------
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
