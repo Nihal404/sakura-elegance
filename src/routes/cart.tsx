@@ -10,6 +10,7 @@ import { playDelightedSound } from "@/lib/zari/sound";
 // TODO: Replace with the merchant's WhatsApp number in international format
 // (digits only, with country code, no "+" or spaces). Example: 919876543210
 const WHATSAPP_NUMBER = "919972025151";
+const FREE_SHIPPING_THRESHOLD = 2999;
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
