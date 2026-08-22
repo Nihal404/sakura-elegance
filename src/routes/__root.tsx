@@ -209,6 +209,7 @@ function RootComponent() {
           <BottomNav />
           <CompareBar />
           <RippleEffect />
+          <InteractionSounds />
           <Toaster />
         </ShoppingListsProvider>
       </StoreProvider>
