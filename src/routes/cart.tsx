@@ -31,6 +31,9 @@ function CartPage() {
   const [popup, setPopup] = useState(false);
 
   const [placing, setPlacing] = useState(false);
+  const [step, setStep] = useState<"bag" | "checkout">("bag");
+  const [address, setAddress] = useState("");
+  const freeShipping = cartTotal >= FREE_SHIPPING_THRESHOLD;
 
   const handleBuyNow = async () => {
     if (cart.length === 0 || placing) return;
