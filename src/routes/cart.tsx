@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Minus, Plus, X, ShoppingBag, ArrowLeft } from "lucide-react";
+import { Minus, Plus, X, ShoppingBag, ArrowLeft, Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SizedImg } from "@/components/SizedImg";
