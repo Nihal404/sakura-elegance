@@ -169,6 +169,7 @@ function CartPage() {
                         </p>
                       </div>
                       <button
+                        data-no-sound
                         onClick={() => {
                           playRemoveFromCartSound();
                           removeFromCart(item.id);
@@ -182,6 +183,7 @@ function CartPage() {
                     <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-3">
                       <div className="flex shrink-0 items-center gap-1 bg-blush/60 rounded-full px-1 py-1">
                         <button
+                          data-no-sound
                           onClick={() => {
                             playRemoveFromCartSound();
                             updateQty(item.id, item.qty - 1);
@@ -286,6 +288,7 @@ function CartPage() {
                     className="w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary/60"
                   />
                   <button
+                    data-no-sound
                     onClick={handleBuyNow}
                     disabled={placing || address.trim().length < 8}
                     className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-medium tracking-wide hover:opacity-90 transition-all shadow-soft disabled:opacity-60"
