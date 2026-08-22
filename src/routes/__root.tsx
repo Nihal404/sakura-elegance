@@ -21,6 +21,7 @@ import { TopProgressBar } from "@/components/TopProgressBar";
 import { ShoppingListsProvider } from "@/lib/shopping-lists";
 import { CompareBar } from "@/components/CompareBar";
 import { RippleEffect } from "@/components/RippleEffect";
+import { InteractionSounds } from "@/components/InteractionSounds";
 import { Toaster } from "@/components/ui/sonner";
 
 
