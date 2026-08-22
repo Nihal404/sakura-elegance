@@ -124,20 +124,31 @@ export function playClickSound() {
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
+    const duration = 0.05;
 
-    const osc = ctx.createOscillator();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(1250, now);
-    osc.frequency.exponentialRampToValueAtTime(620, now + 0.07);
+    // Short filtered noise burst = crisp mechanical "click".
+    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * duration)), ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      const p = i / data.length;
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - p, 6);
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(2100, now);
+    filter.Q.setValueAtTime(1.1, now);
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(0.07, now + 0.008);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.11);
+    noise.connect(filter).connect(gain).connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + duration + 0.01);
   } catch {
     // Audio is optional.
   }
