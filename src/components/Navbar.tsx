@@ -159,5 +159,7 @@ export function Navbar() {
         </div>
       </div>
     </motion.header>
+    <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   );
 }
