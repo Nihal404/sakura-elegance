@@ -197,13 +197,14 @@ function RootComponent() {
             className="origin-center"
           >
             <Navbar />
-            <main className="pt-20 min-h-screen">
+            <main className="pt-24 pb-28 min-h-screen">
               <PageTransition>
                 <Outlet />
               </PageTransition>
             </main>
             <Footer />
           </motion.div>
+          <BottomNav />
           <CompareBar />
           <RippleEffect />
           <Toaster />
