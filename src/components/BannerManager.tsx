@@ -132,69 +132,21 @@ export function BannerManager({ userId }: { userId: string }) {
           No custom banners yet — the home page is showing the default slides.
         </p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="grid gap-4 sm:grid-cols-2">
           {banners.map((b, i) => (
-            <li
+            <BannerPreviewCard
               key={b.id}
-              className="rounded-2xl border border-border/60 overflow-hidden bg-background/60"
-            >
-              <div className="aspect-[4/3] bg-muted">
-                <img
-                  src={galleryImageUrl(b.image, 700)}
-                  alt={b.caption ?? "Banner"}
-                  className="w-full h-full object-contain"
-                  loading="lazy"
-                />
-              </div>
-              <div className="p-3 space-y-2">
-                <input
-                  defaultValue={b.caption ?? ""}
-                  placeholder="Caption"
-                  onBlur={(e) => {
-                    const next = e.target.value.trim();
-                    if (next !== (b.caption ?? "")) {
-                      void updateBanner(b.id, { caption: next || null }).then(load);
-                    }
-                  }}
-                  className="input text-sm"
-                />
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void move(i, -1)}
-                    className="px-2.5 py-1 rounded-full bg-blush text-primary text-[11px]"
-                  >
-                    ↑ Up
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void move(i, 1)}
-                    className="px-2.5 py-1 rounded-full bg-blush text-primary text-[11px]"
-                  >
-                    ↓ Down
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void toggle(b)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground text-[11px]"
-                  >
-                    {b.active ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                    {b.active ? "Visible" : "Hidden"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void destroy(b)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-destructive/10 text-destructive text-[11px] ml-auto"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    Remove
-                  </button>
-                </div>
-              </div>
-            </li>
+              banner={b}
+              onUp={() => void move(i, -1)}
+              onDown={() => void move(i, 1)}
+              onToggle={() => void toggle(b)}
+              onRemove={() => void destroy(b)}
+              onSaved={load}
+            />
           ))}
         </ul>
       )}
+
     </motion.section>
   );
 }
