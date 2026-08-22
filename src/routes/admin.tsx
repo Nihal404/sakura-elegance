@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Trash2, Package, Plus, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Images, Sparkles, Flower2, ChevronDown } from "lucide-react";
+import { Trash2, Package, Plus, ShieldAlert, Loader2, Pencil, Check, X, ImagePlus, Sparkles, Flower2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { useStore, type Category, type Product } from "@/lib/store";
 import { supabase, PRODUCT_IMAGE_BUCKET } from "@/lib/zari/supabase";
