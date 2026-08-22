@@ -33,9 +33,11 @@ export function BannerSlider({
 }) {
   const usable = slides.filter((s) => s && s.image);
   const [index, setIndex] = useState(0);
+  const [loaded, setLoaded] = useState<Record<string, boolean>>({});
   const count = usable.length;
   const hover = useRef(false);
   const touchStart = useRef<number | null>(null);
+
 
   useEffect(() => {
     if (index >= count) setIndex(0);
