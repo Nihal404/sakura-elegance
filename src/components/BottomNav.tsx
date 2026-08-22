@@ -36,21 +36,36 @@ export function BottomNav() {
               key={to}
               to={to}
               data-press
+              aria-current={active ? "page" : undefined}
               className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-full px-2 py-2 text-[11px] tracking-wide transition-colors ${
-                active
-                  ? "glass-active text-primary"
-                  : "text-foreground/70 hover:text-primary"
+                active ? "text-primary font-semibold" : "text-foreground/60 hover:text-primary"
               } ${to === "/cart" && cartShake ? "animate-cart-shake" : ""}`}
             >
+              {active && (
+                <motion.span
+                  layoutId="bottom-nav-active"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  className="glass-active absolute inset-0 rounded-full ring-1 ring-primary/40"
+                />
+              )}
               <span className="relative">
-                <Icon className="h-5 w-5" />
+                <motion.span
+                  className="block"
+                  animate={active ? { scale: 1.12, y: -1 } : { scale: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                >
+                  <Icon className={`h-5 w-5 ${active ? "drop-shadow-sm" : ""}`} />
+                </motion.span>
                 {count > 0 && (
                   <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground">
                     {count}
                   </span>
                 )}
               </span>
-              {label}
+              <span className="relative">{label}</span>
+              {active && (
+                <span className="absolute -bottom-0.5 h-1 w-1 rounded-full bg-primary" />
+              )}
             </Link>
           );
         })}
