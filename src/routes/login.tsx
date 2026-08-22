@@ -13,13 +13,9 @@ import {
   KeyRound,
   ArrowLeft,
   Check,
-  FlaskConical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
-// TEMPORARY testing auth — delete this import and the block marked "TEST AUTH" below
-// once production email is configured.
-import { TEST_AUTH_ENABLED } from "@/lib/zari/test-auth";
 
 type Mode = "signin" | "signup";
 type Step = 1 | 2 | 3;
