@@ -62,8 +62,7 @@ const STEP_LABELS: Record<Step, string> = {
 function Login() {
   const router = useRouter();
   const { next } = Route.useSearch();
-  const { signIn, sendSignupOtp, verifySignupOtp, completeSignup, signInAsTestUser, user } =
-    useStore();
+  const { signIn, sendSignupOtp, verifySignupOtp, completeSignup, user } = useStore();
 
   const [mode, setMode] = useState<Mode>("signin");
   const [loading, setLoading] = useState(false);
