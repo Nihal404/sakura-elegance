@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { StoreProvider } from "@/lib/store";
 import { Navbar } from "@/components/Navbar";
+import { BottomNav } from "@/components/BottomNav";
 import { Footer } from "@/components/Footer";
 import { SplashScreen } from "@/components/SplashScreen";
 import { PageTransition } from "@/components/PageTransition";
@@ -194,16 +195,17 @@ function RootComponent() {
               scale: entryPhase === "revealed" ? 1 : entryPhase === "dimmed" ? 0.98 : 1,
             }}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="origin-center"
+            className="origin-center pb-28"
           >
             <Navbar />
-            <main className="pt-20 min-h-screen">
+            <main className="pt-24 min-h-screen">
               <PageTransition>
                 <Outlet />
               </PageTransition>
             </main>
             <Footer />
           </motion.div>
+          <BottomNav />
           <CompareBar />
           <RippleEffect />
           <Toaster />
