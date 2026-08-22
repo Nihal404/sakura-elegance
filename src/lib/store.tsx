@@ -70,6 +70,12 @@ interface StoreContextValue {
     fullName: string;
     phone?: string;
   }) => Promise<{ needsEmailConfirmation: boolean }>;
+  /** Step 1 of account creation: emails a 6-digit code (creates the auth user if new). */
+  sendSignupOtp: (input: { email: string; fullName: string; phone?: string }) => Promise<void>;
+  /** Step 2: verifies the emailed code and starts a session. */
+  verifySignupOtp: (input: { email: string; code: string }) => Promise<void>;
+  /** Step 3: sets the account password (and stores the name) on the verified session. */
+  completeSignup: (input: { password: string; fullName: string; phone?: string }) => Promise<void>;
   /** TEMPORARY testing auth — real anonymous Supabase session. See src/lib/zari/test-auth.ts */
   signInAsTestUser: () => Promise<void>;
   logout: () => Promise<void>;
