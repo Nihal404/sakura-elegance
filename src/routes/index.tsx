@@ -11,6 +11,7 @@ import { cardImageUrl, DETAIL_WIDTHS } from "@/lib/zari/image-url";
 import { buildProductMockSlides } from "@/lib/zari/product-mock-slides";
 import { fetchBanners, type Banner } from "@/lib/zari/banners";
 import { useSizedSrcList } from "@/hooks/useSizedImage";
+import { RecentlyViewedStrip } from "@/components/RecentlyViewedStrip";
 
 export const Route = createFileRoute("/")({
   head: () => ({
