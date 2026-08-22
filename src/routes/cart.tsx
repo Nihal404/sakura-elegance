@@ -58,7 +58,7 @@ function CartPage() {
     try {
       // The order (and its authoritative total) is recorded in the database first,
       // so WhatsApp is a confirmation channel, not the source of truth.
-      orderId = await placeOrder();
+      orderId = await placeOrder(address.trim() || undefined);
     } catch (err: unknown) {
       setPlacing(false);
       toast.error(err instanceof Error ? err.message : "Could not place your order.");
