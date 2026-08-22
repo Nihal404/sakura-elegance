@@ -2,6 +2,7 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, User as UserIcon, LogOut, LayoutDashboard, Heart, Clock, Scale } from "lucide-react";
 import { useShoppingLists } from "@/lib/shopping-lists";
+import { SearchModal } from "@/components/SearchModal";
 
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
