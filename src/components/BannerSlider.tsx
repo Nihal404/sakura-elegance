@@ -51,7 +51,6 @@ export function BannerSlider({
       setIndex((cur) => {
         const target = ((next % count) + count) % count;
         if (target !== cur) {
-          playSwipeSound();
           hapticSwipe();
         }
         return target;
