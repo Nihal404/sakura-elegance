@@ -34,12 +34,12 @@ export const Route = createFileRoute("/shop")({
 });
 
 function Shop() {
-  const { category } = Route.useSearch();
+  const { category, q } = Route.useSearch();
   const navigate = Route.useNavigate();
   // Server-side filtering + keyset pagination: 24 rows per request, never the whole
   // catalogue, and the category is part of the query rather than a client-side filter.
   const { items: filtered, loading: productsLoading, loadingMore, hasMore, error, loadMore } =
-    useProductFeed({ category: category ?? null });
+    useProductFeed({ category: category ?? null, search: q ?? null });
   const sentinelRef = useNearViewport(loadMore, hasMore && !loadingMore);
   const tabs: (Category | undefined)[] = [undefined, "Clothing", "Accessories"];
 
