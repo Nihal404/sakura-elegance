@@ -193,7 +193,11 @@ function CartPage() {
                         </button>
                         <span className="text-sm w-7 text-center font-medium">{item.qty}</span>
                         <button
-                          onClick={() => updateQty(item.id, item.qty + 1)}
+                          onClick={() => {
+                            playAddToCartSound();
+                            hapticTap();
+                            updateQty(item.id, item.qty + 1);
+                          }}
                           aria-label={`Increase quantity of ${item.name}`}
                           className="w-8 h-8 rounded-full hover:bg-background flex items-center justify-center"
                         >
