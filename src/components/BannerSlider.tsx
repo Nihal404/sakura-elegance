@@ -107,10 +107,22 @@ export function BannerSlider({
             alt={active.caption || "Featured banner"}
             loading={index === 0 ? "eager" : "lazy"}
             decoding="async"
-            className="relative w-full h-full object-contain"
+            onLoad={() => setLoaded((m) => ({ ...m, [active.image]: true }))}
+            onError={() => setLoaded((m) => ({ ...m, [active.image]: true }))}
+            className={`relative w-full h-full object-contain transition-opacity duration-500 ${
+              ready ? "opacity-100" : "opacity-0"
+            }`}
           />
         </motion.div>
       </AnimatePresence>
+
+      {/* LOADING SKELETON — blurred shimmer so the banner never flashes blank */}
+      {!ready && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none bg-gradient-to-br from-primary/10 via-secondary/20 to-primary/10">
+          <div className="absolute inset-y-0 -left-1/3 w-1/3 blur-xl bg-white/40 animate-zari-shimmer" />
+        </div>
+      )}
+
 
       <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-foreground/45 to-transparent pointer-events-none" />
 
