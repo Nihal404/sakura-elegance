@@ -52,14 +52,14 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <Link
-            to="/shop"
+          <button
+            onClick={() => setSearchOpen(true)}
             className="glass-btn flex h-11 w-11 items-center justify-center rounded-full"
             aria-label="Search"
             data-press
           >
             <Search className="h-5 w-5 text-foreground/80" />
-          </Link>
+          </button>
 
           <div className="relative" data-user-menu>
             <button
