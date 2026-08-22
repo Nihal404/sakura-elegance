@@ -70,6 +70,12 @@ interface StoreContextValue {
     fullName: string;
     phone?: string;
   }) => Promise<{ needsEmailConfirmation: boolean }>;
+  /** Step 1 of account creation: emails a 6-digit code (creates the auth user if new). */
+  sendSignupOtp: (input: { email: string; fullName: string; phone?: string }) => Promise<void>;
+  /** Step 2: verifies the emailed code and starts a session. */
+  verifySignupOtp: (input: { email: string; code: string }) => Promise<void>;
+  /** Step 3: sets the account password (and stores the name) on the verified session. */
+  completeSignup: (input: { password: string; fullName: string; phone?: string }) => Promise<void>;
   /** TEMPORARY testing auth — real anonymous Supabase session. See src/lib/zari/test-auth.ts */
   signInAsTestUser: () => Promise<void>;
   logout: () => Promise<void>;
@@ -543,7 +549,59 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const sendSignupOtp = useCallback(
+    async ({ email, fullName, phone }: { email: string; fullName: string; phone?: string }) => {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: {
+          shouldCreateUser: true,
+          data: { full_name: fullName, phone: phone ?? null },
+        },
+      });
+      if (error) {
+        const lower = error.message.toLowerCase();
+        if (lower.includes("rate limit") || lower.includes("security purposes")) {
+          throw new Error("Too many codes requested. Please wait a minute and try again.");
+        }
+        throw new Error(describeError(error, "Could not send your verification code."));
+      }
+    },
+    [],
+  );
+
+  const verifySignupOtp = useCallback(async ({ email, code }: { email: string; code: string }) => {
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: code.trim(),
+      type: "email",
+    });
+    if (error) {
+      const lower = error.message.toLowerCase();
+      if (lower.includes("expired")) throw new Error("That code has expired. Request a new one.");
+      if (lower.includes("invalid")) throw new Error("That code isn't right. Please check and retry.");
+      throw new Error(describeError(error, "Could not verify your code."));
+    }
+  }, []);
+
+  const completeSignup = useCallback(
+    async ({ password, fullName, phone }: { password: string; fullName: string; phone?: string }) => {
+      const { error } = await supabase.auth.updateUser({
+        password,
+        data: { full_name: fullName, phone: phone ?? null },
+      });
+      if (error) {
+        const lower = error.message.toLowerCase();
+        if (lower.includes("session")) {
+          throw new Error("Your verification session expired. Please start again.");
+        }
+        throw new Error(describeError(error, "Could not save your password."));
+      }
+    },
+    [],
+  );
+
   const logout = useCallback(async () => {
+
     await supabase.auth.signOut();
     cartIdRef.current = null;
     cartRowsRef.current = new Map();
@@ -580,6 +638,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       authLoading,
       signIn,
       signUp,
+      sendSignupOtp,
+      verifySignupOtp,
+      completeSignup,
       signInAsTestUser,
       logout,
     };
@@ -607,6 +668,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     authLoading,
     signIn,
     signUp,
+    sendSignupOtp,
+    verifySignupOtp,
+    completeSignup,
     logout,
   ]);
 
