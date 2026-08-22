@@ -194,6 +194,8 @@ function Home() {
         </div>
       </section>
 
+      {/* RECENTLY VIEWED — sits directly under the Explore button */}
+      <RecentlyViewedStrip />
 
       {/* FEATURED — depth carousel showcase */}
       <section className="mx-auto max-w-7xl px-6 lg:px-10 pb-24">
