@@ -10,6 +10,7 @@ import { z } from "zod";
 
 const searchSchema = z.object({
   category: z.enum(["Clothing", "Accessories"]).optional(),
+  q: z.string().optional(),
 });
 
 export const Route = createFileRoute("/shop")({
