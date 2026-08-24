@@ -83,7 +83,7 @@ function Shop() {
       {/* Main Desktop Grid Split */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Sticky Desktop Filter Sidebar */}
-        <aside className="lg:col-span-3 glass-panel rounded-2xl p-5 space-y-6 sticky top-24 border border-border/70 shadow-sm">
+        <aside className="lg:col-span-3 rounded-2xl p-5 space-y-6 lg:sticky lg:top-24 z-30 border border-border/70 shadow-soft bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/85 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
           <div className="flex items-center gap-2 pb-3 border-b border-border/60">
             <Filter className="w-4 h-4 text-primary" />
             <h2 className="font-serif text-lg font-semibold text-foreground">Filters & Search</h2>
