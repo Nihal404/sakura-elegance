@@ -568,66 +568,130 @@ function Admin() {
                     exit={{ opacity: 0, x: -20 }}
                     className="border-t border-border/60"
                   >
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <img src={p.image} alt="" className="w-11 h-11 rounded-lg object-cover" />
-                        {editingId === p.id ? (
-                          <div className="flex-1 flex flex-col gap-2">
-                            <input
-                              value={editName}
-                              onChange={(e) => setEditName(e.target.value)}
-                              className="input !py-1.5 !px-3 max-w-[240px]"
-                              autoFocus
-                            />
-                            <textarea
-                              value={editDescription}
-                              onChange={(e) => setEditDescription(e.target.value)}
-                              placeholder="Description"
-                              rows={2}
-                              className="input !py-1.5 !px-3 text-xs resize-y min-h-[52px]"
-                            />
-                            <textarea
-                              value={editFeatures}
-                              onChange={(e) => setEditFeatures(e.target.value)}
-                              placeholder="Highlights (one per line)"
-                              rows={3}
-                              className="input !py-1.5 !px-3 text-xs resize-y min-h-[64px]"
-                            />
-                            <div>
-                              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-                                Mockups ({editMockups.length}/{MAX_MOCKUPS}) · click to make main
+                    {editingId === p.id ? (
+                      <td colSpan={4} className="p-3 sm:p-5 bg-card border-t border-b border-primary/20">
+                        <div className="bg-blush/20 rounded-2xl p-4 sm:p-5 border border-border/60 space-y-4">
+                          {/* Header: Title + Editing Badge */}
+                          <div className="flex items-center justify-between pb-3 border-b border-border/40">
+                            <div className="flex items-center gap-3">
+                              <img src={p.image} alt="" className="w-10 h-10 rounded-xl object-cover border border-border/60" />
+                              <div>
+                                <span className="text-[11px] uppercase tracking-widest text-primary font-semibold">Editing Product</span>
+                                <h4 className="font-serif text-base font-semibold text-foreground line-clamp-1">{p.name}</h4>
                               </div>
-                              <div className="grid grid-cols-6 gap-1.5">
+                            </div>
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-background/80 text-muted-foreground border border-border/40 font-medium">
+                              {p.category}
+                            </span>
+                          </div>
+
+                          {/* Inputs Grid */}
+                          <div className="space-y-3.5">
+                            <div>
+                              <label className="text-xs font-medium text-foreground block mb-1">Product Name</label>
+                              <input
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                placeholder="Product name"
+                                className="input w-full !py-2.5 !px-3.5 text-sm"
+                                autoFocus
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs font-medium text-foreground block mb-1">Price (₹)</label>
+                                <div className="relative">
+                                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">₹</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={editPrice}
+                                    onChange={(e) => setEditPrice(e.target.value)}
+                                    placeholder="0.00"
+                                    className="input w-full !py-2.5 !pl-8 !pr-3.5 text-sm font-medium"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium text-foreground block mb-1">Category</label>
+                                <div className="input w-full !py-2.5 !px-3.5 text-sm bg-muted/30 text-muted-foreground cursor-not-allowed">
+                                  {p.category}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-medium text-foreground block mb-1">Description</label>
+                              <textarea
+                                value={editDescription}
+                                onChange={(e) => setEditDescription(e.target.value)}
+                                placeholder="Enter detailed product description..."
+                                rows={3}
+                                className="input w-full !py-2.5 !px-3.5 text-xs resize-y min-h-[76px]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-medium text-foreground block mb-1">
+                                Highlights / Features <span className="text-[10px] text-muted-foreground font-normal">(one per line)</span>
+                              </label>
+                              <textarea
+                                value={editFeatures}
+                                onChange={(e) => setEditFeatures(e.target.value)}
+                                placeholder="Feature 1&#10;Feature 2&#10;Feature 3"
+                                rows={3}
+                                className="input w-full !py-2.5 !px-3.5 text-xs resize-y min-h-[76px]"
+                              />
+                            </div>
+
+                            {/* Mockups section */}
+                            <div className="pt-1">
+                              <div className="flex items-center justify-between text-xs mb-2">
+                                <span className="font-medium text-foreground">
+                                  Product Images <span className="text-muted-foreground font-normal">({editMockups.length}/{MAX_MOCKUPS})</span>
+                                </span>
+                                <span className="text-[11px] text-muted-foreground">Tap image to set as main</span>
+                              </div>
+
+                              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
                                 {editMockups.map((src, i) => (
-                                  <div key={src + i} className="relative group">
+                                  <div key={src + i} className="relative group aspect-square">
                                     <button
                                       type="button"
                                       onClick={() => makeEditMain(i)}
-                                      className={`block w-full aspect-square rounded-md overflow-hidden border ${i === 0 ? "border-primary ring-2 ring-primary/40" : "border-border/60"}`}
-                                      aria-label={`Make image ${i + 1} main`}
+                                      className={`block w-full h-full rounded-xl overflow-hidden border transition-all ${
+                                        i === 0 ? "border-primary ring-2 ring-primary/40 shadow-xs" : "border-border/70 hover:border-primary/50"
+                                      }`}
+                                      title={i === 0 ? "Main image" : "Click to set as main image"}
                                     >
-                                      <img
-                                        src={src}
-                                        alt=""
-                                        className="w-full h-full object-cover"
-                                      />
+                                      <img src={src} alt="" className="w-full h-full object-cover" />
+                                      {i === 0 && (
+                                        <span className="absolute bottom-1 left-1 right-1 text-[9px] bg-primary text-primary-foreground font-bold tracking-wider py-0.5 rounded text-center shadow-xs">
+                                          MAIN
+                                        </span>
+                                      )}
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => removeEditMockup(i)}
-                                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-background border border-border/70 text-muted-foreground hover:text-destructive inline-flex items-center justify-center"
-                                      aria-label="Remove"
+                                      className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-background border border-border shadow-xs text-muted-foreground hover:text-destructive hover:border-destructive/40 flex items-center justify-center transition-colors z-10"
+                                      aria-label="Remove image"
                                     >
-                                      <X className="w-2.5 h-2.5" />
+                                      <X className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
                                 ))}
+
                                 {editMockups.length < MAX_MOCKUPS && (
-                                  <label className="aspect-square rounded-md border border-dashed border-border/70 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary cursor-pointer">
+                                  <label className="aspect-square rounded-xl border-2 border-dashed border-border/80 hover:border-primary/60 flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary cursor-pointer transition-colors bg-background/50 hover:bg-primary/5">
                                     {editUploading ? (
-                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
                                     ) : (
-                                      <ImagePlus className="w-3.5 h-3.5" />
+                                      <>
+                                        <ImagePlus className="w-4.5 h-4.5 text-primary/70" />
+                                        <span className="text-[10px] font-medium">Add</span>
+                                      </>
                                     )}
                                     <input
                                       type="file"
@@ -642,61 +706,57 @@ function Admin() {
                               </div>
                             </div>
                           </div>
-                        ) : (
-                          <div className="flex flex-col">
-                            <span className="font-medium">{p.name}</span>
-                            {p.description && (
-                              <span className="text-xs text-muted-foreground line-clamp-1 max-w-[260px]">
-                                {p.description}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 hidden sm:table-cell text-muted-foreground">
-                      {p.category}
-                    </td>
-                    <td className="py-3 px-4 text-right font-medium">
-                      {editingId === p.id ? (
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editPrice}
-                          onChange={(e) => setEditPrice(e.target.value)}
-                          className="input !py-1.5 !px-3 w-24 text-right ml-auto"
-                        />
-                      ) : (
-                        <>₹{p.price}</>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="inline-flex items-center gap-1">
-                        {editingId === p.id ? (
-                          <>
+
+                          {/* Action Bar */}
+                          <div className="flex items-center justify-end gap-2.5 pt-3.5 border-t border-border/40">
                             <button
-                              onClick={() => saveEdit(p.id)}
-                              disabled={savingEdit}
-                              className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors disabled:opacity-50"
-                              aria-label="Save"
-                            >
-                              {savingEdit ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Check className="w-4 h-4" />
-                              )}
-                            </button>
-                            <button
+                              type="button"
                               onClick={cancelEdit}
                               disabled={savingEdit}
-                              className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors"
-                              aria-label="Cancel"
+                              className="px-4 py-2.5 rounded-xl text-xs font-medium border border-border hover:bg-muted text-muted-foreground transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-3.5 h-3.5" />
+                              Cancel
                             </button>
-                          </>
-                        ) : (
-                          <>
+                            <button
+                              type="button"
+                              onClick={() => saveEdit(p.id)}
+                              disabled={savingEdit}
+                              className="px-5 py-2.5 rounded-xl text-xs font-semibold bg-primary text-primary-foreground shadow-soft hover:bg-primary/90 transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
+                            >
+                              {savingEdit ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5" />
+                              )}
+                              Save Changes
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    ) : (
+                      <>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <img src={p.image} alt="" className="w-11 h-11 rounded-lg object-cover" />
+                            <div className="flex flex-col">
+                              <span className="font-medium">{p.name}</span>
+                              {p.description && (
+                                <span className="text-xs text-muted-foreground line-clamp-1 max-w-[260px]">
+                                  {p.description}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 hidden sm:table-cell text-muted-foreground">
+                          {p.category}
+                        </td>
+                        <td className="py-3 px-4 text-right font-medium">
+                          ₹{p.price}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="inline-flex items-center gap-1">
                             <label
                               className={`p-2 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors cursor-pointer inline-flex ${replacingId === p.id ? "opacity-60 pointer-events-none" : ""}`}
                               aria-label="Change pics"
@@ -729,10 +789,10 @@ function Admin() {
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+                          </div>
+                        </td>
+                      </>
+                    )}
                   </motion.tr>
                 ))}
               </AnimatePresence>
