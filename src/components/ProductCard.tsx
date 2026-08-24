@@ -23,6 +23,7 @@ export const ProductCard = memo(function ProductCard({
   priority?: boolean;
 }) {
   const thumb = cardImageUrl(product.image, 400);
+  const navigate = useNavigate();
 
   return (
     <motion.div
@@ -30,30 +31,19 @@ export const ProductCard = memo(function ProductCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5, delay: Math.min(index, 6) * 0.05, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -8, scale: 1.015 }}
-      whileTap={{ y: -2, scale: 0.965 }}
-      onTapStart={(event) => {
-        // Press origin follows the finger/cursor for a tactile squash.
-        const el = event.currentTarget as HTMLElement | null;
-        if (!el || typeof el.getBoundingClientRect !== "function") return;
-        const point = event as unknown as { clientX?: number; clientY?: number };
-        if (point.clientX == null || point.clientY == null) return;
-        const r = el.getBoundingClientRect();
-        const x = Math.min(100, Math.max(0, ((point.clientX - r.left) / r.width) * 100));
-        const y = Math.min(100, Math.max(0, ((point.clientY - r.top) / r.height) * 100));
-        el.style.transformOrigin = `${x}% ${y}%`;
-      }}
+      whileHover={{ y: -6 }}
+      whileTap={{ scale: 0.975 }}
       style={{ WebkitTapHighlightColor: "transparent" }}
-      className="group relative rounded-3xl overflow-hidden bg-card shadow-soft transition-shadow duration-500 hover:shadow-petal active:shadow-soft cursor-pointer select-none"
+      className="group relative rounded-[1.75rem] p-2 border border-primary/25 bg-card shadow-soft transition-shadow duration-500 hover:shadow-petal cursor-pointer select-none"
     >
       <Link
         to="/product/$id"
         params={{ id: product.id }}
-        className="block outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-3xl"
+        className="block outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-[1.5rem]"
         aria-label={`View ${product.name}`}
       >
-        {/* Fixed aspect ratio + intrinsic size = no layout shift while images stream in. */}
-        <div className="relative aspect-[3/4] overflow-hidden bg-blush">
+        {/* Framed image window — heart top-left, bag top-right (as sketched). */}
+        <div className="relative aspect-[3/4] overflow-hidden rounded-[1.35rem] border border-primary/20 bg-blush">
           <ProductImage
             src={thumb}
             rawSrc={product.image}
@@ -65,33 +55,42 @@ export const ProductCard = memo(function ProductCard({
             height={533}
             eager={priority}
             fetchPriority={priority ? "high" : undefined}
-            className="w-full h-full object-cover group-hover:scale-[1.06] group-active:scale-[1.02] transition-transform duration-700 ease-out"
+            className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-700 ease-out"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-          {/* Press wash: instant visual confirmation the card was tapped. */}
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
           <div className="absolute inset-0 bg-foreground/10 opacity-0 group-active:opacity-100 transition-opacity duration-150 pointer-events-none" />
 
-          <div className="absolute top-3 right-3 flex flex-col gap-2">
+          <div className="absolute top-2.5 left-2.5">
             <WishlistButton productId={product.id} productName={product.name} />
-            <CompareButton productId={product.id} productName={product.name} />
           </div>
 
-          {/* Cards never add to cart directly — they lead to the product page. */}
-          <span className="absolute bottom-4 left-4 right-4 py-3 rounded-full bg-background/95 backdrop-blur text-foreground font-medium text-sm tracking-wide flex items-center justify-center gap-2 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
-            <Eye className="w-4 h-4" />
-            View Details
-          </span>
-          <span className="absolute top-4 left-4 text-[10px] uppercase tracking-[0.15em] px-3 py-1 rounded-full bg-background/85 backdrop-blur text-foreground/80">
-            {product.category}
-          </span>
+          {/* Bag icon opens the product page (cards never add to cart directly). */}
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.86 }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate({ to: "/product/$id", params: { id: product.id } });
+            }}
+            aria-label={`Open ${product.name} to add to bag`}
+            className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur border border-border/60 bg-background/85 text-foreground/70 hover:text-primary hover:border-primary/50 transition-colors"
+          >
+            <ShoppingBag className="w-4 h-4" />
+          </motion.button>
         </div>
-        <div className="p-5 flex items-center justify-between">
-          <div>
-            <h3 className="font-serif text-lg leading-tight">{product.name}</h3>
-          </div>
-          <span className="font-medium text-primary">₹{product.price}</span>
+
+        {/* Footer: name on the left, price boxed on the right. */}
+        <div className="mt-2 flex items-end justify-between gap-3 rounded-[1.25rem] border border-primary/20 px-3.5 py-3">
+          <h3 className="font-serif text-base sm:text-lg leading-tight border-b border-primary/25 pb-1 flex-1 min-w-0 truncate">
+            {product.name}
+          </h3>
+          <span className="shrink-0 rounded-xl border border-primary/30 bg-blush/50 px-3 py-1.5 text-sm font-medium text-primary">
+            ₹{product.price}
+          </span>
         </div>
       </Link>
     </motion.div>
   );
 });
+
