@@ -93,8 +93,8 @@ function Consent() {
           Connect {clientName} to Zari Boutique
         </h1>
         <p className="text-sm text-muted-foreground mb-6">
-          This lets <span className="font-medium">{clientName}</span> use Zari Boutique as you —
-          it can browse your profile and post reviews on your behalf.
+          This lets <span className="font-medium">{clientName}</span> use Zari Boutique as you — it
+          can browse your profile and post reviews on your behalf.
         </p>
         {error && (
           <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">

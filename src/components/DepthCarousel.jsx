@@ -95,7 +95,20 @@ export function DepthCarousel({
       el.style.zIndex = String(100 - abs);
       el.style.pointerEvents = hidden ? "none" : "auto";
     });
-  }, [active, count, offsetOf, spread, depth, cardWidth, cardHeight, scale, visibleCards, tilt, falloff, blur]);
+  }, [
+    active,
+    count,
+    offsetOf,
+    spread,
+    depth,
+    cardWidth,
+    cardHeight,
+    scale,
+    visibleCards,
+    tilt,
+    falloff,
+    blur,
+  ]);
 
   const go = useCallback(
     (dir) => {
@@ -117,10 +130,7 @@ export function DepthCarousel({
     return () => window.clearInterval(id);
   }, [autoplay, autoplayDelay, count, go]);
 
-  const stageHeight = useMemo(
-    () => Math.round(cardHeight * scale + 90),
-    [cardHeight, scale],
-  );
+  const stageHeight = useMemo(() => Math.round(cardHeight * scale + 90), [cardHeight, scale]);
 
   if (!count) return null;
 
@@ -198,13 +208,9 @@ export function DepthCarousel({
                   draggable={false}
                 />
                 <div className="depth-carousel__meta">
-                  {item.category && (
-                    <p className="depth-carousel__category">{item.category}</p>
-                  )}
+                  {item.category && <p className="depth-carousel__category">{item.category}</p>}
                   <p className="depth-carousel__name">{item.name}</p>
-                  {item.price != null && (
-                    <p className="depth-carousel__price">₹{item.price}</p>
-                  )}
+                  {item.price != null && <p className="depth-carousel__price">₹{item.price}</p>}
                 </div>
               </>
             )}

@@ -47,7 +47,7 @@ export const Route = createFileRoute("/login")({
 });
 
 const inputClass =
-  "w-full pl-11 pr-4 py-3.5 rounded-full bg-blush/60 border border-border focus:border-primary focus:bg-background outline-none transition-all";
+  "w-full pl-11 pr-4 py-3.5 rounded-full bg-background/50 dark:bg-card/40 border border-border/80 focus:border-primary focus:bg-background/90 outline-none backdrop-blur-md transition-all shadow-inner text-foreground placeholder:text-muted-foreground";
 
 const STEP_LABELS: Record<Step, string> = {
   1: "Your details",
@@ -81,7 +81,6 @@ function Login() {
     const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
     router.navigate({ to: target, replace: true });
   };
-
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,16 +229,20 @@ function Login() {
   );
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-6 py-16 bg-sakura-gradient">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 py-16 bg-sakura-gradient">
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md rounded-3xl bg-background/95 backdrop-blur border border-border shadow-petal p-8 lg:p-10"
+        initial={{ opacity: 0, y: 24, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-md rounded-3xl glass-panel border border-white/40 dark:border-white/10 bg-background/70 dark:bg-card/60 backdrop-blur-2xl shadow-petal p-8 lg:p-10 relative overflow-hidden"
       >
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 justify-center w-12 h-12 rounded-full bg-sakura mb-4">
-            <Sparkles className="w-5 h-5 text-primary" />
+        {/* Subtle background glow inside card */}
+        <div className="pointer-events-none absolute -top-24 -right-24 w-48 h-48 rounded-full bg-primary/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-sakura/30 blur-3xl" />
+
+        <div className="text-center mb-8 relative z-10">
+          <div className="inline-flex items-center gap-2 justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-sakura/50 via-blush/40 to-primary/30 border border-primary/20 shadow-soft mb-4">
+            <Sparkles className="w-6 h-6 text-primary animate-pulse" />
           </div>
           <h1 className="font-serif text-3xl">
             Welcome to <span className="font-zari">Zari</span>
@@ -274,7 +277,9 @@ function Login() {
                     setFormError("");
                   }}
                   className={`flex-1 py-2 rounded-full transition-all ${
-                    mode === m ? "bg-background shadow-soft text-foreground" : "text-muted-foreground"
+                    mode === m
+                      ? "bg-background shadow-soft text-foreground"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {m === "signin" ? "Sign in" : "Create account"}
@@ -510,7 +515,6 @@ function Login() {
                 </motion.form>
               )}
             </AnimatePresence>
-
           </>
         )}
       </motion.div>

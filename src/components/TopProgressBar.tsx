@@ -2,7 +2,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
 
 export function TopProgressBar() {
-  const isLoading = useRouterState({ select: (s) => s.isLoading || s.isTransitioning });
+  const isLoading = useRouterState({ select: (s) => s.isLoading || s.status === "pending" });
 
   return (
     <AnimatePresence>

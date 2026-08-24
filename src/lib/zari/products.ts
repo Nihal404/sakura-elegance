@@ -142,7 +142,10 @@ export async function fetchProductById(id: string, signal?: AbortSignal): Promis
 export async function fetchProductsByIds(ids: readonly string[]): Promise<Product[]> {
   if (!ids.length) return [];
   const run = async () =>
-    supabase.from("products").select(detailColumns()).in("id", ids as string[]);
+    supabase
+      .from("products")
+      .select(detailColumns())
+      .in("id", ids as string[]);
   let { data, error } = await run();
   if (error?.code === MISSING_COLUMN && galleryColumns) {
     galleryColumns = false;

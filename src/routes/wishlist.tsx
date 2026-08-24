@@ -110,16 +110,10 @@ export function UnavailableCard({ onRemove }: { onRemove: () => void }) {
   return (
     <div className="rounded-3xl bg-card shadow-soft overflow-hidden flex flex-col">
       <div className="aspect-[3/4] bg-blush/60 flex items-center justify-center text-center px-4">
-        <p className="text-sm text-muted-foreground">
-          This piece is no longer available.
-        </p>
+        <p className="text-sm text-muted-foreground">This piece is no longer available.</p>
       </div>
       <div className="p-5">
-        <button
-          type="button"
-          onClick={onRemove}
-          className="text-sm text-primary hover:underline"
-        >
+        <button type="button" onClick={onRemove} className="text-sm text-primary hover:underline">
           Remove
         </button>
       </div>

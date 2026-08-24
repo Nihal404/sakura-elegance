@@ -32,7 +32,10 @@ function json(body: unknown, status = 200) {
 
 async function isStoreAdmin(token: string): Promise<boolean> {
   const headers = { apikey: STORE_PUBLISHABLE_KEY, Authorization: `Bearer ${token}` };
-  const userRes = await fetch(`${STORE_SUPABASE_URL}/auth/v1/user`, { headers, signal: AbortSignal.timeout(10_000) });
+  const userRes = await fetch(`${STORE_SUPABASE_URL}/auth/v1/user`, {
+    headers,
+    signal: AbortSignal.timeout(10_000),
+  });
   if (!userRes.ok) return false;
   const user = (await userRes.json()) as { id?: string };
   if (!user.id) return false;
@@ -45,11 +48,11 @@ async function isStoreAdmin(token: string): Promise<boolean> {
   return rows.some((r) => (r.role ?? "").toLowerCase() === "admin");
 }
 
-export const Route = createFileRoute("/api/public/describe-product")({
+export const Route = (createFileRoute("/api/public/describe-product") as any)({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: cors }),
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         const key = process.env["LOVABLE_API_KEY"];
         if (!key) return json({ error: "AI is not configured on the server." }, 503);
 
@@ -107,7 +110,6 @@ Respond with ONLY minified JSON, no markdown, shaped exactly:
           );
         }
 
-
         if (!res.ok) {
           const text = await res.text();
           console.error("[describe-product] gateway error", res.status, text.slice(0, 500));
@@ -122,7 +124,10 @@ Respond with ONLY minified JSON, no markdown, shaped exactly:
 
         const payload = (await res.json()) as { choices?: { message?: { content?: string } }[] };
         const raw = payload.choices?.[0]?.message?.content ?? "";
-        const cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+        const cleaned = raw
+          .replace(/```json/gi, "")
+          .replace(/```/g, "")
+          .trim();
         const match = cleaned.match(/\{[\s\S]*\}/);
 
         let description = "";

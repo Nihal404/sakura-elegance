@@ -148,12 +148,8 @@ export function ProductReviews({ productId }: { productId: string }) {
     <section className="mt-20">
       <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
         <div>
-          <span className="text-xs uppercase tracking-[0.3em] text-primary">
-            Petal Reviews
-          </span>
-          <h2 className="font-serif text-3xl lg:text-4xl mt-2">
-            What blossoms are saying
-          </h2>
+          <span className="text-xs uppercase tracking-[0.3em] text-primary">Petal Reviews</span>
+          <h2 className="font-serif text-3xl lg:text-4xl mt-2">What blossoms are saying</h2>
         </div>
         <div className="flex items-center gap-3">
           <StarRow value={Math.round(avg)} />
@@ -177,7 +173,8 @@ export function ProductReviews({ productId }: { productId: string }) {
             </div>
             <h3 className="font-serif text-2xl mt-3">Leave a review</h3>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-              Sign in to share your thoughts on this piece. Only Zari members can post reviews — it keeps the garden honest.
+              Sign in to share your thoughts on this piece. Only Zari members can post reviews — it
+              keeps the garden honest.
             </p>
             <Link
               to="/login"
@@ -203,7 +200,10 @@ export function ProductReviews({ productId }: { productId: string }) {
               <StarRow value={rating} onChange={setRating} interactive size={26} />
             </div>
 
-            <label htmlFor="review-name" className="block mt-5 text-xs uppercase tracking-widest text-foreground/70">
+            <label
+              htmlFor="review-name"
+              className="block mt-5 text-xs uppercase tracking-widest text-foreground/70"
+            >
               Display name
             </label>
             <input
@@ -216,7 +216,10 @@ export function ProductReviews({ productId }: { productId: string }) {
               className="mt-2 w-full rounded-full bg-background border border-border/70 px-5 py-3 focus:outline-none focus:border-primary transition-colors"
             />
 
-            <label htmlFor="review-comment" className="block mt-5 text-xs uppercase tracking-widest text-foreground/70">
+            <label
+              htmlFor="review-comment"
+              className="block mt-5 text-xs uppercase tracking-widest text-foreground/70"
+            >
               Review
             </label>
             <textarea
@@ -230,9 +233,7 @@ export function ProductReviews({ productId }: { productId: string }) {
               className="mt-2 w-full rounded-2xl bg-background border border-border/70 px-5 py-3 focus:outline-none focus:border-primary transition-colors resize-none"
             />
 
-            {error && (
-              <p className="mt-3 text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
 
             <button
               type="submit"

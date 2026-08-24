@@ -5,9 +5,7 @@
   "auth": {
     "type": "oauth",
     "issuer": "https://aqlqukvdgleialflldlq.supabase.co/auth/v1",
-    "accepted_audiences": [
-      "authenticated"
-    ]
+    "accepted_audiences": ["authenticated"]
   },
   "mcp": {
     "server": {
@@ -114,12 +112,7 @@
               "description": "Review text."
             }
           },
-          "required": [
-            "product_id",
-            "name",
-            "rating",
-            "comment"
-          ]
+          "required": ["product_id", "name", "rating", "comment"]
         },
         "outputSchema": null
       }

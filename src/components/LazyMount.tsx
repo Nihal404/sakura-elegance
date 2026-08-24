@@ -28,17 +28,18 @@ export const LazyMount = memo(function LazyMount({
       setActive(true);
       return;
     }
-    const io = new IntersectionObserver(
-      ([entry]) => setActive(Boolean(entry?.isIntersecting)),
-      { rootMargin: margin },
-    );
+    const io = new IntersectionObserver(([entry]) => setActive(Boolean(entry?.isIntersecting)), {
+      rootMargin: margin,
+    });
     io.observe(el);
     return () => io.disconnect();
   }, [margin]);
 
   return (
     <div ref={ref} className={className}>
-      {active ? children : (placeholder ?? <div className="aspect-[3/4] rounded-3xl bg-blush/50" />)}
+      {active
+        ? children
+        : (placeholder ?? <div className="aspect-[3/4] rounded-3xl bg-blush/50" />)}
     </div>
   );
 });

@@ -5,12 +5,7 @@ import { useEffect } from "react";
  * pointer-down on the document and paints a short-lived expanding circle inside the
  * pressed control. Purely presentational — no React state, no re-renders.
  */
-const PRIMARY_HINTS = [
-  "bg-primary",
-  "bg-foreground",
-  "bg-rose-gold",
-  "data-ripple",
-];
+const PRIMARY_HINTS = ["bg-primary", "bg-foreground", "bg-rose-gold", "data-ripple"];
 
 function isPrimary(el: HTMLElement) {
   if (el.hasAttribute("data-no-ripple")) return false;
@@ -27,9 +22,7 @@ export function RippleEffect() {
 
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
-      const el = target?.closest<HTMLElement>(
-        'button, [role="button"], a[data-ripple]',
-      );
+      const el = target?.closest<HTMLElement>('button, [role="button"], a[data-ripple]');
       if (!el || el.hasAttribute("disabled") || !isPrimary(el)) return;
 
       const rect = el.getBoundingClientRect();

@@ -65,7 +65,11 @@ export function describeError(err: unknown, fallback = "Something went wrong."):
   const raw = anyErr.message ?? anyErr.error_description ?? "";
   if (!raw) return fallback;
   const lower = raw.toLowerCase();
-  if (lower.includes("failed to fetch") || lower.includes("fetch failed") || lower.includes("networkerror")) {
+  if (
+    lower.includes("failed to fetch") ||
+    lower.includes("fetch failed") ||
+    lower.includes("networkerror")
+  ) {
     return `Could not reach the Zari server (${new URL(SUPABASE_URL).host}). Check your connection and try again.`;
   }
   if (lower.includes("row-level security")) {

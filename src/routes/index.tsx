@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, type Variants } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, ShieldCheck, Truck, RefreshCw, Gem } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { ProductGridSkeleton } from "@/components/ProductCardSkeleton";
 import { DepthCarousel } from "@/components/DepthCarousel";
 import { BannerSlider } from "@/components/BannerSlider";
 import { cardImageUrl, DETAIL_WIDTHS } from "@/lib/zari/image-url";
-
 import { buildProductMockSlides } from "@/lib/zari/product-mock-slides";
 import { fetchBanners, type Banner } from "@/lib/zari/banners";
 import { useSizedSrcList } from "@/hooks/useSizedImage";
@@ -38,35 +37,25 @@ export const Route = createFileRoute("/")({
 
 const BANNER_SPEC = { width: 1000, quality: 78, ladder: DETAIL_WIDTHS } as const;
 
-const float: Variants = {
-  animate: {
-    y: [0, -14, 0],
-    transition: { duration: 6, repeat: Infinity, ease: "easeInOut" as const },
-  },
-};
-
 function Home() {
   const navigate = useNavigate();
   const { products, productsLoading } = useStore();
   const featured = products.slice(0, 8);
-  // Hero product mock images — edit PRODUCT_MOCK_SLIDES in
-  // src/lib/zari/product-mock-slides.ts to change them.
   const fallbackSlides = useMemo(() => buildProductMockSlides(products as any, 5), [products]);
-  // Custom banners uploaded from the admin dashboard win over the fallback slides.
   const [banners, setBanners] = useState<Banner[]>([]);
+
   useEffect(() => {
     let alive = true;
     fetchBanners(true)
       .then((rows) => {
         if (alive) setBanners(rows);
       })
-      .catch(() => {
-        /* fall back to the curated slides */
-      });
+      .catch(() => {});
     return () => {
       alive = false;
     };
   }, []);
+
   const rawSlides = useMemo(
     () =>
       banners.length
@@ -74,8 +63,7 @@ function Home() {
         : fallbackSlides,
     [banners, fallbackSlides],
   );
-  // Private-bucket banners must be resolved to a signed, right-sized variant before the
-  // WebGL slider can load them as textures.
+
   const resolved = useSizedSrcList(
     useMemo(() => rawSlides.map((s) => s.image), [rawSlides]),
     BANNER_SPEC,
@@ -86,129 +74,222 @@ function Home() {
   );
 
   return (
-    <div>
-      {/* BANNER — 4:3 ad / campaign showcase */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-sakura-gradient" />
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-10 pt-6 pb-4">
-          <h1 className="sr-only">
-            Zari Boutique — Sakura clothing &amp; accessories
-          </h1>
+    <div className="space-y-12 md:space-y-16">
+      {/* HERO SECTION — Dual-column desktop layout */}
+      <section className="relative overflow-hidden pt-4 pb-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            {/* Left Column: Hero Text & CTAs */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+              className="lg:col-span-5 space-y-6 text-center lg:text-left"
+            >
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sakura/30 border border-primary/20 backdrop-blur-sm text-xs font-semibold uppercase tracking-wider text-primary shadow-sm">
+                <Sparkles className="w-4 h-4 text-gold animate-spin-slow" />
+                Spring '26 Sakura Collection
+              </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            className="rounded-[1.75rem] overflow-hidden shadow-petal"
-          >
-            {/* BANNER SLIDES — admin-managed banners, falling back to
-                PRODUCT_MOCK_SLIDES in src/lib/zari/product-mock-slides.ts. */}
-            <BannerSlider
-              slides={mockSlides}
-              aspect={4 / 3}
-              radius={28}
-              autoplayDelay={5000}
-              showCaptions
-            />
+              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.1]">
+                Where Timeless <br />
+                <span className="text-gradient-rose italic font-light">Elegance Blooms</span>
+              </h1>
 
-          </motion.div>
+              <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed font-sans">
+                Explore hand-crafted silk couture, delicate chiffon silhouettes, and rose gold pearl
+                jewellery curated for the modern romantic.
+              </p>
 
-          {/* OFFERS STRIP */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className="mt-4 rounded-2xl border border-primary/20 bg-background/80 backdrop-blur px-5 py-3.5 flex items-center gap-3 shadow-soft"
-          >
-            <span className="inline-flex items-center gap-1.5 shrink-0 text-[0.65rem] uppercase tracking-[0.2em] text-primary">
-              <Sparkles className="w-3.5 h-3.5" />
-              Offers
-            </span>
-            <p className="text-sm text-foreground/80 truncate">
-              Spring '26 Edit — flat 15% off silks &amp; free shipping above ₹2,999
-            </p>
-          </motion.div>
-
-          {/* CATEGORY CARDS */}
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4">
-            {[
-              {
-                title: "Clothes",
-                caption: "Silks, chiffons & couture",
-                image:
-                  "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=1200&q=80",
-                category: "Clothing" as const,
-              },
-              {
-                title: "Accessories",
-                caption: "Rose gold, pearls & charms",
-                image:
-                  "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1200&q=80",
-                category: "Accessories" as const,
-              },
-            ].map((c, i) => (
-              <motion.div
-                key={c.title}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 + i * 0.1 }}
-              >
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
                 <Link
                   to="/shop"
-                  search={{ category: c.category } as any}
-                  className="group relative block rounded-[1.5rem] overflow-hidden aspect-square shadow-soft"
+                  className="group inline-flex w-full sm:w-auto items-center justify-center gap-3 px-8 py-3.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-soft hover:shadow-petal hover:scale-[1.02] transition-all duration-300"
                 >
-                  <motion.img
-                    src={c.image}
-                    alt={c.title}
-                    className="w-full h-full object-cover"
-                    whileHover={{ scale: 1.06 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/65 via-foreground/10 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 text-primary-foreground">
-                    <h2 className="font-serif text-2xl sm:text-3xl text-white">{c.title}</h2>
-                    <p className="mt-1 text-[0.7rem] sm:text-xs opacity-90 text-white truncate">
-                      {c.caption}
-                    </p>
-                  </div>
+                  Explore Collection
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
-              </motion.div>
-            ))}
-          </div>
+                <Link
+                  to="/shop"
+                  search={{ category: "Clothing" } as any}
+                  className="inline-flex w-full sm:w-auto items-center justify-center px-7 py-3.5 rounded-full border border-border/80 bg-background/60 hover:bg-sakura/20 text-foreground font-medium transition-colors"
+                >
+                  View Silks
+                </Link>
+              </div>
 
-          {/* EXPLORE */}
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-5 flex justify-center"
-          >
-            <Link
-              to="/shop"
-              className="group inline-flex w-full sm:w-auto justify-center items-center gap-2 px-10 py-4 rounded-full bg-primary text-primary-foreground font-medium tracking-wide shadow-soft hover:shadow-petal transition-all"
+              {/* Offer Highlight Pill */}
+              <div className="pt-2">
+                <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-background/80 border border-primary/20 shadow-sm text-xs text-foreground/85">
+                  <span className="font-bold text-gold uppercase tracking-wider">Offer:</span>
+                  <span>Flat 15% off silks &amp; free express shipping above ₹2,999</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right Column: Hero Banner Showcase */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
+              className="lg:col-span-7"
             >
-              Explore
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </motion.div>
+              <div className="rounded-3xl overflow-hidden shadow-petal border border-border/60 bg-background/40 backdrop-blur-sm p-2">
+                <BannerSlider
+                  slides={mockSlides}
+                  aspect={16 / 10}
+                  radius={20}
+                  autoplayDelay={5000}
+                  showCaptions
+                />
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* RECENTLY VIEWED — sits directly under the Explore button */}
-      <RecentlyViewedStrip />
+      {/* LUXURY BOUTIQUE ADVANTAGES (4 Columns on Desktop) */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {[
+            {
+              icon: Gem,
+              title: "Handcrafted Couture",
+              desc: "Pure silks & premium fabrics",
+            },
+            {
+              icon: Truck,
+              title: "Express Delivery",
+              desc: "Pan-India 2–5 business days",
+            },
+            {
+              icon: RefreshCw,
+              title: "Easy 7-Day Exchange",
+              desc: "Hassle-free size swaps",
+            },
+            {
+              icon: ShieldCheck,
+              title: "100% Authentic",
+              desc: "Certified craftsmanship",
+            },
+          ].map((item, idx) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              className="glass-panel rounded-2xl p-5 flex flex-col items-center lg:items-start text-center lg:text-left gap-3 hover:border-gold/40 transition-colors"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <item.icon className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-serif text-base font-semibold text-foreground">{item.title}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
 
-      {/* FEATURED — depth carousel showcase */}
-      <section className="mx-auto max-w-7xl px-6 lg:px-10 pb-24">
-        <div className="flex items-end justify-between mb-10">
+      {/* CATEGORY SHOWCASE (4 Columns Desktop Grid) */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-8">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3">Best sellers</p>
-            <h2 className="font-serif text-3xl md:text-5xl">In full bloom</h2>
+            <p className="text-xs uppercase tracking-[0.25em] font-semibold text-primary mb-1">
+              Curated Collections
+            </p>
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold">Discover By Category</h2>
           </div>
-          <Link to="/shop" className="hidden md:inline-flex items-center gap-2 text-sm hover:text-primary">
-            View all <ArrowRight className="w-4 h-4" />
+          <Link
+            to="/shop"
+            className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+          >
+            All Categories <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              title: "Silks & Sarees",
+              caption: "Pure Kanjivaram & Banarasi",
+              image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&q=80",
+              category: "Clothing" as const,
+            },
+            {
+              title: "Chiffon Silhouettes",
+              caption: "Flowing dresses & dupattas",
+              image: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800&q=80",
+              category: "Clothing" as const,
+            },
+            {
+              title: "Rose Gold Jewellery",
+              caption: "Necklaces, rings & bangles",
+              image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80",
+              category: "Accessories" as const,
+            },
+            {
+              title: "Pearl & Clutch Bags",
+              caption: "Embellished luxury accessories",
+              image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80",
+              category: "Accessories" as const,
+            },
+          ].map((c, i) => (
+            <motion.div
+              key={c.title}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+            >
+              <Link
+                to="/shop"
+                search={{ category: c.category } as any}
+                className="group relative block rounded-2xl overflow-hidden aspect-[4/5] shadow-soft border border-border/40"
+              >
+                <motion.img
+                  src={c.image}
+                  alt={c.title}
+                  className="w-full h-full object-cover"
+                  whileHover={{ scale: 1.08 }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                  <h3 className="font-serif text-2xl font-bold">{c.title}</h3>
+                  <p className="mt-1 text-xs opacity-90 truncate text-sakura font-medium">
+                    {c.caption}
+                  </p>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* RECENTLY VIEWED STRIP */}
+      <RecentlyViewedStrip />
+
+      {/* BEST SELLERS — 3D Carousel Showcase */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] font-semibold text-primary mb-1">
+              Best Sellers
+            </p>
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold">In Full Bloom</h2>
+          </div>
+          <Link
+            to="/shop"
+            className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+          >
+            Shop All Products <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
         {productsLoading && featured.length === 0 ? (
           <ProductGridSkeleton count={4} />
         ) : featured.length === 0 ? (
@@ -219,7 +300,6 @@ function Home() {
           <DepthCarousel
             items={featured.map((p: any) => ({
               ...p,
-              // Carousel cards are 320px wide — serve a 640px variant, not the original.
               image: cardImageUrl(p.image, 640),
               alt: `${p.name} — Zari Boutique ${p.category ?? "product"}`,
             }))}

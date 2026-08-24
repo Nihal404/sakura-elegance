@@ -35,7 +35,6 @@ async function warmProductCards(products: readonly Product[]) {
   await warmImages(urls);
 }
 
-
 interface FeedOptions {
   category?: Category | null;
   search?: string | null;
@@ -49,7 +48,11 @@ interface FeedOptions {
  * state). Rapid scrolling cannot fire duplicate requests: a single in-flight guard plus
  * an AbortController per filter change drop stale responses.
  */
-export function useProductFeed({ category = null, search = null, pageSize = PRODUCT_PAGE_SIZE }: FeedOptions = {}) {
+export function useProductFeed({
+  category = null,
+  search = null,
+  pageSize = PRODUCT_PAGE_SIZE,
+}: FeedOptions = {}) {
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -94,10 +97,10 @@ export function useProductFeed({ category = null, search = null, pageSize = PROD
         // Warm a small window only (never the whole catalogue): sign the card-sized
         // variants for the next few products and put them in the persistent cache.
         void warmProductCards(page.items.slice(0, 8));
-
       } catch (err) {
         if ((err as { name?: string })?.name === "AbortError") return;
-        if (id === requestId.current) setError(describeError(err, "Could not load the collection."));
+        if (id === requestId.current)
+          setError(describeError(err, "Could not load the collection."));
       } finally {
         inFlight.current = false;
         if (id === requestId.current) {

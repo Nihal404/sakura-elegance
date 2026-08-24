@@ -73,7 +73,9 @@
   backdrop-filter: blur(8px);
   color: #fff;
   cursor: pointer;
-  transition: background 0.25s ease, transform 0.25s ease;
+  transition:
+    background 0.25s ease,
+    transform 0.25s ease;
 }
 
 .morph-slider__btn:hover {
@@ -99,7 +101,9 @@
   padding: 0;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.5);
-  transition: width 0.3s ease, background 0.3s ease;
+  transition:
+    width 0.3s ease,
+    background 0.3s ease;
 }
 
 .morph-slider__dot[data-active="true"] {

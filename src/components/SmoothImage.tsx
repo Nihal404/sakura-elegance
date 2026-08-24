@@ -13,10 +13,7 @@ export function SmoothImage({
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div
-      className={`relative overflow-hidden ${wrapperClassName}`}
-      aria-busy={!loaded}
-    >
+    <div className={`relative overflow-hidden ${wrapperClassName}`} aria-busy={!loaded}>
       {!loaded && (
         <div
           className="absolute inset-0 animate-pulse"

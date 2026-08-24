@@ -84,7 +84,6 @@ export function sizedImageUrl(url: string | undefined | null, opts: SizedOptions
   return `${base}?width=${width}&quality=${quality}&resize=cover`;
 }
 
-
 /** Grid/card variant: mobile gets the smallest rung, desktop a slightly larger one. */
 export function cardImageUrl(url: string | undefined | null, width = 400): string {
   return sizedImageUrl(url, { width, quality: 70, ladder: CARD_WIDTHS });
@@ -131,7 +130,6 @@ export function gallerySrcSet(url: string | undefined | null): string | undefine
 const SIGN_SEGMENT = "/storage/v1/object/sign/";
 const RENDER_SIGN_SEGMENT = "/storage/v1/render/image/sign/";
 
-
 export function isHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value) || value.startsWith("data:") || value.startsWith("blob:");
 }
@@ -151,7 +149,12 @@ export function signedUrlExpired(url: string): boolean {
   if (!payload) return false;
   try {
     const json = JSON.parse(
-      atob(payload.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(payload.length / 4) * 4, "=")),
+      atob(
+        payload
+          .replace(/-/g, "+")
+          .replace(/_/g, "/")
+          .padEnd(Math.ceil(payload.length / 4) * 4, "="),
+      ),
     ) as { exp?: number };
     return typeof json.exp === "number" && json.exp * 1000 < Date.now() + 60_000;
   } catch {
@@ -189,7 +192,9 @@ const SIGN_TTL_SECONDS = 60 * 60 * 24 * 365;
  */
 export async function resolveSignedSrc(value: string): Promise<string> {
   const { supabase, PRODUCT_IMAGE_BUCKET } = await import("./supabase");
-  const path = storageObjectPath(value, PRODUCT_IMAGE_BUCKET) ?? pathFromStorageUrl(value, PRODUCT_IMAGE_BUCKET);
+  const path =
+    storageObjectPath(value, PRODUCT_IMAGE_BUCKET) ??
+    pathFromStorageUrl(value, PRODUCT_IMAGE_BUCKET);
   if (!path) return value;
 
   const cached = signedCache.get(path);

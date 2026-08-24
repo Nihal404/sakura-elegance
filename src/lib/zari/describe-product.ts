@@ -41,7 +41,11 @@ export async function shrinkImageDataUrl(dataUrl: string): Promise<string> {
 }
 
 type Result = { description: string; features: string[] };
-type Parsed = { ok: boolean; status: number; body: { description?: string; features?: string[]; error?: string } };
+type Parsed = {
+  ok: boolean;
+  status: number;
+  body: { description?: string; features?: string[]; error?: string };
+};
 
 async function post(url: string, payload: unknown, token: string): Promise<Parsed> {
   const res = await fetch(url, {

@@ -7,7 +7,6 @@ import { ProductImage } from "@/components/ProductImage";
 import { CARD_SIZES, CARD_WIDTHS, cardImageUrl, cardSrcSet } from "@/lib/zari/image-url";
 import { CompareButton, WishlistButton } from "@/components/WishlistCompareControls";
 
-
 /**
  * Grid card. Loads ONLY the product's primary thumbnail (a ~320–500px CDN variant) —
  * never the 1 MB original, and never the gallery/mockup images, which are fetched on the
@@ -23,7 +22,6 @@ export const ProductCard = memo(function ProductCard({
   priority?: boolean;
 }) {
   const thumb = cardImageUrl(product.image, 400);
-
 
   return (
     <motion.div
@@ -46,7 +44,6 @@ export const ProductCard = memo(function ProductCard({
       }}
       style={{ WebkitTapHighlightColor: "transparent" }}
       className="group relative rounded-3xl overflow-hidden bg-card shadow-soft transition-shadow duration-500 hover:shadow-petal active:shadow-soft cursor-pointer select-none"
-
     >
       <Link
         to="/product/$id"
@@ -54,7 +51,6 @@ export const ProductCard = memo(function ProductCard({
         className="block outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-3xl"
         aria-label={`View ${product.name}`}
       >
-
         {/* Fixed aspect ratio + intrinsic size = no layout shift while images stream in. */}
         <div className="relative aspect-[3/4] overflow-hidden bg-blush">
           <ProductImage

@@ -248,7 +248,6 @@ export function MorphSlider({
           img.src = slides[i].image;
         });
 
-
       const resize = () => {
         const el = containerRef.current;
         if (!el) return;
@@ -284,7 +283,6 @@ export function MorphSlider({
       // Only hide the plain <img> once a real texture is on screen; otherwise WebGL would
       // paint an empty canvas over a perfectly loadable picture.
       setReady(Boolean(first));
-
 
       ctx = {
         gsap,
@@ -377,9 +375,12 @@ export function MorphSlider({
   /* autoplay */
   useEffect(() => {
     if (!autoplay || slides.length < 2 || reduced.current) return;
-    const id = setInterval(() => {
-      if (!hoverRef.current && !document.hidden) next();
-    }, Math.max(1.5, autoplayDelay) * 1000);
+    const id = setInterval(
+      () => {
+        if (!hoverRef.current && !document.hidden) next();
+      },
+      Math.max(1.5, autoplayDelay) * 1000,
+    );
     return () => clearInterval(id);
   }, [autoplay, autoplayDelay, next, slides.length]);
 
@@ -441,10 +442,20 @@ export function MorphSlider({
 
       {showControls && slides.length > 1 && (
         <div className="morph-slider__controls">
-          <button type="button" className="morph-slider__btn" onClick={prev} aria-label="Previous image">
+          <button
+            type="button"
+            className="morph-slider__btn"
+            onClick={prev}
+            aria-label="Previous image"
+          >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <button type="button" className="morph-slider__btn" onClick={next} aria-label="Next image">
+          <button
+            type="button"
+            className="morph-slider__btn"
+            onClick={next}
+            aria-label="Next image"
+          >
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

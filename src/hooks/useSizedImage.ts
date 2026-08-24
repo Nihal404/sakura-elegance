@@ -16,9 +16,7 @@ import {
  */
 export function useSizedSrc(raw: string | undefined | null, spec: VariantRequest): string {
   const fallback = raw ?? "";
-  const [src, setSrc] = useState(
-    () => (raw && cachedVariantUrl(raw, spec)) || fallback,
-  );
+  const [src, setSrc] = useState(() => (raw && cachedVariantUrl(raw, spec)) || fallback);
 
   useEffect(() => {
     if (!raw || !isStorageSource(raw)) {
@@ -45,9 +43,7 @@ export function useSizedSrc(raw: string | undefined | null, spec: VariantRequest
 /** Array flavour of {@link useSizedSrc} for galleries and thumbnail strips. */
 export function useSizedSrcList(raws: readonly string[], spec: VariantRequest): string[] {
   const key = raws.join("|");
-  const [list, setList] = useState<string[]>(() =>
-    raws.map((r) => cachedVariantUrl(r, spec) || r),
-  );
+  const [list, setList] = useState<string[]>(() => raws.map((r) => cachedVariantUrl(r, spec) || r));
 
   useEffect(() => {
     let alive = true;

@@ -112,7 +112,6 @@ function ComparePage() {
                 }))`,
                 minWidth: products.length > 1 ? `${products.length * 244}px` : undefined,
               }}
-
             >
               {products.map((p) => (
                 <div

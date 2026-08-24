@@ -2,7 +2,9 @@ let audioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext {
   if (!audioCtx) {
-    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     audioCtx = new Ctx();
   }
   if (audioCtx.state === "suspended") {
@@ -90,7 +92,11 @@ export function playDelightedSound() {
 
     // Soft shimmer (high-frequency sparkle) on top of the chime.
     const shimmerDuration = 1.0;
-    const shimmerBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * shimmerDuration), ctx.sampleRate);
+    const shimmerBuffer = ctx.createBuffer(
+      1,
+      Math.floor(ctx.sampleRate * shimmerDuration),
+      ctx.sampleRate,
+    );
     const shimmerData = shimmerBuffer.getChannelData(0);
     for (let i = 0; i < shimmerData.length; i++) {
       shimmerData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / shimmerData.length, 2.5);
@@ -127,7 +133,11 @@ export function playClickSound() {
     const duration = 0.05;
 
     // Short filtered noise burst = crisp mechanical "click".
-    const buffer = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * duration)), ctx.sampleRate);
+    const buffer = ctx.createBuffer(
+      1,
+      Math.max(1, Math.floor(ctx.sampleRate * duration)),
+      ctx.sampleRate,
+    );
     const data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) {
       const p = i / data.length;

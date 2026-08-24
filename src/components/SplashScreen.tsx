@@ -83,8 +83,7 @@ export function SplashScreen({ onFading }: SplashScreenProps) {
                 transition={{ duration: 1.4, ease: "easeOut" }}
                 className="absolute inset-0 -m-10 rounded-full blur-2xl"
                 style={{
-                  background:
-                    "radial-gradient(circle, oklch(0.85 0.08 15 / 0.6), transparent 70%)",
+                  background: "radial-gradient(circle, oklch(0.85 0.08 15 / 0.6), transparent 70%)",
                 }}
               />
               <motion.div

@@ -8,16 +8,19 @@ export default defineTool({
   title: "List products",
   description: "List products in the Zari Boutique catalog. Optionally filter by category.",
   inputSchema: {
-    category: z.string().trim().min(1).optional().describe("Optional category filter (e.g. 'Sarees')."),
+    category: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe("Optional category filter (e.g. 'Sarees')."),
     limit: z.number().int().min(1).max(50).optional().describe("Max items to return (default 20)."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ category, limit }) => {
-    const supabase = createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY,
-      { auth: { persistSession: false, autoRefreshToken: false } },
-    );
+    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
     let q = supabase
       .from("products")
       .select("id, name, price, category, description, image_url")

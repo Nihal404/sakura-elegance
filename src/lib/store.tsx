@@ -61,6 +61,9 @@ interface StoreContextValue {
   setCartShake: (v: boolean) => void;
   placeOrder: (shippingAddress?: string) => Promise<string>;
 
+  theme: "light" | "dark";
+  toggleTheme: () => void;
+
   user: User | null;
   authLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -100,6 +103,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+
+  const [theme, setThemeState] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("zari_theme") as "light" | "dark" | null;
+    if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+      setThemeState("dark");
+      document.documentElement.classList.add("dark");
+    } else {
+      setThemeState("light");
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      if (next === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      localStorage.setItem("zari_theme", next);
+      return next;
+    });
+  }, []);
 
   // id of the signed-in shopper's carts row; null while signed out
   const cartIdRef = useRef<string | null>(null);
@@ -154,7 +184,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setLoadingMoreProducts(false);
     }
   }, []);
-
 
   useEffect(() => {
     void refreshProducts();
@@ -301,7 +330,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCart(items);
   }, []);
 
-
   // On sign-in: merge whatever the guest added, then mirror the database cart.
   // On sign-out: drop the server cart from memory.
   useEffect(() => {
@@ -401,7 +429,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const updateQty = useCallback(
     (id: string, qty: number) => {
       setCart((prev) =>
-        qty <= 0 ? prev.filter((i) => i.id !== id) : prev.map((i) => (i.id === id ? { ...i, qty } : i)),
+        qty <= 0
+          ? prev.filter((i) => i.id !== id)
+          : prev.map((i) => (i.id === id ? { ...i, qty } : i)),
       );
       if (!user) return;
       const rowId = cartRowsRef.current.get(id);
@@ -503,7 +533,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
     if (error) {
       const lower = error.message.toLowerCase();
-      if (lower.includes("invalid login credentials")) throw new Error("Invalid email or password.");
+      if (lower.includes("invalid login credentials"))
+        throw new Error("Invalid email or password.");
       if (lower.includes("email not confirmed")) {
         throw new Error("Please confirm your email from the link we sent, then sign in.");
       }
@@ -578,13 +609,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (error) {
       const lower = error.message.toLowerCase();
       if (lower.includes("expired")) throw new Error("That code has expired. Request a new one.");
-      if (lower.includes("invalid")) throw new Error("That code isn't right. Please check and retry.");
+      if (lower.includes("invalid"))
+        throw new Error("That code isn't right. Please check and retry.");
       throw new Error(describeError(error, "Could not verify your code."));
     }
   }, []);
 
   const completeSignup = useCallback(
-    async ({ password, fullName, phone }: { password: string; fullName: string; phone?: string }) => {
+    async ({
+      password,
+      fullName,
+      phone,
+    }: {
+      password: string;
+      fullName: string;
+      phone?: string;
+    }) => {
       const { error } = await supabase.auth.updateUser({
         password,
         data: { full_name: fullName, phone: phone ?? null },
@@ -601,7 +641,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-
     await supabase.auth.signOut();
     cartIdRef.current = null;
     cartRowsRef.current = new Map();
@@ -634,6 +673,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       cartShake,
       setCartShake,
       placeOrder,
+      theme,
+      toggleTheme,
       user,
       authLoading,
       signIn,
@@ -664,6 +705,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     placeOrder,
     cartShake,
     setCartShake,
+    theme,
+    toggleTheme,
     user,
     authLoading,
     signIn,

@@ -22,8 +22,9 @@ import { ShoppingListsProvider } from "@/lib/shopping-lists";
 import { CompareBar } from "@/components/CompareBar";
 import { RippleEffect } from "@/components/RippleEffect";
 import { InteractionSounds } from "@/components/InteractionSounds";
+import { SakuraPetals } from "@/components/SakuraPetals";
+import { SakuraBranches } from "@/components/SakuraBranches";
 import { Toaster } from "@/components/ui/sonner";
-
 
 function NotFoundComponent() {
   return (
@@ -56,9 +57,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="font-serif text-xl">This page didn't load</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Something went wrong on our end.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -179,15 +178,23 @@ function RootComponent() {
     const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
     const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
     const mask = (v?: string) =>
-      !v ? "(missing)" : v.length <= 12 ? "***" : `${v.slice(0, 8)}…${v.slice(-4)} (len ${v.length})`;
-    // eslint-disable-next-line no-console
-    console.log("[Supabase env]", { VITE_SUPABASE_URL: url, VITE_SUPABASE_PUBLISHABLE_KEY: mask(key) });
+      !v
+        ? "(missing)"
+        : v.length <= 12
+          ? "***"
+          : `${v.slice(0, 8)}…${v.slice(-4)} (len ${v.length})`;
+    console.log("[Supabase env]", {
+      VITE_SUPABASE_URL: url,
+      VITE_SUPABASE_PUBLISHABLE_KEY: mask(key),
+    });
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
         <ShoppingListsProvider>
+          <SakuraBranches />
+          <SakuraPetals />
           <TopProgressBar />
           <SplashScreen onFading={() => setEntryPhase("revealed")} />
           <motion.div
@@ -213,7 +220,6 @@ function RootComponent() {
           <Toaster />
         </ShoppingListsProvider>
       </StoreProvider>
-
     </QueryClientProvider>
   );
 }

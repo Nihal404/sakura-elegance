@@ -24,15 +24,17 @@ export const Route = createFileRoute("/cart")({
       { title: "Your Bag — Zari Boutique" },
       { name: "description", content: "Review the pieces in your bag and check out via WhatsApp." },
       { property: "og:title", content: "Your Bag — Zari Boutique" },
-      { property: "og:description", content: "Review your Sakura-curated selections before checkout." },
+      {
+        property: "og:description",
+        content: "Review your Sakura-curated selections before checkout.",
+      },
     ],
   }),
   component: CartPage,
 });
 
 function CartPage() {
-  const { cart, updateQty, removeFromCart, cartTotal, cartCount, user, placeOrder } =
-    useStore();
+  const { cart, updateQty, removeFromCart, cartTotal, cartCount, user, placeOrder } = useStore();
   const router = useRouter();
   const [popup, setPopup] = useState(false);
 
@@ -91,7 +93,7 @@ function CartPage() {
 
   return (
     <div className="min-h-screen bg-sakura-gradient">
-      <div className="mx-auto max-w-5xl px-6 lg:px-10 py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 md:py-14">
         <button
           onClick={() => router.history.back()}
           className="inline-flex items-center gap-2 text-sm text-foreground/70 hover:text-primary transition-colors mb-6"
@@ -106,7 +108,9 @@ function CartPage() {
               <span className="text-gradient-rose">Blooming</span> selections
             </h1>
           </div>
-          <span className="text-sm text-muted-foreground">{cartCount} item{cartCount === 1 ? "" : "s"}</span>
+          <span className="text-sm text-muted-foreground">
+            {cartCount} item{cartCount === 1 ? "" : "s"}
+          </span>
         </div>
 
         {cart.length === 0 ? (
@@ -135,11 +139,7 @@ function CartPage() {
                   key={item.id}
                   className="flex gap-5 p-4 rounded-2xl bg-background/95 border border-border shadow-soft animate-fade-in"
                 >
-                  <Link
-                    to="/product/$id"
-                    params={{ id: item.id }}
-                    className="shrink-0"
-                  >
+                  <Link to="/product/$id" params={{ id: item.id }} className="shrink-0">
                     <SizedImg
                       raw={item.image}
                       spec={{ width: 200, quality: 65, ladder: [160, 240, 320] }}
@@ -243,9 +243,7 @@ function CartPage() {
               <h2 className="mt-5 font-serif text-2xl">Order Summary</h2>
               <div className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between text-muted-foreground">
-                  <span>
-                    Items ({cartCount})
-                  </span>
+                  <span>Items ({cartCount})</span>
                   <span className="tabular-nums">₹{cartTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">

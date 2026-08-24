@@ -39,7 +39,6 @@ export function BannerSlider({
   const hover = useRef(false);
   const touchStart = useRef<number | null>(null);
 
-
   useEffect(() => {
     if (index >= count) setIndex(0);
   }, [count, index]);
@@ -77,7 +76,6 @@ export function BannerSlider({
 
   const active = usable[Math.min(index, count - 1)]!;
   const ready = !!loaded[active.image];
-
 
   return (
     <div
@@ -133,7 +131,6 @@ export function BannerSlider({
           <div className="absolute inset-y-0 -left-1/3 w-1/3 blur-xl bg-white/40 animate-zari-shimmer" />
         </div>
       )}
-
 
       <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-foreground/45 to-transparent pointer-events-none" />
 

@@ -131,7 +131,9 @@ export function ProductLightbox({ open, slides, index, alt, onIndexChange, onClo
               >
                 <Minus className="w-4 h-4" />
               </button>
-              <span className="text-xs w-10 text-center tabular-nums">{Math.round(zoom * 100)}%</span>
+              <span className="text-xs w-10 text-center tabular-nums">
+                {Math.round(zoom * 100)}%
+              </span>
               <button
                 type="button"
                 onClick={() => zoomBy(1.35)}

@@ -8,8 +8,7 @@
  * a blocking network/extension. Those all previously surfaced as just "fetch failed".
  */
 
-export const supabaseUrl =
-  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
+export const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
 
 function hostOf(url: string): string {
   try {

@@ -24,7 +24,7 @@ export function BottomNav() {
       initial={{ y: 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut", delay: 0.15 }}
-      className="fixed bottom-4 inset-x-0 z-50 px-4 pb-[env(safe-area-inset-bottom)]"
+      className="fixed bottom-4 inset-x-0 z-50 px-4 pb-[env(safe-area-inset-bottom)] md:hidden"
       aria-label="Primary"
     >
       <div className="glass-panel mx-auto flex max-w-md items-center justify-between gap-1 rounded-full px-2 py-2">
@@ -63,9 +63,7 @@ export function BottomNav() {
                 )}
               </span>
               <span className="relative">{label}</span>
-              {active && (
-                <span className="absolute -bottom-0.5 h-1 w-1 rounded-full bg-primary" />
-              )}
+              {active && <span className="absolute -bottom-0.5 h-1 w-1 rounded-full bg-primary" />}
             </Link>
           );
         })}

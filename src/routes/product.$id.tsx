@@ -24,7 +24,6 @@ import { useShoppingLists } from "@/lib/shopping-lists";
 import { CompareButton, WishlistButton } from "@/components/WishlistCompareControls";
 import { playAddToCartSound } from "@/lib/zari/sound";
 
-
 const SITE_URL = "https://zaris-elegance.lovable.app";
 
 export const Route = createFileRoute("/product/$id")({
@@ -94,7 +93,6 @@ export const Route = createFileRoute("/product/$id")({
   component: ProductDetail,
 });
 
-
 function ProductDetail() {
   const { id } = Route.useParams();
   const router = useRouter();
@@ -103,7 +101,6 @@ function ProductDetail() {
   const [activeView, setActiveView] = useState(0);
   const [btnShake, setBtnShake] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-
 
   const cached = products.find((p) => p.id === id);
   const [fetched, setFetched] = useState<Product | null>(null);
@@ -155,7 +152,6 @@ function ProductDetail() {
   const gallerySrcs = useSizedSrcList(rawViews, GALLERY_SPEC);
   const galleryThumbs = useSizedSrcList(rawViews, THUMB_SPEC);
 
-
   if (loadingProduct && !product) {
     return (
       <div className="mx-auto max-w-7xl px-6 lg:px-10 py-10 lg:py-14">
@@ -206,12 +202,11 @@ function ProductDetail() {
     );
   }
 
-  const description =
-    product.description?.trim()
-      ? product.description
-      : product.category === "Clothing"
-        ? `Crafted for effortless elegance, the ${product.name} drapes the wearer in whisper-soft fabric with a hand-finished silhouette. Rose-toned stitching and subtle floral motifs bring a modern romance to a timeless piece — perfect for garden weddings, twilight dinners, and quiet afternoons alike.`
-        : `A refined accent piece, the ${product.name} is finished by hand with delicate rose-gold detailing. Designed to complement the Sakura palette, it layers beautifully with everyday looks and special occasions — a small heirloom in the making.`;
+  const description = product.description?.trim()
+    ? product.description
+    : product.category === "Clothing"
+      ? `Crafted for effortless elegance, the ${product.name} drapes the wearer in whisper-soft fabric with a hand-finished silhouette. Rose-toned stitching and subtle floral motifs bring a modern romance to a timeless piece — perfect for garden weddings, twilight dinners, and quiet afternoons alike.`
+      : `A refined accent piece, the ${product.name} is finished by hand with delicate rose-gold detailing. Designed to complement the Sakura palette, it layers beautifully with everyday looks and special occasions — a small heirloom in the making.`;
 
   // Prefer admin-uploaded mockups; fall back to synthetic framed views of the main image.
   const hasMockups = product.mockups && product.mockups.length > 0;
@@ -280,7 +275,9 @@ function ProductDetail() {
           </div>
 
           {gallery.length > 1 && (
-            <div className={`mt-4 grid gap-3 ${gallery.length <= 4 ? "grid-cols-4" : "grid-cols-6"}`}>
+            <div
+              className={`mt-4 grid gap-3 ${gallery.length <= 4 ? "grid-cols-4" : "grid-cols-6"}`}
+            >
               {gallery.map((v, i) => (
                 <button
                   key={i}
@@ -290,7 +287,9 @@ function ProductDetail() {
                     setLightboxOpen(true);
                   }}
                   className={`relative aspect-square rounded-2xl overflow-hidden ${v.frame} border-2 transition-all ${
-                    activeView === i ? "border-primary shadow-soft" : "border-transparent opacity-70 hover:opacity-100"
+                    activeView === i
+                      ? "border-primary shadow-soft"
+                      : "border-transparent opacity-70 hover:opacity-100"
                   }`}
                   aria-label={`View ${v.label}`}
                 >
@@ -322,25 +321,19 @@ function ProductDetail() {
           />
         </div>
 
-
-
-        {/* Details */}
+        {/* Details Column */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col"
+          className="flex flex-col sticky top-24 glass-panel rounded-3xl p-6 lg:p-8 border border-border/70 shadow-soft"
         >
           <span className="text-xs uppercase tracking-[0.3em] text-primary">
             {product.category}
           </span>
-          <h1 className="font-serif text-4xl lg:text-5xl mt-3 leading-tight">
-            {product.name}
-          </h1>
+          <h1 className="font-serif text-4xl lg:text-5xl mt-3 leading-tight">{product.name}</h1>
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="text-3xl font-medium text-primary">
-              ₹{product.price}
-            </span>
+            <span className="text-3xl font-medium text-primary">₹{product.price}</span>
             <span className="text-sm text-muted-foreground">INR · Free petal-wrapped shipping</span>
           </div>
 
@@ -357,7 +350,12 @@ function ProductDetail() {
           <ul className="mt-6 grid grid-cols-2 gap-3 text-sm text-foreground/75">
             {(product.features && product.features.length > 0
               ? product.features
-              : ["Hand-finished detail", "Rose-gold accents", "Sakura-soft palette", "Ships in 2–7 days"]
+              : [
+                  "Hand-finished detail",
+                  "Rose-gold accents",
+                  "Sakura-soft palette",
+                  "Ships in 2–7 days",
+                ]
             ).map((f, i) => (
               <li key={i} className="rounded-2xl bg-blush/60 px-4 py-3">
                 {f}
@@ -401,8 +399,6 @@ function ProductDetail() {
               <CompareButton productId={product.id} productName={product.name} size="lg" />
             </div>
           </div>
-
-
         </motion.div>
       </div>
 

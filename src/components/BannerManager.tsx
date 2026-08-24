@@ -4,7 +4,13 @@ import { ImagePlus, Loader2, Trash2, Eye, EyeOff, GalleryHorizontalEnd } from "l
 import { toast } from "sonner";
 import { supabase, PRODUCT_IMAGE_BUCKET } from "@/lib/zari/supabase";
 import { compressImage } from "@/lib/zari/compress-image";
-import { addBanner, fetchBanners, removeBanner, updateBanner, type Banner } from "@/lib/zari/banners";
+import {
+  addBanner,
+  fetchBanners,
+  removeBanner,
+  updateBanner,
+  type Banner,
+} from "@/lib/zari/banners";
 import { galleryImageUrl } from "@/lib/zari/image-url";
 
 /**
@@ -30,7 +36,6 @@ export function BannerManager({ userId }: { userId: string }) {
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,9 +115,20 @@ export function BannerManager({ userId }: { userId: string }) {
           <h2 className="truncate font-serif text-2xl">Home banners</h2>
         </div>
         <label className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs cursor-pointer">
-          {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
+          {uploading ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <ImagePlus className="w-3.5 h-3.5" />
+          )}
           {uploading ? "Uploading…" : "Add banner"}
-          <input type="file" accept="image/*" multiple hidden onChange={onFiles} disabled={uploading} />
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={onFiles}
+            disabled={uploading}
+          />
         </label>
       </div>
 
@@ -146,7 +162,6 @@ export function BannerManager({ userId }: { userId: string }) {
           ))}
         </ul>
       )}
-
     </motion.section>
   );
 }
@@ -265,10 +280,18 @@ function BannerPreviewCard({
         />
 
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={onUp} className="px-2.5 py-1 rounded-full bg-blush text-primary text-[11px]">
+          <button
+            type="button"
+            onClick={onUp}
+            className="px-2.5 py-1 rounded-full bg-blush text-primary text-[11px]"
+          >
             ↑ Up
           </button>
-          <button type="button" onClick={onDown} className="px-2.5 py-1 rounded-full bg-blush text-primary text-[11px]">
+          <button
+            type="button"
+            onClick={onDown}
+            className="px-2.5 py-1 rounded-full bg-blush text-primary text-[11px]"
+          >
             ↓ Down
           </button>
           <button

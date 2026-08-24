@@ -109,12 +109,10 @@ export async function fetchServerWishlist(userId: string): Promise<string[] | nu
 
 export async function addServerWishlist(userId: string, productIds: string[]) {
   if (!serverListsAvailable || !productIds.length) return;
-  const { error } = await db
-    .from("wishlist_items")
-    .upsert(
-      productIds.map((product_id) => ({ user_id: userId, product_id })),
-      { onConflict: "user_id,product_id", ignoreDuplicates: true },
-    );
+  const { error } = await db.from("wishlist_items").upsert(
+    productIds.map((product_id) => ({ user_id: userId, product_id })),
+    { onConflict: "user_id,product_id", ignoreDuplicates: true },
+  );
   if (error) noteError(error);
 }
 

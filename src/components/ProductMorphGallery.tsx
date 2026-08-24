@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import gsap from "gsap";
+import _gsap from "gsap";
+const gsap: any = _gsap;
 import { ChevronLeft, ChevronRight, Images } from "lucide-react";
 
 export interface GalleryView {
@@ -31,7 +32,7 @@ export function ProductMorphGallery({ views, alt, activeIndex, onChange }: Props
   const layerB = useRef<HTMLDivElement>(null);
   const frontIsA = useRef(true);
   const shown = useRef(index);
-  const tweenRef = useRef<gsap.core.Timeline | null>(null);
+  const tweenRef = useRef<any>(null);
   const dragX = useRef<number | null>(null);
   const reduced = useRef(false);
 
@@ -99,11 +100,7 @@ export function ProductMorphGallery({ views, alt, activeIndex, onChange }: Props
       outgoing,
       { opacity: 0, scale: 0.9, x: -dir * 34, z: -180, filter: "blur(8px)", duration: 0.62 },
       0,
-    ).to(
-      incoming,
-      { opacity: 1, scale: 1, x: 0, z: 0, filter: "blur(0px)", duration: 0.7 },
-      0.04,
-    );
+    ).to(incoming, { opacity: 1, scale: 1, x: 0, z: 0, filter: "blur(0px)", duration: 0.7 }, 0.04);
     tweenRef.current = tl;
   }, [index, count, views]);
 
