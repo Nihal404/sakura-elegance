@@ -1,11 +1,12 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { Eye } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { ShoppingBag } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { type Product } from "@/lib/store";
 import { ProductImage } from "@/components/ProductImage";
 import { CARD_SIZES, CARD_WIDTHS, cardImageUrl, cardSrcSet } from "@/lib/zari/image-url";
-import { CompareButton, WishlistButton } from "@/components/WishlistCompareControls";
+import { WishlistButton } from "@/components/WishlistCompareControls";
+
 
 /**
  * Grid card. Loads ONLY the product's primary thumbnail (a ~320–500px CDN variant) —
