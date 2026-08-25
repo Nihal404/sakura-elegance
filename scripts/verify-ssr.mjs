@@ -87,6 +87,7 @@ try {
     };
     const res = await fetchFn(new Request("http://localhost/"), { ...process.env }, ctx);
     const body = await res.text();
+    console.error(`[verify-ssr] GET / -> ${res.status}`);
     if (res.status >= 500) runtimeFailure = `GET / returned ${res.status}: ${body.slice(0, 500)}`;
     else if (/is not a function|ReferenceError/.test(body))
       runtimeFailure = `GET / body contains a runtime error: ${body.slice(0, 500)}`;
