@@ -8,8 +8,17 @@ import { pathToFileURL } from "node:url";
 
 const root = process.cwd();
 
+const SERVER_DIRS = [
+  ".vercel/output/functions/__server.func",
+  ".output/server",
+  "dist/server",
+];
+
 function findServerEntry() {
   const candidates = [
+    // Vercel Nitro preset output (what Vercel actually deploys).
+    ".vercel/output/functions/__server.func/index.mjs",
+    ".vercel/output/functions/__server.func/index.js",
     ".output/server/index.mjs",
     ".output/server/index.js",
     "dist/server/server.js",
@@ -34,10 +43,8 @@ function walk(dir, out = []) {
 
 // 1. Static check: any interop helper that is referenced but never declared.
 const HELPERS = ["__exportAll", "__toESM", "__commonJS", "__commonJSMin", "__export", "__require"];
-const serverFiles = [
-  ...walk(resolve(root, ".output/server")),
-  ...walk(resolve(root, "dist/server")),
-];
+const serverFiles = SERVER_DIRS.flatMap((dir) => walk(resolve(root, dir)));
+
 let staticFailures = 0;
 for (const file of serverFiles) {
   const code = readFileSync(file, "utf8");
