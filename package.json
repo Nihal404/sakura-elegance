@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "vite build && node scripts/verify-ssr.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "verify:ssr": "node scripts/verify-ssr.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -88,9 +89,15 @@
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.16"
+    "vite": "8.1.5",
+    "rolldown": "1.1.5"
   },
-  "optionalDependencies": {
-    "@rolldown/binding-win32-x64-msvc": "^1.2.5"
+  "overrides": {
+    "rolldown": "1.1.5",
+    "vite": "8.1.5"
+  },
+  "resolutions": {
+    "rolldown": "1.1.5",
+    "vite": "8.1.5"
   }
 }
