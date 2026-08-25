@@ -33,7 +33,7 @@ function walk(dir, out = []) {
 }
 
 // 1. Static check: any interop helper that is referenced but never declared.
-const HELPERS = ["__exportAll", "__toESM", "__commonJS", "__export"];
+const HELPERS = ["__exportAll", "__toESM", "__commonJS", "__commonJSMin", "__export", "__require"];
 const serverFiles = [
   ...walk(resolve(root, ".output/server")),
   ...walk(resolve(root, "dist/server")),
@@ -42,14 +42,17 @@ let staticFailures = 0;
 for (const file of serverFiles) {
   const code = readFileSync(file, "utf8");
   for (const helper of HELPERS) {
-    if (!code.includes(helper)) continue;
+    // Rolldown may deconflict a reference as `__exportAll$1`; a trailing
+    // identifier char (e.g. `__commonJSMin`) means it is a different symbol.
+    const ref = new RegExp(`\\b${helper}(?:\\$\\d+)?(?![A-Za-z0-9_$])`);
+    if (!ref.test(code)) continue;
     const declared = new RegExp(
-      `(?:var|let|const|function)\\s+${helper}\\b|${helper}\\s*[:=]\\s*(?:function|\\()`,
+      `(?:var|let|const|function|class)\\s+${helper}(?:\\$\\d+)?(?![A-Za-z0-9_$])`,
     ).test(code);
-    // Rolldown emits these helpers in a shared runtime chunk and imports them,
+    // Helpers live in a shared runtime chunk and are imported (often renamed),
     // so an import binding counts as a valid declaration.
     const imported = new RegExp(
-      `import[^;]*\\b${helper}\\b[^;]*from|\\b${helper}\\s+as\\b|\\bas\\s+${helper}\\b`,
+      `as\\s+${helper}(?:\\$\\d+)?(?![A-Za-z0-9_$])|\\{[^}]*\\b${helper}(?:\\$\\d+)?\\s*[,}]`,
     ).test(code);
     if (!declared && !imported) {
       console.error(`[verify-ssr] ${helper} is referenced but never declared in ${file}`);
