@@ -46,7 +46,12 @@ for (const file of serverFiles) {
     const declared = new RegExp(
       `(?:var|let|const|function)\\s+${helper}\\b|${helper}\\s*[:=]\\s*(?:function|\\()`,
     ).test(code);
-    if (!declared) {
+    // Rolldown emits these helpers in a shared runtime chunk and imports them,
+    // so an import binding counts as a valid declaration.
+    const imported = new RegExp(
+      `import[^;]*\\b${helper}\\b[^;]*from|\\b${helper}\\s+as\\b|\\bas\\s+${helper}\\b`,
+    ).test(code);
+    if (!declared && !imported) {
       console.error(`[verify-ssr] ${helper} is referenced but never declared in ${file}`);
       staticFailures++;
     }
@@ -72,7 +77,12 @@ try {
     const res = await fetch(`http://127.0.0.1:${port}/`);
     if (res.status >= 500) runtimeFailure = `GET / returned ${res.status}`;
   } else {
-    const res = await fetchFn(new Request("http://localhost/"), process.env, {});
+    const ctx = {
+      waitUntil: () => {},
+      passThroughOnException: () => {},
+      props: {},
+    };
+    const res = await fetchFn(new Request("http://localhost/"), { ...process.env }, ctx);
     const body = await res.text();
     if (res.status >= 500) runtimeFailure = `GET / returned ${res.status}: ${body.slice(0, 500)}`;
     else if (/is not a function|ReferenceError/.test(body))
